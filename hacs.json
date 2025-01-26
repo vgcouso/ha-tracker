@@ -6,6 +6,6 @@
   "render_readme": true,
   "country": ["ALL"], 
   "iot_class": "Local Push",
-  "version": "0.0.3",
-  "icon": "icon_v1.png"
+  "version": "0.0.4",
+  "icon": "https://raw.githubusercontent.com/vgcouso/ha-tracker/main/icon.png"
 }
