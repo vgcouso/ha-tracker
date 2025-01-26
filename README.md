@@ -7,7 +7,7 @@ It also allows you to filter the positions of these devices and manage areas of 
 
 INSTALLATION:
 Add the following to your configuration.yaml file and then restart Home Assistant:
-ha-tracker:
+ha_tracker:
 
 The application can be run from a web page or from an iframe within Home Assistant.
 The URL is: https://<server address>/local/ha-tracker/index.html
