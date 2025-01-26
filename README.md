@@ -10,7 +10,7 @@ Add the following to your configuration.yaml file and then restart Home Assistan
 ha_tracker:
 
 The application can be run from a web page or from an iframe within Home Assistant.
-The URL is: https://<<server address>>/local/ha-tracker/index.html
+The URL is: https://server address/local/ha-tracker/index.html
 This same address is the one that must be entered into Home Assistant when it is integrated into an iframe.
 
 QUICK START:
