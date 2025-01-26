@@ -1,7 +1,7 @@
 {
   "domain": "ha_tracker",
   "name": "HA Tracker",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "requirements": [],
   "dependencies": [],
   "codeowners": ["@vgcouso"]
