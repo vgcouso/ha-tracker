@@ -1,0 +1,10 @@
+{
+  "name": "HA Tracker",
+  "description": "A Home Assistant integration to track devices, filters, and zones, with a web client for advanced features.",
+  "domains": ["integration"], 
+  "homeassistant": "2023.12.0",
+  "render_readme": true,
+  "country": ["ALL"], 
+  "iot_class": "Local Push",
+  "version": "0.0.1"
+}
