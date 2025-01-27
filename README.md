@@ -1,5 +1,7 @@
 <img src="docs/images/logo_512x512.png" alt="HA Tracker logo" width="128" height="128" align="left" />
 
+---
+
 # HA-TRACKER
 
 HA-Tracker is an application designed to track devices assigned to Home Assistant users.
