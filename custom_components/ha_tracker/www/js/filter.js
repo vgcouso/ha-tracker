@@ -95,7 +95,7 @@ async function updatePositionsTable(positions) {
           <button class="toggle-btn">►</button>
         </td>
         <td>${fecha}</td>
-        <td>${vel} km/h</td>
+        <td>${vel} ${t('km_per_hour')}</td>
         <td>${zoneName}</td>
       `;
 
@@ -107,7 +107,7 @@ async function updatePositionsTable(positions) {
             row.innerHTML = `
         <td></td>
         <td>${fecha}</td>
-        <td>${vel} km/h</td>
+        <td>${vel} ${t('km_per_hour')}</td>
         <td>${zoneName}</td>
       `;
         }
@@ -145,14 +145,14 @@ async function addFilterMarkers(positions) {
         const icon = L.divIcon({
             className: '',
             html: `
-        <div style="
-          width:6px; 
-          height:6px;
-          border:1px solid rgba(0,0,255,0.8);
-          border-radius:50%;
-          background-color: rgba(0,0,255,0.5);
-        "></div>
-      `,
+			<div style="
+			  width:6px; 
+			  height:6px;
+			  border:1px solid rgba(0,0,255,0.8);
+			  border-radius:50%;
+			  background-color: rgba(0,0,255,0.5);
+			"></div>
+		  `,
             iconSize: [8, 8],
             iconAnchor: [4, 4],
         });
@@ -290,7 +290,7 @@ async function selectRow(row) {
         .addTo(map)
         .bindPopup(`
       ${formatDate(lastUpdated)}<br>
-      ${speed} km/h
+      ${speed} ${t('km_per_hour')}
     `)
         .openPopup();
 
@@ -434,8 +434,8 @@ async function updateSummaryTable(positions) {
     // Actualizar las celdas del resumen
     document.getElementById('positions-count').textContent = totalPositions;
     document.getElementById('total-time').textContent = totalTime;
-    document.getElementById('max-speed').textContent = `${maxSpeed} km/h`;
-    document.getElementById('average-speed').textContent = `${avgSpeed} km/h`;
+    document.getElementById('max-speed').textContent = `${maxSpeed} ${t('km_per_hour')}`;
+    document.getElementById('average-speed').textContent = `${avgSpeed} ${t('km_per_hour')}`;
 
     // Hacer clic en la fila de Velocidad Máxima para centrar en la posición correspondiente
     const maxSpeedRow = document.querySelector('#summary table tbody tr:nth-child(3)');
@@ -470,7 +470,7 @@ async function updatesummaryZonesTable(positions) {
 
     positions.forEach((pos, index) => {
         const zone = getZoneForPosition(pos);
-        const currentZoneName = zone ? zone.name : '(Sin Zona)';
+        const currentZoneName = zone ? zone.name : '';
         const currentTime = new Date(pos.last_updated).getTime();
 
         // Guardar posición de la zona

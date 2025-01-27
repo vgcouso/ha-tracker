@@ -179,7 +179,7 @@ class ZonesAPI(HomeAssistantView):
             if entity_id.startswith("zone."):
                 zone_data = {
                     "id": entity_id.split("zone.")[1],
-                    "name": state.attributes.get("friendly_name", "Zona sin nombre"),
+                    "name": state.attributes.get("friendly_name", ""),
                     "latitude": state.attributes.get("latitude"),
                     "longitude": state.attributes.get("longitude"),
                     "radius": state.attributes.get("radius", 100),

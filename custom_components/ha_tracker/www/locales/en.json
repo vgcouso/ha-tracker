@@ -28,6 +28,10 @@
   "select_device": "Select Device",  
   "day": "day",
   "days": "days",  
+  "zone_without_name": "Zone without name",
+  "radius": "Radius",
+  "meters": "Meters",
+  "km_per_hour": "km/h",  
   "disconnected": "Disconnected from server",
   "running_filter": "Running the Filter",
   "no_positions": "No valid positions found for the selected filter",
@@ -44,5 +48,6 @@
   "empty_name": "Name cannot be empty",
   "error_updating_zone": "Failed to update zone",
   "enter_zone_name": "Enter the name for the zone:",
-  "confirm_delete_zone": "Are you sure you want to delete the zone: {name}?"
+  "confirm_delete_zone": "Are you sure you want to delete the zone: {name}?",
+  "date_unavailable": "Date unavailable"
 }

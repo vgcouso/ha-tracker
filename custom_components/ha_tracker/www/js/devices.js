@@ -134,7 +134,7 @@ export async function updateDeviceMarkers() {
         if (!isValidCoordinates(latitude, longitude))
             return;
 
-        const formattedDate = formatDate(device.last_updated || "Fecha no disponible");
+        const formattedDate = formatDate(device.last_updated || t("date_unavailable"));
         const ownerName = deviceToPersonMap[device.entity_id] || '';
         const iconUrl = persons.find(p => p.attributes.friendly_name === ownerName)?.attributes.entity_picture || DEFAULT_ICON_URL;
         const popupContent = generatePopupContent({
@@ -168,7 +168,7 @@ function generatePopupContent({
     return `
     <strong>${friendly_name} ${ownerName ? `(${ownerName})` : ''}</strong><br>
     ${formattedDate}<br>
-    ${speed || 0} km/h
+    ${speed || 0} ${t('km_per_hour')}
   `;
 }
 

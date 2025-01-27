@@ -28,6 +28,10 @@
   "select_device": "اختر الجهاز",
   "day": "يوم",
   "days": "أيام",
+  "zone_without_name": "منطقة بلا اسم",
+  "radius": "نصف القطر",
+  "meters": "أمتار",
+  "km_per_hour": "كم/ساعة",
   "disconnected": "تم قطع الاتصال بالخادم",
   "running_filter": "تطبيق التصفية",
   "no_positions": "لم يتم العثور على مواقع صالحة للتصفية المحددة",
@@ -44,5 +48,6 @@
   "empty_name": "لا يمكن أن يكون الاسم فارغًا",
   "error_updating_zone": "فشل تحديث المنطقة",
   "enter_zone_name": "أدخل اسم المنطقة:",
-  "confirm_delete_zone": "هل أنت متأكد أنك تريد حذف المنطقة: {name}؟"
+  "confirm_delete_zone": "هل أنت متأكد أنك تريد حذف المنطقة: {name}؟",
+  "date_unavailable": "التاريخ غير متوفر"
 }

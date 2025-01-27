@@ -28,6 +28,10 @@
   "select_device": "选择设备",
   "day": "天",
   "days": "天数",
+  "zone_without_name": "未命名区域",
+  "radius": "半径",
+  "meters": "米",
+  "km_per_hour": "公里/小时",  
   "disconnected": "与服务器断开连接",
   "running_filter": "正在运行筛选",
   "no_positions": "未找到符合筛选条件的有效位置",
@@ -44,5 +48,6 @@
   "empty_name": "名称不能为空",
   "error_updating_zone": "更新区域失败",
   "enter_zone_name": "输入区域名称：",
-  "confirm_delete_zone": "您确定要删除区域：{name}？"
+  "confirm_delete_zone": "您确定要删除区域：{name}？",
+  "date_unavailable": "日期不可用"
 }

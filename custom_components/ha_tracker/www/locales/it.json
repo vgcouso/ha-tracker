@@ -28,6 +28,10 @@
   "select_device": "Seleziona dispositivo",
   "day": "giorno",
   "days": "giorni",
+  "zone_without_name": "Zona senza nome",
+  "radius": "Raggio",
+  "meters": "Metri",
+  "km_per_hour": "km/h",  
   "disconnected": "Disconnesso dal server",
   "running_filter": "Esecuzione del filtro",
   "no_positions": "Nessuna posizione valida trovata per il filtro selezionato",
@@ -44,5 +48,6 @@
   "empty_name": "Il nome non può essere vuoto",
   "error_updating_zone": "Aggiornamento della zona non riuscito",
   "enter_zone_name": "Inserisci il nome della zona:",
-  "confirm_delete_zone": "Sei sicuro di voler eliminare la zona: {name}?"
+  "confirm_delete_zone": "Sei sicuro di voler eliminare la zona: {name}?",
+  "date_unavailable": "Data non disponibile"
 }

@@ -133,7 +133,6 @@ body {
   outline: 2px solid #00509e; /* Resalta al enfocarlo */
 }
 
-
 #filter-container {
   flex-grow: 1;
   display: flex;
@@ -141,7 +140,7 @@ body {
 }
 
 .group {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   display: flex;
   align-items: center; /* Alinear verticalmente */
   justify-content: center; /* Centrar el contenido horizontalmente */
@@ -162,7 +161,9 @@ body {
   width: calc(100% - 130px); /* Ajustar el tamaño considerando el espacio del label y margen */
   border: 1px solid #ccc; /* Borde opcional */
   border-radius: 8px; /* Bordes redondeados */
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); /* Efecto interno opcional */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5); /* Sombra */
+  background: #f7f7f7; /* Fondo claro */
+  transition: box-shadow 0.3s ease, transform 0.2s ease; /* Transición suave */
 }
 
 #device-select, #start-date, #end-date {
@@ -171,9 +172,14 @@ body {
   width: calc(100%);
   border: 1px solid #ccc; /* Opcional: Define el color del borde */
   border-radius: 8px; /* Define las esquinas redondeadas */
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); /* Opcional: Añade un efecto interno */
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2); /* Opcional: Añade un efecto interno */
 }
 
+.group label[for="start-date"], .group label[for="end-date"] {
+  color: #000099; /* Azul */
+  font-weight: bold; /* Mantiene el texto en negrita */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Sombra al texto */
+}
 
 .filter-button {
   min-height: 40px; /* Altura mínima asegurada */
@@ -185,9 +191,10 @@ body {
   width: calc(100%); /* Ocupa todo el ancho por defecto */
   cursor: pointer;
   border-radius: 5px;
-  margin-bottom: 5px; /* Añade espacio debajo del botón */
+  margin-bottom: 10px; /* Añade espacio debajo del botón */
   font-weight: bold;
   transition: background 0.3s ease; /* Transición suave al hover */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5); /* Sombra */
 }
 
 .filter-button:hover {

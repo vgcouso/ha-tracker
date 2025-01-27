@@ -28,6 +28,10 @@
   "select_device": "डिवाइस चुनें",
   "day": "दिन",
   "days": "दिन",
+  "zone_without_name": "नाम रहित क्षेत्र",
+  "radius": "त्रिज्या",
+  "meters": "मीटर",
+  "km_per_hour": "किमी/घंटा",  
   "disconnected": "सर्वर से कनेक्शन टूटा",
   "running_filter": "फ़िल्टर चल रहा है",
   "no_positions": "चयनित फ़िल्टर के लिए कोई मान्य स्थिति नहीं मिली",
@@ -44,5 +48,6 @@
   "empty_name": "नाम खाली नहीं हो सकता",
   "error_updating_zone": "क्षेत्र को अपडेट करने में विफल",
   "enter_zone_name": "क्षेत्र का नाम दर्ज करें:",
-  "confirm_delete_zone": "क्या आप वाकई क्षेत्र को हटाना चाहते हैं: {name}?"
+  "confirm_delete_zone": "क्या आप वाकई क्षेत्र को हटाना चाहते हैं: {name}?",
+  "date_unavailable": "तारीख उपलब्ध नहीं है"
 }

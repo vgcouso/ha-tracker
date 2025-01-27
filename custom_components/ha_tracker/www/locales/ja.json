@@ -28,6 +28,10 @@
   "select_device": "デバイスを選択",
   "day": "日",
   "days": "日数",
+  "zone_without_name": "名前のないゾーン",
+  "radius": "半径",
+  "meters": "メートル",
+  "km_per_hour": "km/h",  
   "disconnected": "サーバーとの接続が切れました",
   "running_filter": "フィルターを実行中",
   "no_positions": "選択されたフィルターに一致する有効な位置が見つかりません",
@@ -44,5 +48,6 @@
   "empty_name": "名前を空にすることはできません",
   "error_updating_zone": "ゾーンの更新に失敗しました",
   "enter_zone_name": "ゾーンの名前を入力してください：",
-  "confirm_delete_zone": "ゾーン {name} を削除してもよろしいですか？"
+  "confirm_delete_zone": "ゾーン {name} を削除してもよろしいですか？",
+  "date_unavailable": "日付は利用できません"
 }

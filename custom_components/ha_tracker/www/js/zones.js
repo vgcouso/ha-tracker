@@ -115,9 +115,9 @@ export async function updateZonesTable() {
 
         // Actualizar el contenido de la fila si es necesario
         const newContent = `
-      <td>${adminColumnContent}</td>
-      <td>${name || 'Zona sin nombre'}</td>
-    `;
+		  <td>${adminColumnContent}</td>
+		  <td>${name || t('zone_without_name')}</td>
+		`;
 
         if (row.innerHTML !== newContent) {
             row.innerHTML = newContent;
@@ -216,9 +216,10 @@ export async function updateZoneMarkers() {
         if (existingCircle) {
             // Actualizar el popup si el nombre ha cambiado
             const popupContent = `
-	    <strong>${name || 'Zona sin nombre'}</strong><br>
-	    Radio: ${radius.toFixed(2)} metros
-	  `;
+			<strong>${name || t("zone_without_name")}</strong><br>
+			 ${t('radius')}: ${radius.toFixed(2)} ${t('meters')}
+		    `;
+			
             if (existingCircle.getPopup().getContent() !== popupContent) {
                 existingCircle.setPopupContent(popupContent);
             }
@@ -258,9 +259,10 @@ export async function updateZoneMarkers() {
 
         // Añadir el popup y personalizar su comportamiento
         const newPopupContent = `
-      <strong>${name || 'Zona sin nombre'}</strong><br>
-      Radio: ${radius.toFixed(2)} metros
-    `;
+		 <strong>${name || t("zone_without_name")}</strong><br>
+		 ${t('radius')}: ${radius.toFixed(2)} ${t('meters')}
+		`;
+		
         circle.bindPopup(newPopupContent, {
             autoPan: false
         }); // Vincular el popup al círculo
@@ -299,9 +301,10 @@ export async function updateZoneMarkers() {
             const updatedRadius = circle.getRadius(); // Obtén el nuevo radio
 
             const updatedPopupContent = `
-		<strong>${zone.name || 'Zona sin nombre'}</strong><br>
-		Radio: ${updatedRadius.toFixed(2)} metros
-	  `;
+			<strong>${zone.name || 'Zona sin nombre'}</strong><br>
+			 ${t('radius')}: ${updatedRadius.toFixed(2)} ${t('meters')}
+		    `;
+			
             circle.bindPopup(updatedPopupContent, {
                 autoPan: false
             }); // Actualiza el popup
@@ -494,7 +497,7 @@ async function handleEditZone() {
     }
 
     // Pedir el nuevo nombre al usuario
-    const newName = prompt(t('enter_zone_name'), zone.name || "Zona sin nombre");
+    const newName = prompt(t('enter_zone_name'), zone.name || t('zone_without_name'));
 
     if (!newName || newName.trim() === "") {
         alert(t('empty_name'));
