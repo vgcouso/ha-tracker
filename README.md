@@ -1,9 +1,6 @@
 <div style="text-align: center;">
-  <img src="docs/images/logo_512x512.png" alt="HA Tracker logo" width="128" height="128" align="left" />
+  <img src="docs/images/logo_512x512.png" alt="HA Tracker logo" width="128" height="128" style="display: block; margin: 0 auto;" />
 </div>
-
-<div style="clear: both;"></div>
-
 
 # HA-TRACKER
 
