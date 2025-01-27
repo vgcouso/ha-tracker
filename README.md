@@ -2,9 +2,9 @@
   <img src="docs/images/logo_512x512.png" alt="HA Tracker logo" width="128" height="128" style="display: block; margin: 0 auto;" />
 </div>
 
-# HA-TRACKER
+# HA TRACKER
 
-HA-Tracker is an application designed to track devices assigned to Home Assistant users.
+HA Tracker is an application designed to track devices assigned to Home Assistant users.
 It also allows filtering the positions of those devices and managing zones specific to the application.
 
 
@@ -27,14 +27,19 @@ It also allows filtering the positions of those devices and managing zones speci
    - From `/custom_components/ha_tracker/` to `/config/custom_components/ha_tracker/` in Home Assistant.
    - From `/custom_components/ha_tracker/www/` to `/config/www/ha-tracker/` in Home Assistant.
 
-3. In both cases, add the following to your `configuration.yaml` file and restart Home Assistant:
+<br>
+<br>
+
+- In HACS and manual installation, add the following to your `configuration.yaml` file and restart Home Assistant:
 
    ```yaml
    ha-tracker:
    ```
 
-The application can be accessed via a web browser or embedded in an iframe within Home Assistant.
-In both cases, the URL is: `https://<server-address>/local/ha-tracker/index.html`
+- The application can be accessed via a web browser or embedded in an iframe within Home Assistant.
+
+
+- In both cases, the URL is: `https://<server-address>/local/ha-tracker/index.html`
 
 
 ## QUICK START
