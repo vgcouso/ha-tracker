@@ -8,38 +8,22 @@ HA Tracker is an application designed to track devices assigned to Home Assistan
 It also allows filtering the positions of those devices and managing zones specific to the application.
 
 
-## INSTALLATION
+## INSTALLATION USING HACS
 
-### Using HACS
 1. Ensure you have HACS installed.
 2. Open HACS, go to the top right corner, and click on the three dots.
 3. Select **"Custom repositories"**.
 4. In the **"Repository"** field, enter: `https://github.com/vgcouso/ha-tracker` and select **"Integration"** as the type. Then click **"Add"**.
 5. Search for **HA Tracker** in HACS and click on it.
 6. Once it opens, click on **"Download"** in the bottom right corner and confirm the download in the pop-up window.
-7. Finally, restart your Home Assistant.
-
-### Manual Installation
-1. Create the following folders in your Home Assistant:
-   - `/config/custom_components/ha_tracker/`
-   - `/config/www/ha-tracker/`
-2. Copy the contents of the downloaded folder:
-   - From `/custom_components/ha_tracker/` to `/config/custom_components/ha_tracker/` in Home Assistant.
-   - From `/custom_components/ha_tracker/www/` to `/config/www/ha-tracker/` in Home Assistant.
-
-<br>
-<br>
-
-- In HACS and manual installation, add the following to your `configuration.yaml` file and restart Home Assistant:
+7. Add the following to your `configuration.yaml` file and restart Home Assistant:
 
    ```yaml
    ha-tracker:
    ```
 
-- The application can be accessed via a web browser or embedded in an iframe within Home Assistant.
-
-
-- In both cases, the URL is: `https://<server-address>/local/ha-tracker/index.html`
+8. The application can be accessed via a web browser or embedded in an iframe within Home Assistant.
+9. The URL is: `https://<server-address>/local/ha-tracker/index.html`
 
 
 ## QUICK START
