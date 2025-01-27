@@ -1,11 +1,8 @@
-<img src="docs/images/logo_512x512.png" alt="HA Tracker logo" width="128" height="128" align="left" />
+<div style="text-align: center;">
+  <img src="docs/images/logo_512x512.png" alt="HA Tracker logo" width="128" height="128" align="left" />
+</div>
 
-
-
-
-
-
-
+<div style="clear: both;"></div>
 
 
 # HA-TRACKER
