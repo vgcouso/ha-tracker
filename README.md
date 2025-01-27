@@ -7,6 +7,7 @@
 HA-Tracker is an application designed to track devices assigned to Home Assistant users.
 It also allows filtering the positions of those devices and managing zones specific to the application.
 
+
 ## INSTALLATION
 
 ### Using HACS
@@ -35,11 +36,20 @@ It also allows filtering the positions of those devices and managing zones speci
 The application can be accessed via a web browser or embedded in an iframe within Home Assistant.
 In both cases, the URL is: `https://<server-address>/local/ha-tracker/index.html`
 
+
 ## QUICK START
 
 The application consists of:
 - A map displaying devices, filters, and zones.
 - Two panels on the right side of the application for managing filters and zones.
+
+<div align="center">
+  <img src="docs/images/start.png" alt="HA Tracker main screen" style="width: 80%; max-width: 100%; height: auto;" />
+  <br>
+  <em>This is the main screen</em>
+</div>
+<br>
+
 
 ### Filters
 A filter applied to a device within a specific date range displays positions grouped by zone and a summary of the most relevant data.
@@ -48,8 +58,30 @@ On the map, the filter is represented by:
 - A marker for the selected position.
 - Circular markers for each position.
 
+<div align="center">
+  <img src="docs/images/filter.png" alt="HA Tracker filter screen" style="width: 80%; max-width: 100%; height: auto;" />
+  <br>
+  <em>This is the filter screen</em>
+</div>
+<br>
+<br>
+<div align="center">
+  <img src="docs/images/summary.png" alt="HA Tracker summary screen" style="width: 80%; max-width: 100%; height: auto;" />
+  <br>
+  <em>This is the summary screen</em>
+</div>
+<br>
+
+
 ### Zones
 - **Home Assistant zones** cannot be edited and are displayed on the map in red.
 - **Zones created within the application**, with admin permissions, are displayed in green.
   - These zones can be moved and have their radius changed.
   - Zones created within the application are visible in Home Assistant but cannot be modified there.
+
+<div align="center">
+  <img src="docs/images/zones.png" alt="HA Tracker zones screen" style="width: 80%; max-width: 100%; height: auto;" />
+  <br>
+  <em>This is the zones screen</em>
+</div>
+<br>
