@@ -21,7 +21,7 @@ It also allows filtering the positions of those devices and managing zones speci
    - `/config/www/ha-tracker/`
 2. Copy the contents of the downloaded folder:
    - From `/custom_components/ha_tracker/` to `/config/custom_components/ha_tracker/` in Home Assistant.
-   - From `/www/ha-tracker/` to `/config/www/ha-tracker/` in Home Assistant.
+   - From `/custom_components/ha_tracker/www/` to `/config/www/ha-tracker/` in Home Assistant.
 
 3. In both cases, add the following to your `configuration.yaml` file and restart Home Assistant:
 
