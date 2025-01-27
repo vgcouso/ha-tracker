@@ -1,5 +1,5 @@
 <div style="text-align: center;">
-  <img src="docs/images/logo_512x512.png" alt="HA Tracker logo" width="128" height="128" style="display: block; margin: 0 auto;" />
+  <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/logo_512x512.png" alt="HA Tracker logo" width="128" height="128" style="display: block; margin: 0 auto;" />
 </div>
 
 # HA TRACKER
@@ -33,7 +33,7 @@ The application consists of:
 - Two panels on the right side of the application for managing filters and zones.
 
 <div align="center">
-  <img src="docs/images/start.png" alt="HA Tracker main screen" style="width: 80%; max-width: 100%; height: auto;" />
+  <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/start.png" alt="HA Tracker main screen" style="width: 80%; max-width: 100%; height: auto;" />
   <br>
   <em>This is the main screen</em>
 </div>
@@ -48,14 +48,14 @@ On the map, the filter is represented by:
 - Circular markers for each position.
 
 <div align="center">
-  <img src="docs/images/filter.png" alt="HA Tracker filter screen" style="width: 80%; max-width: 100%; height: auto;" />
+  <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/filter.png" alt="HA Tracker filter screen" style="width: 80%; max-width: 100%; height: auto;" />
   <br>
   <em>This is the filter screen</em>
 </div>
 <br>
 <br>
 <div align="center">
-  <img src="docs/images/summary.png" alt="HA Tracker summary screen" style="width: 80%; max-width: 100%; height: auto;" />
+  <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/summary.png" alt="HA Tracker summary screen" style="width: 80%; max-width: 100%; height: auto;" />
   <br>
   <em>This is the summary screen</em>
 </div>
@@ -69,7 +69,7 @@ On the map, the filter is represented by:
   - Zones created within the application are visible in Home Assistant but cannot be modified there.
 
 <div align="center">
-  <img src="docs/images/zones.png" alt="HA Tracker zones screen" style="width: 80%; max-width: 100%; height: auto;" />
+  <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/zones.png" alt="HA Tracker zones screen" style="width: 80%; max-width: 100%; height: auto;" />
   <br>
   <em>This is the zones screen</em>
 </div>
