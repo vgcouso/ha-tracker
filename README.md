@@ -1,6 +1,12 @@
 <img src="docs/images/logo_512x512.png" alt="HA Tracker logo" width="128" height="128" align="left" />
 
----
+
+
+
+
+
+
+
 
 # HA-TRACKER
 
