@@ -1,8 +1,8 @@
 {
   "filter": "Filtro",
   "zones": "Zonas",
-  "start_date": "Inicio",
-  "end_date": "Fin",
+  "start_date": "Fecha de Inicio",
+  "end_date": "Fecha de Fin",
   "apply_filter": "Aplicar Filtro",
   "positions": "Posiciones",
   "summary": "Resumen",

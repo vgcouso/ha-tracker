@@ -90,3 +90,7 @@ On the map, the filter is represented by:
   <em>This is the zones screen</em>
 </div>
 <br>
+
+
+## Changelog
+See the [CHANGELOG](CHANGELOG.md) for details about changes and updates.
