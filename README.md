@@ -7,6 +7,8 @@
 HA Tracker is an application designed to track devices assigned to Home Assistant users.
 It also allows filtering the positions of those devices and managing zones specific to the application.
 
+<br>
+<br>
 
 ## INSTALLATION USING HACS
 
@@ -16,15 +18,19 @@ It also allows filtering the positions of those devices and managing zones speci
 4. In the **"Repository"** field, enter: `https://github.com/vgcouso/ha-tracker` and select **"Integration"** as the type. Then click **"Add"**.
 5. Search for **HA Tracker** in HACS and click on it.
 6. Once it opens, click on **"Download"** in the bottom right corner and confirm the download in the pop-up window.
-7. Add the following to your `configuration.yaml` file and restart Home Assistant:
+7. Add the following line to your `configuration.yaml` file.
 
    ```yaml
-   ha-tracker:
+   ha_tracker:
    ```
 
-8. The application can be accessed via a web browser or embedded in an iframe within Home Assistant.
-9. The URL is: `https://<server-address>/local/ha-tracker/index.html`
+8. Restart Home Assistant to apply changes.
+9. The application can be accessed via a web browser or embedded in an iframe within Home Assistant and the URL is:
 
+   `https://<server-address>/local/ha-tracker/index.html`
+
+<br>
+<br>
 
 ## QUICK START
 
@@ -37,8 +43,9 @@ The application consists of:
   <br>
   <em>This is the main screen</em>
 </div>
-<br>
 
+<br>
+<br>
 
 ### Filters
 A filter applied to a device within a specific date range displays positions grouped by zone and a summary of the most relevant data.
@@ -59,8 +66,9 @@ On the map, the filter is represented by:
   <br>
   <em>This is the summary screen</em>
 </div>
-<br>
 
+<br>
+<br>
 
 ### Zones
 - **Home Assistant zones** cannot be edited and are displayed on the map in red.
@@ -73,8 +81,9 @@ On the map, the filter is represented by:
   <br>
   <em>This is the zones screen</em>
 </div>
-<br>
 
+<br>
+<br>
 
 ## Changelog
 See the [CHANGELOG](CHANGELOG.md) for details about changes and updates.
