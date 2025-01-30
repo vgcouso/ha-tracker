@@ -3,22 +3,27 @@
 //
 
 
+import {fetchAdmin, fetchConnection} from './fetch.js';
+
 export const haUrl = location.origin;
 
 export let isAdmin = false;
+export let isConnected = false;
 
-export async function setAdmin(data) {
+export async function updateAdmin() {
     try {
-        if (data && typeof data.is_admin !== "undefined") {
-            isAdmin = data.is_admin; // Actualiza la variable global
-            console.log("Estado de administrador:", isAdmin);
-        } else {
-            console.warn("No se pudo determinar el estado de administrador. Respuesta inválida:", data);
-            isAdmin = false; // Valor predeterminado si no se puede determinar
-        }
+		isAdmin = await fetchAdmin();
     } catch (error) {
-        console.error("Error al verificar el estado de administrador:", error);
-        isAdmin = false; // Valor predeterminado en caso de error
+        console.error("Error al verificar el establecer admin:", error);
+		isAdmin = false;
     }
 }
 
+export async function updateConnection() {
+    try {
+		isConnected = await fetchConnection();
+    } catch (error) {
+        console.error("Error al verificar el establecer connection:", error);
+		isConnected = false;
+    }
+}

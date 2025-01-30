@@ -49,5 +49,10 @@
   "error_updating_zone": "Échec de la mise à jour de la zone",
   "enter_zone_name": "Entrez le nom de la zone :",
   "confirm_delete_zone": "Êtes-vous sûr de vouloir supprimer la zone : {name}?",
-  "date_unavailable": "Date non disponible"
+  "date_unavailable": "Date non disponible",
+  "select_user": "Sélectionner un utilisateur",
+  "select_user_filter": "Veuillez sélectionner un utilisateur valide avant d'appliquer le filtre",
+  "device_not_found": "Appareil non trouvé",
+  "person_not_found": "Utilisateur non trouvé",
+  "users": "Utilisateurs"
 }

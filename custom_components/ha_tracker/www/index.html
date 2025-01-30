@@ -25,13 +25,51 @@
     <div id="forms-container">
       <div id="combo-container">
         <select id="combo-select">
+		  <option value="users" data-i18n="users">Users</option>
+          <option value="zones" data-i18n="zones">Zones</option>		  
           <option value="filter" data-i18n="filter">Filter</option>
-          <option value="zones" data-i18n="zones">Zones</option>
         </select>
       </div>
-      <div id="filter-container" style="display: block;"> <!-- Visible por defecto -->
+      <div id="persons-container" style="display: block;"> <!-- Visible por defecto -->
+        <div class="table-container">
+          <table class="fixed-table">
+            <thead>
+              <tr>
+                <th data-i18n="name">Name</th>
+				<th style="width: 50px;" data-i18n="time">Time</th>
+				<th style="width: 30px;" data-i18n="km/h">km/h</th>
+				<th data-i18n="zone">Zone</th>
+              </tr>				  
+            </thead>
+            <tbody id="persons-table-body">
+              <!-- Filas generadas dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div> 	
+      <div id="zones-container" style="display: none;"> <!-- Oculto por defecto -->
+        <div class="zone-actions" id="zone-actions" style="display: none;">
+          <button id="add-zone-button" class="filter-button hidden" data-i18n="add">Add</button>
+          <button id="delete-zone-button" class="filter-button hidden" data-i18n="delete">Delete</button>
+          <button id="edit-zone-button" class="filter-button hidden" data-i18n="edit">Edit</button>
+        </div>
+        <div class="table-container">
+          <table class="fixed-table">
+            <thead>
+              <tr>
+                <th style="width: 10px;"></th>
+                <th data-i18n="name">Name</th>
+              </tr>
+            </thead>
+            <tbody id="zones-table-body">
+              <!-- Filas generadas dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div> 	  
+      <div id="filter-container" style="display: none;"> <!-- Oculto por defecto -->
         <div class="group">
-          <select id="device-select"></select>
+          <select id="person-select"></select>
         </div>
         <div class="group">
           <label for="start-date" data-i18n="start">Start</label>
@@ -56,7 +94,7 @@
                     <tr>
                       <th style="width: 5px;"></th>
                       <th style="width: 50px;" data-i18n="time">Time</th>
-                      <th style="width: 50px;" data-i18n="speed">Speed</th>
+                      <th style="width: 30px;" data-i18n="km/h">km/h</th>
                       <th data-i18n="zone">Zone</th>
                     </tr>
                   </thead>
@@ -111,26 +149,6 @@
           </div>
         </div>
       </div>
-      <div id="zones-container" style="display: none;"> <!-- Oculto por defecto -->
-        <div class="zone-actions" id="zone-actions" style="display: none;">
-          <button id="add-zone-button" class="filter-button hidden" data-i18n="add">Add</button>
-          <button id="delete-zone-button" class="filter-button hidden" data-i18n="delete">Delete</button>
-          <button id="edit-zone-button" class="filter-button hidden" data-i18n="edit">Edit</button>
-        </div>
-        <div class="table-container">
-          <table class="fixed-table">
-            <thead>
-              <tr>
-                <th style="width: 10px;"></th>
-                <th data-i18n="name">Name</th>
-              </tr>
-            </thead>
-            <tbody id="zones-table-body">
-              <!-- Filas generadas dinámicamente -->
-            </tbody>
-          </table>
-        </div>
-      </div>    
     </div>
 
     <button class="hamburger-button" id="hamburger-button">☰</button>

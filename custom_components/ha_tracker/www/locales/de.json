@@ -49,5 +49,10 @@
   "error_updating_zone": "Die Zone konnte nicht aktualisiert werden",
   "enter_zone_name": "Geben Sie den Namen für die Zone ein:",
   "confirm_delete_zone": "Sind Sie sicher, dass Sie die Zone löschen möchten: {name}?",
-  "date_unavailable": "Datum nicht verfügbar"
+  "date_unavailable": "Datum nicht verfügbar",
+  "select_user": "Benutzer auswählen",
+  "select_user_filter": "Wählen Sie einen gültigen Benutzer, bevor Sie den Filter anwenden",
+  "device_not_found": "Gerät nicht gefunden",
+  "person_not_found": "Benutzer nicht gefunden",
+  "users": "Benutzer"
 }

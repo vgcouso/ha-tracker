@@ -4,8 +4,8 @@
 
 # HA TRACKER
 
-HA Tracker is an application designed to track devices assigned to Home Assistant users.
-It also allows filtering the positions of those devices and managing zones specific to the application.
+HA Tracker is an application designed to track users assigned to Home Assistant users.
+It also allows filtering the positions of those users and managing zones specific to the application.
 
 <br>
 <br>
@@ -34,21 +34,38 @@ It also allows filtering the positions of those devices and managing zones speci
 
 ## QUICK START
 
-The application consists of:
-- A map displaying devices, filters, and zones.
-- Two panels on the right side of the application for managing filters and zones.
+<br>
+
+### Users
+
+- These are the same ones created in Home Assistant and can have administrator permissions. In this case, they can manage the zones of HA Tracker.
+- In addition, if users have the application installed on their mobile and it is assigned in Home Assistant, they will appear on the map and filters can be made with the positions stored over time.
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/start.png" alt="HA Tracker main screen" style="width: 80%; max-width: 100%; height: auto;" />
+  <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/users.png" alt="HA Tracker users screen" style="width: 80%; max-width: 100%; height: auto;" />
   <br>
-  <em>This is the main screen</em>
+  <em>This is the users screen</em>
+</div>
+
+<br>
+
+### Zones
+- **Home Assistant zones** cannot be edited and are displayed on the map in red.
+- **Zones created within the application**, with admin permissions, are displayed in green.
+  - These zones can be moved and have their radius changed.
+  - Zones created within the application are visible in Home Assistant but cannot be modified there.
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/zones.png" alt="HA Tracker zones screen" style="width: 80%; max-width: 100%; height: auto;" />
+  <br>
+  <em>This is the zones screen</em>
 </div>
 
 <br>
 <br>
 
 ### Filters
-A filter applied to a device within a specific date range displays positions grouped by zone and a summary of the most relevant data.
+A filter applied to a user within a specific date range displays positions grouped by zone and a summary of the most relevant data.
 On the map, the filter is represented by:
 - A blue line.
 - A marker for the selected position.
@@ -65,21 +82,6 @@ On the map, the filter is represented by:
   <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/summary.png" alt="HA Tracker summary screen" style="width: 80%; max-width: 100%; height: auto;" />
   <br>
   <em>This is the summary screen</em>
-</div>
-
-<br>
-<br>
-
-### Zones
-- **Home Assistant zones** cannot be edited and are displayed on the map in red.
-- **Zones created within the application**, with admin permissions, are displayed in green.
-  - These zones can be moved and have their radius changed.
-  - Zones created within the application are visible in Home Assistant but cannot be modified there.
-
-<div align="center">
-  <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/zones.png" alt="HA Tracker zones screen" style="width: 80%; max-width: 100%; height: auto;" />
-  <br>
-  <em>This is the zones screen</em>
 </div>
 
 <br>

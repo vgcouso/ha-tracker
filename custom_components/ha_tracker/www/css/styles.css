@@ -15,7 +15,7 @@ body {
   overflow: hidden;
 }
 
-#filter-container, #zones-container {
+#filter-container, #zones-container, #persons-container {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -30,25 +30,20 @@ body {
   margin-bottom: auto; /* Ajusta automáticamente el espacio inferior */
 }
 
-#zones-container .table-container {
+#zones-container .table-container,
+#persons-container .table-container {
   border-radius: 8px; /* Bordes redondeados para todo el contenedor */
   overflow: hidden; /* Asegura que el contenido no sobresalga de las esquinas */
   overflow-y: auto; /* Habilita el scroll vertical si el contenido excede la altura */
 }
 
-#zones-container table {
-  border-radius: 8px; /* Bordes redondeados aplicados a toda la tabla */
-  width: 100%; /* Asegura que ocupe todo el espacio disponible */
-  border-collapse: collapse; /* Evita duplicación de bordes */
-}
-
-#zones-container {
+#zones-container, #persons-container {
   display: none; /* Oculto por defecto */
 }
 
-#zones-container .table-container td {
-  text-align: left; /* Alinea el texto a la izquierda */
-  cursor: pointer; /* Muestra un puntero al pasar sobre la fila */
+#persons-table-body tr td {
+    height: 60px;
+    vertical-align: middle; /* Centrar el contenido verticalmente */
 }
 
 #container {
@@ -133,12 +128,6 @@ body {
   outline: 2px solid #00509e; /* Resalta al enfocarlo */
 }
 
-#filter-container {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
 .group {
   margin-bottom: 8px;
   display: flex;
@@ -166,8 +155,8 @@ body {
   transition: box-shadow 0.3s ease, transform 0.2s ease; /* Transición suave */
 }
 
-#device-select, #start-date, #end-date {
-  font-size: 14px;
+#person-select, #start-date, #end-date {
+  font-size: 14px;	
   height: 40px;
   width: calc(100%);
   border: 1px solid #ccc; /* Opcional: Define el color del borde */
@@ -176,9 +165,9 @@ body {
 }
 
 .group label[for="start-date"], .group label[for="end-date"] {
-  color: #000099; /* Azul */
+  color: #003366; /* Azul */  
   font-weight: bold; /* Mantiene el texto en negrita */
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Sombra al texto */
+  font-size: 16px;
 }
 
 .filter-button {
@@ -278,7 +267,7 @@ tr.selected {
   right: 10px;
   width: 40px;
   height: 40px;
-  background: linear-gradient(to bottom, steelblue, #003366); /* Degradado de azul claro a azul oscuro */
+  background: linear-gradient(to bottom, #003366, #00509e); /* Degradado para el select cerrado */
   color: white;
   border: none;
   cursor: pointer;
@@ -288,10 +277,11 @@ tr.selected {
   text-align: center;
   border-radius: 5px;
   transition: background 0.3s ease; /* Transición suave */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5); /* Sombra */
 }
 
 .hamburger-button:hover {
-  background: linear-gradient(to bottom, #003366, steelblue); /* Invertir degradado en hover */
+  background: linear-gradient(to bottom, #00274d, #004080); /* Cambia el degradado al pasar el cursor */
 }
 
 .toggle-btn {
@@ -384,3 +374,4 @@ tr.selected {
   max-height: 300px; /* Define una altura máxima */
   overflow-y: auto; /* Permite desplazamiento vertical */
 }
+

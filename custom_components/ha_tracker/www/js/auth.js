@@ -3,8 +3,20 @@
 //
 
 import {haUrl} from './globals.js';
-import {fetchTokenRefresh} from './fetch.js';
+import {fetchTokenRefresh, fetchAuthCallback} from './fetch.js';
 
+export async function authCallback() {
+    try {
+		const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has("code")) {
+            const code = urlParams.get("code");
+            await fetchAuthCallback(code);
+        }    
+	} catch (error) {
+        console.error("Error durante la autenticación:", error);
+		throw error;
+    }		
+}
 
 export async function getToken() {
     try {

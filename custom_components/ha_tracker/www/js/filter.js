@@ -3,14 +3,36 @@
 //
 
 import {map} from './map.js';
-import {showWindowOverlay, hideWindowOverlay, formatDate, formatTotalTime} from './utils.js';
+import {showWindowOverlay, hideWindowOverlay, formatDate, formatTotalTime, isValidCoordinates} from './utils.js';
 import {fetchFilteredPositions} from './fetch.js';
-import {getZoneForPosition, showZone} from './zones.js';
+import {handleZonePosition, showZone} from './zones.js';
+import {handlePersonsSelection, updatePersonsFilter} from './persons.js';
 import {t} from './i18n.js';
 
 let filterMarkers = [], routeLine, selectedMarker;
 
+const DEFAULT_ICON_URL = '/local/ha-tracker/images/location-blue.png';
+						 
 document.addEventListener("DOMContentLoaded", () => {
+    const personSelect = document.getElementById("person-select");
+
+    personSelect.addEventListener("focus", async() => {
+        try {
+            await updatePersonsFilter();
+        } catch (error) {
+            console.error("Error al actualizar la lista de usuarios:", error);
+        }
+    });
+
+    personSelect.addEventListener("change", () => {
+        try {
+			resetFilter();
+			handlePersonsSelection(document.getElementById('person-select').value);
+        } catch (error) {
+            console.error("Error al seleccionar un usuario:", error);
+        }
+    });
+
     const tabButtons = document.querySelectorAll(".tab-button");
 
     tabButtons.forEach(button => {
@@ -62,7 +84,7 @@ async function updatePositionsTable(positions) {
     let isFirstInGroup = false;
 
     positions.forEach((pos, index) => {
-        const zone = getZoneForPosition(pos);
+        const zone = handleZonePosition(pos.attributes.latitude,pos.attributes.longitude);
         const zoneName = zone ? zone.name : '';
         if (zoneName !== prevZone) {
             groupClassIndex++;
@@ -95,7 +117,7 @@ async function updatePositionsTable(positions) {
           <button class="toggle-btn">►</button>
         </td>
         <td>${fecha}</td>
-        <td>${vel} ${t('km_per_hour')}</td>
+        <td>${vel}</td>
         <td>${zoneName}</td>
       `;
 
@@ -107,7 +129,7 @@ async function updatePositionsTable(positions) {
             row.innerHTML = `
         <td></td>
         <td>${fecha}</td>
-        <td>${vel} ${t('km_per_hour')}</td>
+        <td>${vel}</td>
         <td>${zoneName}</td>
       `;
         }
@@ -176,11 +198,11 @@ async function addFilterMarkers(positions) {
 async function applyFilter() {
     const startDate = document.getElementById('start-date').value;
     const endDate = document.getElementById('end-date').value;
-    const selectedDeviceId = document.getElementById('device-select').value;
+    const selectedPersonId = document.getElementById('person-select').value;
 
-    // Validar que se haya seleccionado un dispositivo
-    if (!selectedDeviceId || selectedDeviceId === "seleccionar dispositivo") {
-        alert(t('select_device_filter'));
+    // Validar que se haya seleccionado un usuario
+    if (!selectedPersonId || selectedPersonId === t('select_user')) {
+        alert(t('select_user_filter'));
         return;
     }
 
@@ -208,7 +230,7 @@ async function applyFilter() {
     showWindowOverlay(t('running_filter')); // Mostrar ventana de carga
 
     try {
-        await fetchFilteredPositions(selectedDeviceId, startDate, endDate);
+        await fetchFilteredPositions(selectedPersonId, startDate, endDate);
     } catch (error) {
         console.error("Error durante el filtro:", error);
         alert(t('filter_error'));
@@ -216,6 +238,7 @@ async function applyFilter() {
         hideWindowOverlay(); // Ocultar ventana de carga
     }
 }
+
 
 export async function resetFilter() {
     document.getElementById('filter-table-body').innerHTML = '';
@@ -281,7 +304,7 @@ async function selectRow(row) {
     // Crear el nuevo marcador
     selectedMarker = L.marker([latitude, longitude], {
         icon: L.icon({
-            iconUrl: '/local/ha-tracker/images/location-blue.png',
+            iconUrl: DEFAULT_ICON_URL,
             iconSize: [32, 32],
             iconAnchor: [16, 32],
             popupAnchor: [0, -32],
@@ -316,12 +339,13 @@ async function selectRow(row) {
 async function handleFilterRowSelection(uniqueId) {
     const filterTableBody = document.getElementById('filter-table-body');
     const row = filterTableBody.querySelector(`tr[data-entity-id="${uniqueId}"]`);
+
     if (!row) {
+        console.error("No se encontró la fila para la posición:", uniqueId);
         return;
-        console.error("No se encontró la fila para la posicion:", uniqueId);
     }
 
-    const isHidden = getComputedStyle(row).display === 'none';
+    const isHidden = getComputedStyle(row).display === 'none' || row.style.display === 'none';
     const groupClass = [...row.classList].find(cls => cls.startsWith('group-'));
 
     if (!groupClass) {
@@ -329,46 +353,45 @@ async function handleFilterRowSelection(uniqueId) {
         return;
     }
 
+    // Si la fila está oculta, expandimos su grupo
     if (isHidden) {
         console.log("Fila oculta. Expandimos el grupo:", groupClass);
         const groupHeader = document.querySelector(`tr.${groupClass}.group-header`);
         if (groupHeader) {
             const toggleBtn = groupHeader.querySelector('.toggle-btn');
-            if (toggleBtn)
+            if (toggleBtn) {
                 toggleGroup(groupClass, toggleBtn);
+            }
         }
     }
 
-    // Asegúrate de que "Filtro" esté seleccionado en el combo
+    // Asegurar que "Filtro" esté seleccionado en el combo
     const comboSelect = document.getElementById('combo-select');
     if (comboSelect && comboSelect.value !== 'filter') {
         comboSelect.value = 'filter'; // Cambia la selección del combo a "Filtro"
 
-        // Dispara el evento de cambio manualmente
-        const changeEvent = new Event('change', {
-            bubbles: true
-        });
-        comboSelect.dispatchEvent(changeEvent); // Asegura que el cambio de selección también muestre
+        // Dispara el evento de cambio manualmente para reflejar la selección en la UI
+        const changeEvent = new Event('change', { bubbles: true });
+        comboSelect.dispatchEvent(changeEvent);
     }
 
-    // Cambia a la pestaña "Posiciones" si existe un marcador seleccionado
-    if (selectedMarker) {
+    // Cambiar a la pestaña "Posiciones" si hay un marcador seleccionado
+    if (typeof selectedMarker !== "undefined" && selectedMarker !== null) {
         const positionsTabButton = document.querySelector('.tab-button[data-tab="positions"]');
         if (positionsTabButton) {
-            openTab({
-                currentTarget: positionsTabButton
-            }, 'positions'); // Cambia a la pestaña "Posiciones"
+            openTab({ currentTarget: positionsTabButton }, 'positions'); // Cambia a la pestaña "Posiciones"
         }
     }
 
-    // Selecciona la fila
+    // Seleccionar la fila
     selectRow(row);
 
-    row.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-    });
+    // Asegurar que la fila sea visible antes de hacer scroll
+    if (!isHidden) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
+    console.log("Fila seleccionada en la tabla de filtro:", uniqueId);
 }
 
 async function addRouteLine(positions) {
@@ -469,7 +492,7 @@ async function updatesummaryZonesTable(positions) {
     let totalTimeByZones = 0; // Tiempo total por zonas
 
     positions.forEach((pos, index) => {
-        const zone = getZoneForPosition(pos);
+        const zone = handleZonePosition(pos.attributes.latitude,pos.attributes.longitude);
         const currentZoneName = zone ? zone.name : '';
         const currentTime = new Date(pos.last_updated).getTime();
 

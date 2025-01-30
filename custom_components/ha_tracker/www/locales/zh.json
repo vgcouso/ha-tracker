@@ -49,5 +49,10 @@
   "error_updating_zone": "更新区域失败",
   "enter_zone_name": "输入区域名称：",
   "confirm_delete_zone": "您确定要删除区域：{name}？",
-  "date_unavailable": "日期不可用"
+  "date_unavailable": "日期不可用",
+  "select_user": "选择用户",
+  "select_user_filter": "在应用过滤器之前请选择一个有效的用户",
+  "device_not_found": "设备未找到",
+  "person_not_found": "未找到用户",
+  "users": "用户"
 }

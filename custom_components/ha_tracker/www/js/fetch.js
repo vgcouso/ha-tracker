@@ -2,9 +2,9 @@
 // FETCH
 //
 
-import {setAdmin, haUrl} from './globals.js';
+import {haUrl} from './globals.js';
 import {getToken} from './auth.js';
-import {setDevices, setPersons} from './devices.js';
+import {setDevices, setPersons} from './persons.js';
 import {setZones} from './zones.js';
 import {setFilter} from './filter.js';
 
@@ -47,32 +47,32 @@ async function fetchData(url, options = {
     }
 }
 
-export async function fetchConnection() {
-    try {
-        const url = `${haUrl}/api/`;
-        const data = await fetchData(url);
-
-        console.log(data);
-
-        if (data && data.message === 'API running.') {
-            return true;
-        } else {
-            return false;
-        }
-    } catch (error) {
-        console.error('Error al comprobar el estado de Home Assistant:', error);
-        return false;
-    }
-}
-
 export async function fetchAdmin() {
     const url = `${haUrl}/api/is_admin`;
     try {
         const data = await fetchData(url);
-        await setAdmin(data);
+        return data?.is_admin ?? false; // Usa optional chaining y nullish coalescing para mayor claridad
     } catch (error) {
         console.error("Error al verificar el estado de administrador:", error);
-        throw error; // Propagar el error para que el llamador pueda manejarlo
+        return false;
+    }
+}
+
+export async function fetchConnection() {
+    try {
+        const url = `${haUrl}/api/config`; // Verifica la configuración de HA
+        const data = await fetchData(url);
+
+        if (!data || typeof data !== "object") {
+            console.warn(" Home Assistant responde, pero no parece estar listo.");
+            return false;
+        }
+
+        console.log("Home Assistant está disponible.");
+        return true; // Si `api/config` devuelve datos, consideramos que HA está listo
+    } catch (error) {
+        console.error('Error al comprobar el estado de Home Assistant:', error);
+        return false;
     }
 }
 
@@ -212,13 +212,13 @@ export async function createZone(name, radius, latitude, longitude, icon = "mdi:
     }
 }
 
-export async function fetchFilteredPositions(deviceId, startDate, endDate) {
-    if (!deviceId || !startDate || !endDate) {
-        console.error("Los parámetros deviceId, startDate y endDate son obligatorios.");
+export async function fetchFilteredPositions(person_id, startDate, endDate) {
+    if (!person_id || !startDate || !endDate) {
+        console.error("Los parámetros person_id, startDate y endDate son obligatorios.");
         return;
     }
 
-    const url = `${haUrl}/api/filtered_positions?device_id=${encodeURIComponent(deviceId)}&start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
+    const url = `${haUrl}/api/filtered_positions?person_id=${encodeURIComponent(person_id)}&start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
 
     try {
         const data = await fetchData(url);

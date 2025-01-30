@@ -49,5 +49,10 @@
   "error_updating_zone": "ゾーンの更新に失敗しました",
   "enter_zone_name": "ゾーンの名前を入力してください：",
   "confirm_delete_zone": "ゾーン {name} を削除してもよろしいですか？",
-  "date_unavailable": "日付は利用できません"
+  "date_unavailable": "日付は利用できません",
+  "select_user": "ユーザーを選択",
+  "select_user_filter": "フィルターを適用する前に有効なユーザーを選択してください",
+  "device_not_found": "デバイスが見つかりません",
+  "person_not_found": "ユーザーが見つかりません",
+  "users": "ユーザー"
 }

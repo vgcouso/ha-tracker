@@ -2,7 +2,6 @@
 //  UTILS
 //
 
-import {isAdmin} from './globals.js';
 import {currentLang, t} from './i18n.js';
 
 export async function load() {
@@ -18,7 +17,6 @@ export async function load() {
 
         // Configura observadores al cargar la página
         observeTableContainers();
-        observeZoneActions();
 
         // Garantizar que todo el contenido esté oculto hasta que las hojas de estilo y el DOM estén listos
         if (!document.body.classList.contains('loaded')) {
@@ -29,7 +27,7 @@ export async function load() {
     }
 }
 
-// Opción adicional: recalcular en redimensionado
+// recalcular en redimensionado
 window.addEventListener('resize', () => {
     document.querySelectorAll('.table-container').forEach(adjustTableContainerHeight);
 });
@@ -47,25 +45,33 @@ document.getElementById('combo-select').addEventListener('change', function () {
         const selectedValue = this.value; // Obtiene el valor seleccionado
         const filterContainer = document.getElementById('filter-container');
         const zonesContainer = document.getElementById('zones-container');
+		const personsContainer = document.getElementById('persons-container');
 
         if (selectedValue === 'filter') {
-            // Mostrar filterContainer y ocultar zones
+            // Mostrar filterContainer 
             filterContainer.style.display = 'block';
             zonesContainer.style.display = 'none';
+			personsContainer.style.display = 'none';
         } else if (selectedValue === 'zones') {
-            // Mostrar zones y ocultar filterContainer
+            // Mostrar zones 
             filterContainer.style.display = 'none';
             zonesContainer.style.display = 'block';
-            if (isAdmin) {
-                document.getElementById('zone-actions').style.display = 'flex';
-            } else {
-                document.getElementById('zone-actions').style.display = 'none';
-            }
-        }
+			personsContainer.style.display = 'none';			
+        } else if (selectedValue === 'users') {
+			// Mostrar zones 
+            filterContainer.style.display = 'none';
+            zonesContainer.style.display = 'none';
+			personsContainer.style.display = 'block';			
+		}
     } catch (error) {
         console.error("Error durante el combo-select:", error);
     }
 });
+
+
+export function isValidCoordinates(lat, lng) {
+    return lat != null && lng != null && !isNaN(lat) && !isNaN(lng);
+}
 
 async function toggleContainer() {
     try {
@@ -88,49 +94,62 @@ async function toggleContainer() {
 
 async function adjustTableContainerHeight(container) {
     try {
-        const viewportHeight = window.innerHeight; // Altura visible del viewport
-        const containerTop = container.getBoundingClientRect().top; // Distancia desde el borde superior del viewport
-        const newHeight = viewportHeight - containerTop - 20; // Ajusta el margen si es necesario
-        container.style.height = `${newHeight}px`;
+        const viewportHeight = window.innerHeight;
+        const containerTop = container.getBoundingClientRect().top;
+        const newHeight = Math.max(viewportHeight - containerTop - 20, 150); // Altura mínima de 150px
+
+        // Reducido el umbral a 2px para minimizar parpadeo sin causar loops
+        if (Math.abs(container.clientHeight - newHeight) > 2) {
+            requestAnimationFrame(() => {
+                container.style.height = `${newHeight}px`;
+            });
+        }
     } catch (error) {
-        console.error("Error durante el adjustTableContainerHeight:", error);
+        console.error("Error ajustando la altura de la tabla:", error);
     }
 }
 
 async function observeTableContainers() {
     try {
         const containers = document.querySelectorAll('.table-container');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    adjustTableContainerHeight(entry.target); // Ajusta la altura cuando el contenedor es visible
-                }
+        const parentContainer = document.getElementById('forms-container'); // Contenedor general
+
+        // Crear ResizeObserver evitando loops
+        const resizeObserver = new ResizeObserver(entries => {
+            requestAnimationFrame(() => { // Evita ciclos infinitos
+                entries.forEach(entry => adjustTableContainerHeight(entry.target));
             });
         });
-        containers.forEach(container => {
-            observer.observe(container); // Observa cada contenedor
-        });
-    } catch (error) {
-        console.error("Error durante el observeTableContainers:", error);
-    }
-}
 
-async function observeZoneActions() {
-    try {
-        const target = document.getElementById('zone-actions');
-        if (!target) {
-            console.error("No se encontró el elemento con ID 'zone-actions'.");
-            return;
+        // Crear IntersectionObserver para detectar cuando una tabla aparece
+        const intersectionObserver = new IntersectionObserver(entries => {
+            requestAnimationFrame(() => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) adjustTableContainerHeight(entry.target);
+                });
+            });
+        });
+
+        // Crear MutationObserver para detectar cambios en el DOM (cuando desaparecen elementos)
+        const mutationObserver = new MutationObserver(() => {
+            requestAnimationFrame(() => {
+                document.querySelectorAll('.table-container').forEach(adjustTableContainerHeight);
+            });
+        });
+
+        // Aplicar observadores a cada tabla
+        containers.forEach(container => {
+            intersectionObserver.observe(container);
+            resizeObserver.observe(container);
+        });
+
+        // Aplicar MutationObserver al contenedor padre
+        if (parentContainer) {
+            mutationObserver.observe(parentContainer, { childList: true, subtree: true });
         }
-        const observer = new MutationObserver(() => {
-            document.querySelectorAll('.table-container').forEach(adjustTableContainerHeight);
-        });
-        observer.observe(target, {
-            attributes: true,
-            attributeFilter: ['style']
-        });
+
     } catch (error) {
-        console.error("Error durante el observeZoneActions:", error);
+        console.error("Error en observeTableContainers:", error);
     }
 }
 

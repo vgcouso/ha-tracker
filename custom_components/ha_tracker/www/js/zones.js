@@ -4,11 +4,13 @@
 
 import {isAdmin} from './globals.js';
 import {map} from './map.js';
-import {getDistanceFromLatLonInMeters, hideWindowOverlay} from './utils.js';
+import {getDistanceFromLatLonInMeters} from './utils.js';
 import {deleteZone, updateZone, createZone, fetchZones} from './fetch.js';
+import {updatePersonsTable} from './persons.js';
 import {t, tWithVars} from './i18n.js';
 
 let zones = [], zoneMarkers = {};
+const editingZones = {};
 
 document.addEventListener("DOMContentLoaded", () => {
     const addZoneButton = document.getElementById("add-zone-button");
@@ -46,6 +48,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+export async function updateZones(){
+	try {
+		await fetchZones();
+		await updateZonesTable();
+		await updateZoneMarkers();
+    } catch (error) {
+		console.error("Error al actualizar zonas:", error);
+		throw error;
+    }
+}
+
 export async function setZones(data) {
     try {
         if (data && Array.isArray(data)) {
@@ -61,11 +74,13 @@ export async function setZones(data) {
     }
 }
 
-export async function updateZonesTable() {
+async function updateZonesTable() {
     const zonesTableBody = document.getElementById('zones-table-body');
 
     if (!zonesTableBody) {
         console.error("No se encontró el cuerpo de la tabla de zonas.");
+		updatePersonsTable();
+		updateZoneActionButtons();
         return;
     }
 
@@ -107,6 +122,7 @@ export async function updateZonesTable() {
             row.dataset.zoneId = id;
             row.dataset.custom = custom;
             row.dataset.name = name;
+			row.style.cursor = 'pointer'; // Cambiar el cursor al pasar
             zonesTableBody.appendChild(row);
         }
 
@@ -163,11 +179,10 @@ export async function updateZonesTable() {
 
     // Actualizar botones después de procesar las zonas
     updateZoneActionButtons();
+	updatePersonsTable();
 }
 
-const editingZones = {};
-
-export async function updateZoneMarkers() {
+async function updateZoneMarkers() {
     // Asegúrate de que los panes estén configurados
     if (!map.getPane('circlePane')) {
         map.createPane('circlePane'); // Crear un pane para los círculos
@@ -314,11 +329,11 @@ export async function updateZoneMarkers() {
             if (isAdmin && custom) {
                 try {
                     const response = await updateZone(
-                            zone.id,
-                            zone.name, // Mantén el nombre
-                            updatedRadius,
-                            updatedLatLng.lat,
-                            updatedLatLng.lng);
+						zone.id,
+						zone.name, // Mantén el nombre
+						updatedRadius,
+						updatedLatLng.lat,
+						updatedLatLng.lng);
                     await fetchZones();
                     await handleZoneRowSelection(zone.id);
 
@@ -339,99 +354,94 @@ export async function updateZoneMarkers() {
 }
 
 export async function handleZoneRowSelection(zoneId) {
-    console.log("Seleccionando fila para la zona");
+    console.log("Seleccionando fila para la zona:", zoneId);
 
     const zonesTableBody = document.getElementById('zones-table-body');
     const row = zonesTableBody.querySelector(`tr[data-zone-id="${zoneId}"]`);
+
     if (!row) {
-        return;
         console.error("No se encontró la fila para la zona:", zoneId);
+        return;
     }
 
-    // Cambiar el combo a "Zonas"
+    // Cambiar el combo a "Zonas" solo si es necesario
     const comboSelect = document.getElementById('combo-select');
     if (comboSelect && comboSelect.value !== 'zones') {
         comboSelect.value = 'zones';
 
-        // Disparar el evento de cambio manualmente
-        const changeEvent = new Event('change', {
-            bubbles: true
-        });
+        // Disparar el evento de cambio manualmente para actualizar la UI
+        const changeEvent = new Event('change', { bubbles: true });
         comboSelect.dispatchEvent(changeEvent);
     }
 
     // Resaltar la fila en la tabla de zonas
-    const rows = zonesTableBody.querySelectorAll('tr');
-
-    rows.forEach(r => r.classList.remove('selected')); // Limpiar selección previa
+    zonesTableBody.querySelectorAll('tr').forEach(r => r.classList.remove('selected')); // Limpiar selección previa
     row.classList.add('selected'); // Resaltar la fila seleccionada
 
-    row.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-    });
+    // Asegurar que la fila sea visible antes de hacer scroll
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    updateZoneActionButtons();
+    // Llamar a updateZoneActionButtons solo si hay una fila seleccionada
+    if (typeof updateZoneActionButtons === "function") {
+        updateZoneActionButtons();
+    }
 }
 
 async function updateZoneActionButtons() {
-    const zonesTable = document.getElementById('zones-table-body');
-    const rows = zonesTable.querySelectorAll('tr');
+    const zonesTableBody = document.getElementById('zones-table-body');
+    if (!zonesTableBody) {
+        console.error("No se encontró el cuerpo de la tabla de zonas.");
+        return;
+    }
+
+    const rows = zonesTableBody.querySelectorAll('tr');
     const addButton = document.getElementById('add-zone-button');
     const deleteButton = document.getElementById('delete-zone-button');
     const editButton = document.getElementById('edit-zone-button');
     const zoneActions = document.getElementById('zone-actions');
 
     // Ocultar todos los botones al inicio para evitar conflictos
-    addButton.classList.add('hidden');
-    deleteButton.classList.add('hidden');
-    editButton.classList.add('hidden');
-
+    [addButton, deleteButton, editButton].forEach(button => button.classList.add('hidden'));
+    
+    // Manejo de visibilidad del contenedor de botones según permisos de admin
     if (isAdmin) {
-        document.getElementById('zone-actions').style.display = 'flex';
+        zoneActions.style.display = 'flex';
     } else {
-        document.getElementById('zone-actions').style.display = 'none';
+        zoneActions.style.display = 'none';
         return;
     }
 
-    // Si no hay filas en la tabla, solo mostrar el botón de añadir
+    // Si no hay filas, solo mostrar el botón "Añadir"
     if (rows.length === 0) {
-        addButton.classList.remove('hidden'); // Mostrar solo "Añadir"
-        zoneActions.classList.add('single-button'); // Asegurar diseño de un solo botón
-        addButton.style.flex = '1'; // Ocupa todo el ancho
+        addButton.classList.remove('hidden');
     } else {
-        const selectedRow = zonesTable.querySelector('tr.selected');
+        const selectedRow = zonesTableBody.querySelector('tr.selected');
+
         if (!selectedRow) {
             // Si no hay fila seleccionada, solo mostrar "Añadir"
             addButton.classList.remove('hidden');
-            zoneActions.classList.add('single-button'); // Asegurar diseño de un solo botón
-            addButton.style.flex = '1'; // Ocupa todo el ancho
         } else {
             const isCustom = selectedRow.dataset.custom === "true";
             if (isCustom) {
                 addButton.classList.remove('hidden');
                 deleteButton.classList.remove('hidden');
                 editButton.classList.remove('hidden');
-                zoneActions.classList.remove('single-button'); // Quitar diseño de un solo botón
-                addButton.style.flex = '1'; // Ajustar para compartir el ancho con los demás
             } else {
                 addButton.classList.remove('hidden');
-                zoneActions.classList.add('single-button'); // Asegurar diseño de un solo botón
-                addButton.style.flex = '1'; // Ocupa todo el ancho
             }
         }
     }
 
-    // Si solo hay un botón visible, asegúrate de que ocupe todo el ancho
-    const visibleButtons = [addButton, deleteButton, editButton].filter(
-        button => !button.classList.contains('hidden'));
+    // Determinar cuántos botones están visibles
+    const visibleButtons = [addButton, deleteButton, editButton].filter(button => !button.classList.contains('hidden'));
 
+    // Si hay un solo botón visible, aplicamos la clase 'single-button'
     if (visibleButtons.length === 1) {
-        zoneActions.classList.add('single-button'); // Asegurar que el diseño sea para un solo botón
-        visibleButtons[0].style.flex = '1'; // Ocupa todo el ancho
+        zoneActions.classList.add('single-button');
+        visibleButtons[0].style.flex = '1';
     } else {
-        zoneActions.classList.remove('single-button'); // Diseño para múltiples botones
-        visibleButtons.forEach(button => (button.style.flex = '1')); // Distribuir el ancho uniformemente
+        zoneActions.classList.remove('single-button');
+        visibleButtons.forEach(button => (button.style.flex = '1'));
     }
 }
 
@@ -572,12 +582,7 @@ async function handleCreateZone() {
     }
 }
 
-export function getZoneForPosition(position) {
-    const {
-        latitude,
-        longitude
-    } = position.attributes;
-
+export function handleZonePosition(latitude, longitude) {
     if (!latitude || !longitude)
         return null;
 

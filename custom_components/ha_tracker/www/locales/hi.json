@@ -49,5 +49,10 @@
   "error_updating_zone": "क्षेत्र को अपडेट करने में विफल",
   "enter_zone_name": "क्षेत्र का नाम दर्ज करें:",
   "confirm_delete_zone": "क्या आप वाकई क्षेत्र को हटाना चाहते हैं: {name}?",
-  "date_unavailable": "तारीख उपलब्ध नहीं है"
+  "date_unavailable": "तारीख उपलब्ध नहीं है",
+  "select_user": "उपयोगकर्ता चुनें",
+  "select_user_filter": "फ़िल्टर लागू करने से पहले एक वैध उपयोगकर्ता चुनें",
+  "device_not_found": "डिवाइस नहीं मिला",
+  "person_not_found": "उपयोगकर्ता नहीं मिला",
+  "users": "उपयोगकर्ता"
 }

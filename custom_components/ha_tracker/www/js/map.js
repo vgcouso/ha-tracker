@@ -2,7 +2,6 @@
 // MAP
 //
 
-import {devices} from './devices.js';
 
 export let map; 
 
@@ -59,28 +58,5 @@ export async function initMap() {
         }
     } catch (error) {
         console.error("Error al iniciar el mapa:", error);
-    }
-}
-
-export async function fitMapToAllDevices() {
-    try {
-        // Obtener sólo aquellos devices que tengan lat/long
-        const coords = devices
-            .filter(d => d.attributes.latitude && d.attributes.longitude)
-            .map(d => [d.attributes.latitude, d.attributes.longitude]);
-
-        if (!coords.length) {
-            console.log("No hay dispositivos con coordenadas para ajustar el mapa.");
-            // Podrías establecer un setView por defecto aquí, si quieres
-            map.setView([40.4168, -3.7038], 6); // fallback a Madrid, por ejemplo
-            return;
-        }
-
-        // Crear un LatLngBounds con todas las coords
-        const bounds = L.latLngBounds(coords);
-        // Ajustar el mapa para que todas entren en la vista
-        map.fitBounds(bounds);
-    } catch (error) {
-        console.error("Error al hacer fitMapToAllDevices:", error);
     }
 }

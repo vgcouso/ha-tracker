@@ -49,5 +49,10 @@
   "error_updating_zone": "فشل تحديث المنطقة",
   "enter_zone_name": "أدخل اسم المنطقة:",
   "confirm_delete_zone": "هل أنت متأكد أنك تريد حذف المنطقة: {name}؟",
-  "date_unavailable": "التاريخ غير متوفر"
+  "date_unavailable": "التاريخ غير متوفر",
+  "select_user": "اختر المستخدم",
+  "select_user_filter": "يرجى تحديد مستخدم صالح قبل تطبيق الفلتر",
+  "device_not_found": "الجهاز غير موجود",
+  "person_not_found": "المستخدم غير موجود",
+  "users": "المستخدمون"
 }

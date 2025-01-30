@@ -61,7 +61,7 @@ class PersonsEndpoint(HomeAssistantView):
         ]
         return self.json(person_data)
 
-# Endpoint para devolver posiciones filtradas por un dispositivo y rango de tiempo
+# Endpoint para devolver posiciones filtradas por un usuario y rango de tiempo
 class FilteredPositionsEndpoint(HomeAssistantView):
     url = "/api/filtered_positions"
     name = "api:filtered_positions"
@@ -70,13 +70,25 @@ class FilteredPositionsEndpoint(HomeAssistantView):
     async def get(self, request):
         hass = request.app["hass"]
         query = request.query
-        device_id = query.get("device_id")
+        person_id = query.get("person_id")  # Ahora se pasa person_id en vez de device_id
         start_date = query.get("start_date")
         end_date = query.get("end_date")
 
         # Validar parámetros
-        if not all([device_id, start_date, end_date]):
+        if not all([person_id, start_date, end_date]):
             return self.json({"error": "Missing parameters"}, status_code=400)
+
+        # Obtener estado de la persona
+        person_state = hass.states.get(person_id)
+        if not person_state:
+            return self.json({"error": f"Person {person_id} not found"}, status_code=404)
+
+        # Obtener el device_tracker asociado en source
+        source_device_id = person_state.attributes.get("source")
+
+        # Validar que source existe y tiene un valor válido
+        if not source_device_id or not isinstance(source_device_id, str) or not source_device_id.strip():
+            return self.json({"error": f"Person {person_id} does not have a valid 'source' device_tracker"}, status_code=400)
 
         # Validar y convertir fechas
         start_datetime = dt_util.parse_datetime(start_date)
@@ -95,10 +107,10 @@ class FilteredPositionsEndpoint(HomeAssistantView):
         if start_datetime_utc >= now:
             return self.json({"error": "start_date must be in the past"}, status_code=400)
 
-        # Validar si el dispositivo existe
-        device_state = hass.states.get(device_id)
+        # Validar si el device_tracker existe
+        device_state = hass.states.get(source_device_id)
         if not device_state:
-            return self.json({"error": f"Device {device_id} not found"}, status_code=404)
+            return self.json({"error": f"Device {source_device_id} not found"}, status_code=404)
 
         # Obtener historial usando get_significant_states
         try:
@@ -107,19 +119,19 @@ class FilteredPositionsEndpoint(HomeAssistantView):
                 hass,
                 start_datetime_utc,
                 end_datetime_utc,
-                [device_id]
+                [source_device_id]  # Ahora usamos el device_tracker asociado a la persona
             )
         except Exception as e:
             return self.json({"error": f"Error retrieving history: {str(e)}"}, status_code=500)
 
-        if not history or device_id not in history:
+        if not history or source_device_id not in history:
             return self.json([])
 
         # Filtrar posiciones únicas y dentro del rango de tiempo
         filtered_positions = []
         last_seen_datetime = None
 
-        for state in history[device_id]:
+        for state in history[source_device_id]:
             if not (state.attributes.get("latitude") and state.attributes.get("longitude")):
                 continue
 
@@ -140,6 +152,7 @@ class FilteredPositionsEndpoint(HomeAssistantView):
                 last_seen_datetime = current_datetime_rounded
 
         return self.json(filtered_positions)
+
         
 # Endpoint para verificar si el usuario es administrador
 class IsAdminEndpoint(HomeAssistantView):

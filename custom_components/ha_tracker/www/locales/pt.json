@@ -49,5 +49,10 @@
   "error_updating_zone": "Falha ao atualizar a zona",
   "enter_zone_name": "Digite o nome da zona:",
   "confirm_delete_zone": "Tem certeza de que deseja excluir a zona: {name}?",
-  "date_unavailable": "Data não disponível"
+  "date_unavailable": "Data não disponível",
+  "select_user": "Selecionar usuário",
+  "select_user_filter": "Selecione um usuário válido antes de aplicar o filtro",
+  "device_not_found": "Dispositivo não encontrado",
+  "person_not_found": "Usuário não encontrado",
+  "users": "Usuários"
 }
