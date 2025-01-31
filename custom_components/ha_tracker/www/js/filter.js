@@ -285,9 +285,15 @@ async function toggleGroup(groupClass, btn) {
 async function selectRow(row) {
     console.log("Fila seleccionada:", row.dataset.entityId);
 
+    // Asegurar que el pane "selectedMarker" existe (si no, crearlo)
+    if (!map.getPane('selectedMarker')) {
+        map.createPane('selectedMarker').style.zIndex = 450; // 🔹 Menor que `personsMarkers` 
+    }
+
     // Eliminar el marcador seleccionado anterior
-    if (selectedMarker)
+    if (selectedMarker) {
         map.removeLayer(selectedMarker);
+    }
 
     // Quitar la clase 'selected' de todas las filas y añadirla a la fila seleccionada
     const rows = document.querySelectorAll('#filter-table-body tr');
@@ -301,7 +307,7 @@ async function selectRow(row) {
     const speed = row.dataset.speed || 0;
     const uniqueId = row.dataset.entityId;
 
-    // Crear el nuevo marcador
+    // Crear el nuevo marcador 
     selectedMarker = L.marker([latitude, longitude], {
         icon: L.icon({
             iconUrl: DEFAULT_ICON_URL,
@@ -309,13 +315,14 @@ async function selectRow(row) {
             iconAnchor: [16, 32],
             popupAnchor: [0, -32],
         }),
+        pane: 'selectedMarker', // 🔹 Asignamos al nuevo pane de menor prioridad
     })
-        .addTo(map)
-        .bindPopup(`
-      ${formatDate(lastUpdated)}<br>
-      ${speed} ${t('km_per_hour')}
+    .addTo(map)
+    .bindPopup(`
+        ${formatDate(lastUpdated)}<br>
+        ${t('speed')}: ${speed} ${t('km_per_hour')}
     `)
-        .openPopup();
+    .openPopup();
 
     // Añadir evento `click` al marcador seleccionado
     selectedMarker.on('click', () => {
@@ -325,15 +332,6 @@ async function selectRow(row) {
 
     // Centrar el mapa en la posición seleccionada
     map.setView([latitude, longitude], map.getZoom());
-
-    // Añadir datos necesarios a `selectedMarker`
-    selectedMarker.positionData = {
-        latitude,
-        longitude,
-        lastUpdated,
-        speed,
-    }; // Guarda los datos reconstruidos de la posición
-    selectedMarker.rowId = uniqueId; // Guarda el identificador único de la fila
 }
 
 async function handleFilterRowSelection(uniqueId) {
@@ -387,9 +385,9 @@ async function handleFilterRowSelection(uniqueId) {
     selectRow(row);
 
     // Asegurar que la fila sea visible antes de hacer scroll
-    if (!isHidden) {
+    //if (!isHidden) {
         row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    //}
 
     console.log("Fila seleccionada en la tabla de filtro:", uniqueId);
 }

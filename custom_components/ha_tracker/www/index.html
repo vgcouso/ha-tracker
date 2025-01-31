@@ -19,8 +19,7 @@
 </head>
 <body>
   <div id="container">
-    <div id="map-container">
-      <div id="map"></div>
+    <div id="map">
     </div>
     <div id="forms-container">
       <div id="combo-container">
@@ -36,8 +35,9 @@
             <thead>
               <tr>
                 <th data-i18n="name">Name</th>
-				<th style="width: 50px;" data-i18n="time">Time</th>
-				<th style="width: 30px;" data-i18n="km/h">km/h</th>
+				<th style="width: 50px;" data-i18n="date">Date</th>
+				<th style="width: 20px;" data-i18n="km/h">km/h</th>
+				<th style="width: 15px;" data-i18n="percentage">%</th>
 				<th data-i18n="zone">Zone</th>
               </tr>				  
             </thead>
@@ -49,9 +49,9 @@
       </div> 	
       <div id="zones-container" style="display: none;"> <!-- Oculto por defecto -->
         <div class="zone-actions" id="zone-actions" style="display: none;">
-          <button id="add-zone-button" class="filter-button hidden" data-i18n="add">Add</button>
-          <button id="delete-zone-button" class="filter-button hidden" data-i18n="delete">Delete</button>
-          <button id="edit-zone-button" class="filter-button hidden" data-i18n="edit">Edit</button>
+          <button id="add-zone-button" class="action-button hidden" data-i18n="add">Add</button>
+          <button id="delete-zone-button" class="action-button hidden" data-i18n="delete">Delete</button>
+          <button id="edit-zone-button" class="action-button hidden" data-i18n="edit">Edit</button>
         </div>
         <div class="table-container">
           <table class="fixed-table">
@@ -79,7 +79,7 @@
           <label for="end-date" data-i18n="end">End</label>
           <input type="datetime-local" id="end-date" />
         </div>
-        <button id="filter-button" class="filter-button" data-i18n="apply_filter">Apply Filter</button>
+        <button id="filter-button" class="action-button" data-i18n="apply_filter">Apply Filter</button>
 
         <div>
           <div class="tabs">
@@ -93,8 +93,8 @@
                   <thead>
                     <tr>
                       <th style="width: 5px;"></th>
-                      <th style="width: 50px;" data-i18n="time">Time</th>
-                      <th style="width: 30px;" data-i18n="km/h">km/h</th>
+                      <th style="width: 50px;" data-i18n="date">Date</th>
+                      <th style="width: 20px;" data-i18n="km/h">km/h</th>
                       <th data-i18n="zone">Zone</th>
                     </tr>
                   </thead>

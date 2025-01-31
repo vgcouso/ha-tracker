@@ -54,5 +54,8 @@
   "select_user_filter": "Select a valid user before applying the filter",
   "device_not_found": "Device not found",
   "person_not_found": "User not found",
-  "users": "Users"
+  "users": "Users",
+  "date": "Date",
+  "percentage": "%",
+  "battery": "Battery"
 }

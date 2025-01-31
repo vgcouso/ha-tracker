@@ -13,7 +13,7 @@ import aiofiles
 
 _LOGGER = logging.getLogger(__name__)
 
-ZONES_FILE = "custom_components/ha_tracker/zones.json"
+ZONES_FILE = "ha-tracker-zones.json"
 
 # Endpoint para devolver todos los dispositivos (device_trackers)
 class DevicesEndpoint(HomeAssistantView):
@@ -24,19 +24,36 @@ class DevicesEndpoint(HomeAssistantView):
     async def get(self, request):
         hass = request.app["hass"]
         devices = hass.states.async_all()
-        device_data = [
-            {
-                "entity_id": device.entity_id,
-                "state": device.state,
-                "attributes": device.attributes,
-                "last_updated": device.last_updated,
-                "last_changed": device.last_changed,
-            }
-            for device in devices
-            if device.entity_id.startswith("device_tracker") and
-               device.attributes.get("latitude") and
-               device.attributes.get("longitude")
-        ]
+        
+        device_data = []
+        
+        for device in devices:
+            if device.entity_id.startswith("device_tracker") and \
+               device.attributes.get("latitude") and \
+               device.attributes.get("longitude"):
+
+                # Obtener el friendly_name del device_tracker
+                friendly_name = device.attributes.get("friendly_name", "").lower().replace(" ", "_")
+                
+                geocoded_sensor_id = f"sensor.{friendly_name}_geocoded_location"               
+                geocoded_sensor_state = hass.states.get(geocoded_sensor_id)
+                geocoded_location = geocoded_sensor_state.state if geocoded_sensor_state and geocoded_sensor_state.state.lower() != "unknown" else ""
+                
+                battery_sensor_id = f"sensor.{friendly_name}_battery_level"               
+                battery_sensor_state = hass.states.get(battery_sensor_id)
+                battery_level = battery_sensor_state.state if battery_sensor_state and battery_sensor_state.state.lower() != "unknown" else ""
+
+                # Agregar el dispositivo con el nuevo campo
+                device_data.append({
+                    "entity_id": device.entity_id,
+                    "state": device.state,
+                    "attributes": device.attributes,
+                    "last_updated": device.last_updated,
+                    "last_changed": device.last_changed,
+                    "geocoded_location": geocoded_location,  # Nuevo campo
+                    "battery_level": battery_level  # Nuevo campo
+                })
+
         return self.json(device_data)
 
 # Endpoint para devolver todas las personas

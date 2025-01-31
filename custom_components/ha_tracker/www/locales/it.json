@@ -6,7 +6,7 @@
   "apply_filter": "Applica filtro",
   "positions": "Posizioni",
   "summary": "Riepilogo",
-  "time": "Ora",
+  "time": "Tempo",
   "speed": "Velocità",
   "zone": "Zona",
   "metric": "Metrica",
@@ -54,5 +54,8 @@
   "select_user_filter": "Seleziona un utente valido prima di applicare il filtro",
   "device_not_found": "Dispositivo non trovato",
   "person_not_found": "Utente non trovato",
-  "users": "Utenti"
+  "users": "Utenti",
+  "date": "Data",
+  "percentage": "%",
+  "battery": "Batteria"
 }

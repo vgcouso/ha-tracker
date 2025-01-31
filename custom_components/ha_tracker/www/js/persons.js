@@ -63,6 +63,12 @@ export async function handlePersonsSelection(personId) {
         return;
     }
 
+    // Restablecer el zIndexOffset de todos los marcadores para evitar conflictos
+    Object.values(personsMarkers).forEach(marker => marker.setZIndexOffset(500));
+
+    // Aumentar el zIndexOffset del marcador seleccionado para que esté encima
+    selectedPerson.setZIndexOffset(600);
+
     // Obtener coordenadas desde el device_tracker almacenado
     const { latitude: lat, longitude: lng } = selectedDevice.attributes || {};
     if (!isValidCoordinates(lat, lng)) {
@@ -167,8 +173,8 @@ async function updatePersonsDevicesMap() {
 }
 
 async function updatePersonsMarkers() {
-    if (!map.getPane('topMarkers')) {
-        map.createPane('topMarkers').style.zIndex = 500;
+    if (!map.getPane('personsMarkers')) {
+        map.createPane('personsMarkers').style.zIndex = 500;
     }
 
     const currentPersonIds = Object.keys(personsDevicesMap);
@@ -191,6 +197,7 @@ async function updatePersonsMarkers() {
             friendly_name,
             speed
         } = device.attributes;
+		let batteryLevel = device.battery_level ? `<br>${t('battery')}: ${device.battery_level}${t('percentage')}` : "";
 
         if (!isValidCoordinates(latitude, longitude))
             return;
@@ -202,7 +209,8 @@ async function updatePersonsMarkers() {
         const popupContent = `
             <strong>${ownerName}</strong><br>
             ${formattedDate}<br>
-            ${speed || 0} ${t('km_per_hour')}
+            ${t('speed')}: ${speed || 0} ${t('km_per_hour')}
+			${batteryLevel}
         `;
 
         const markerIcon = L.divIcon({
@@ -223,7 +231,7 @@ async function updatePersonsMarkers() {
             // Crear un nuevo marcador si no existe
             personsMarkers[personId] = L.marker([latitude, longitude], {
                 icon: markerIcon,
-                pane: 'topMarkers'
+                pane: 'personsMarkers'
             })
             .addTo(map)
             .bindPopup(popupContent, {
@@ -231,8 +239,9 @@ async function updatePersonsMarkers() {
             })
             .on('click', () => {
                 handlePersonRowSelection(personId); // Selecciona la fila en la tabla
-                map.setView([latitude, longitude], map.getZoom(), { animate: true }); // Centra el mapa
-                personsMarkers[personId].openPopup(); // Abre el popup del marcador
+				map.invalidateSize();
+				map.setView([latitude, longitude], map.getZoom());	
+                personsMarkers[personId].openPopup(); // Abre el popup del marcador		
             });
         }
     });
@@ -262,14 +271,16 @@ export async function updatePersonsTable() {
         const existingPersonIds = existingRows.map(row => row.dataset.personId);
 
         // Actualizar o agregar filas
-        sortedPersons.forEach((person, index) => {
+        sortedPersons.forEach(async (person, index) => {
             const personId = person.entity_id;
             const friendlyName = person.attributes.friendly_name || personId;
             const source = person.attributes.source || null; // El device_tracker vinculado
 
             let time = "";
             let speed = "";
+			let battery = "";
             let currentZoneName = "";
+            let address = ""; // Dirección por defecto
 
             // Si la persona tiene un device_tracker en personsDevicesMap, extraer datos
             if (source && personsDevicesMap[personId]) {
@@ -277,25 +288,45 @@ export async function updatePersonsTable() {
 
                 time = formatDate(device.last_updated);
                 speed = device.attributes.speed;
+				battery = device.battery_level;
                 const zone = handleZonePosition(device.attributes.latitude, device.attributes.longitude);
                 currentZoneName = zone ? zone.name : "";
+                address = device.geocoded_location;
             }
 
             let row = existingRows.find(row => row.dataset.personId === personId);
+            let addressRow = row ? row.nextElementSibling : null;
 
             if (!row) {
-                // Crear una nueva fila si no existe
+                // Crear la fila principal si no existe
                 row = document.createElement("tr");
                 row.dataset.personId = personId;
                 row.style.cursor = "pointer"; // Cambia el cursor al pasar por encima
+
+				// Crear la fila para la dirección
+				addressRow = document.createElement("tr");
+				addressRow.dataset.personId = personId;
+				addressRow.style.cursor = "pointer"; // Cambia el cursor al pasar por encima
+				addressRow.classList.add("person-address-row");
+
+				const addressCell = document.createElement("td");
+				addressCell.setAttribute("colspan", "5");
+				addressCell.textContent = address;
+				addressCell.style.borderBottom = "1px solid rgba(0, 0, 0, 0.1)"; // Línea de separación debajo
+
+				addressRow.appendChild(addressCell);
+
+                // Agregar ambas filas a la tabla
                 tableBody.appendChild(row);
+                tableBody.appendChild(addressRow);
             }
 
-            // Actualizar el contenido de la fila si es necesario
+            // Actualizar el contenido de la fila principal si es necesario
             const newContent = `
-                <td>${friendlyName}</td>
+                <td><p style="font-weight: bold; color: #003366;">${friendlyName}</p></td>
                 <td>${time}</td>
                 <td>${speed}</td>
+                <td>${battery}</td>				
                 <td>${currentZoneName}</td>
             `;
 
@@ -303,18 +334,36 @@ export async function updatePersonsTable() {
                 row.innerHTML = newContent;
             }
 
-            // Asignar evento de clic para centrar en el mapa
-            row.onclick = () => {
-                // Quitar selección de todas las filas
-                tableBody.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
-                row.classList.add("selected");
+            // Actualizar la dirección si ya existe la fila
+            if (addressRow) {
+                addressRow.querySelector("td").textContent = address;
+            }
 
-                handlePersonsSelection(personId);
-            };
+			// Asignar evento de clic a ambas filas
+			const selectPerson = () => {
+				// Quitar selección de todas las filas
+				tableBody.querySelectorAll("tr").forEach(r => r.classList.remove("selected"));
 
-            // Asegurar que la fila esté en la posición correcta (reordenar si es necesario)
-            if (tableBody.children[index] !== row) {
-                tableBody.insertBefore(row, tableBody.children[index]);
+				// Seleccionar la fila principal y la fila de dirección
+				row.classList.add("selected");
+				if (addressRow) {
+					addressRow.classList.add("selected");
+				}
+
+				// Llamar a la función para centrar en el mapa
+				handlePersonsSelection(personId);
+			};
+
+			// Asignar el evento de clic a ambas filas
+			row.onclick = selectPerson;
+			if (addressRow) {
+				addressRow.onclick = selectPerson;
+			}
+
+            // Asegurar que las filas están en la posición correcta
+            if (tableBody.children[index * 2] !== row) {
+                tableBody.insertBefore(row, tableBody.children[index * 2]);
+                tableBody.insertBefore(addressRow, row.nextSibling);
             }
 
             // Mantener la selección si la persona actual estaba seleccionada
@@ -327,6 +376,9 @@ export async function updatePersonsTable() {
         existingRows.forEach(row => {
             if (!sortedPersons.some(person => person.entity_id === row.dataset.personId)) {
                 row.remove();
+                if (row.nextElementSibling && row.nextElementSibling.classList.contains("person-address-row")) {
+                    row.nextElementSibling.remove();
+                }
             }
         });
 
@@ -339,16 +391,31 @@ export async function updatePersonsTable() {
 export async function handlePersonRowSelection(personId) {
     console.log("Seleccionando fila para la persona:", personId);
 
+    const selectedPerson = personsMarkers[personId];
+    if (selectedPerson) {
+        // Restablecer el zIndexOffset de todos los marcadores para evitar conflictos
+        Object.values(personsMarkers).forEach(marker => marker.setZIndexOffset(500));
+        // Aumentar el zIndexOffset del marcador seleccionado para que esté encima
+        selectedPerson.setZIndexOffset(600);
+    }
+
     const personTableBody = document.getElementById('persons-table-body');
     if (!personTableBody) {
         console.error("No se encontró el tbody de la tabla de persons.");
         return;
     }
 
+    // Seleccionar la fila principal
     const row = personTableBody.querySelector(`tr[data-person-id="${personId}"]`);
     if (!row) {
         console.warn("No se encontró la fila para la persona:", personId);
         return;
+    }
+
+    // Seleccionar la fila de dirección (la siguiente fila después de la principal)
+    const addressRow = row.nextElementSibling;
+    if (!addressRow || !addressRow.classList.contains("person-address-row")) {
+        console.warn("No se encontró la fila de dirección para la persona:", personId);
     }
 
     // Cambiar el combo a "users" si no está seleccionado
@@ -360,12 +427,17 @@ export async function handlePersonRowSelection(personId) {
         comboSelect.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    // Resaltar la fila en la tabla de personas
+    // Quitar la selección de todas las filas
     personTableBody.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
-    row.classList.add('selected'); // Agregar clase de selección
 
-    // Hacer scroll hacia la fila seleccionada
+    // Agregar la clase de selección a la fila principal y la de dirección
+    row.classList.add('selected');
+    if (addressRow) {
+        addressRow.classList.add('selected');
+    }
+
+    // Hacer scroll hacia la fila principal (ajustado para que incluya la dirección)
     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    console.log("Fila de la persona seleccionada correctamente.");
+    console.log("Fila de la persona y su dirección seleccionadas correctamente.");
 }

@@ -54,5 +54,8 @@
   "select_user_filter": "フィルターを適用する前に有効なユーザーを選択してください",
   "device_not_found": "デバイスが見つかりません",
   "person_not_found": "ユーザーが見つかりません",
-  "users": "ユーザー"
+  "users": "ユーザー",
+  "date": "日付",
+  "percentage": "%",
+  "battery": "バッテリー"
 }

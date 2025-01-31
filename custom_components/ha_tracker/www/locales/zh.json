@@ -54,5 +54,8 @@
   "select_user_filter": "在应用过滤器之前请选择一个有效的用户",
   "device_not_found": "设备未找到",
   "person_not_found": "未找到用户",
-  "users": "用户"
+  "users": "用户",
+  "date": "日期",
+  "percentage": "%",
+  "battery": "电池"
 }

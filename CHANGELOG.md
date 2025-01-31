@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.14] - 2025-01-31
+
+### Added
+- Battery on the user screen and popups
+- Address on the user screen
+- Changes in README.md
+- Changes in css
+- Changes in translations
+
+### Fixed
+- Every time HA Tracker was updated, the zones were deleted
+- zIndex of the markers
+
 ## [0.0.13] - 2025-01-30
 
 ### Added
