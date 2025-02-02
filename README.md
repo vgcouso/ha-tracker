@@ -36,13 +36,11 @@ It also allows you to filter the positions made by users between two dates and m
 
 - These are the same ones created in Home Assistant and can have administrator permissions. In this case, they can manage the zones of HA Tracker.
 - In addition, if users have the application installed on their mobile and it is assigned in Home Assistant, they will appear on the map and filters can be made with the positions stored over time.
-- To see the address and battery, you need to go to the following screen in the Home Assistant app on your smartphone:
+- To see the battery, you need to go to the following screen in the Home Assistant app on your smartphone:
 
     **"Settings &rarr; Companion application &rarr; Manage sensors"**
   
-  There you need to activate the following sensors:
-    - Geocoded location
-    - Battery level
+    There you need to activate the **Battery level** sensor.
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/users.png" alt="HA Tracker users screen" style="width: 80%; max-width: 100%; height: auto;" />

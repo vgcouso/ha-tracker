@@ -21,8 +21,6 @@ async function fetchData(url, options = {
             }
         }
 
-        console.log(`Usando token: ${token || "No requerido"}`);
-
         const response = await fetch(url, {
             method: options.method || 'GET',
             headers: {
@@ -43,18 +41,30 @@ async function fetchData(url, options = {
         return await response.json();
     } catch (error) {
         console.error("Error en fetchData:", error);
-        return null;
+        throw error;
     }
 }
 
+export async function fetchConfig() {
+    const url = `${haUrl}/api/ha_tracker/config`;
+    try {
+        const data = await fetchData(url);
+        return data;
+    } catch (error) {
+        console.error("Error al obtener la configuración:", error);
+        throw error;
+    }
+}
+
+
 export async function fetchAdmin() {
-    const url = `${haUrl}/api/is_admin`;
+    const url = `${haUrl}/api/ha_tracker/is_admin`;
     try {
         const data = await fetchData(url);
         return data?.is_admin ?? false; // Usa optional chaining y nullish coalescing para mayor claridad
     } catch (error) {
         console.error("Error al verificar el estado de administrador:", error);
-        return false;
+        throw error;
     }
 }
 
@@ -64,7 +74,7 @@ export async function fetchConnection() {
         const data = await fetchData(url);
 
         if (!data || typeof data !== "object") {
-            console.warn(" Home Assistant responde, pero no parece estar listo.");
+            console.log(" Home Assistant responde, pero no parece estar listo.");
             return false;
         }
 
@@ -72,12 +82,12 @@ export async function fetchConnection() {
         return true; // Si `api/config` devuelve datos, consideramos que HA está listo
     } catch (error) {
         console.error('Error al comprobar el estado de Home Assistant:', error);
-        return false;
+        throw error;
     }
 }
 
 export async function fetchDevices() {
-    const url = `${haUrl}/api/devices`;
+    const url = `${haUrl}/api/ha_tracker/devices`;
     try {
         const data = await fetchData(url);
         await setDevices(data);
@@ -88,7 +98,7 @@ export async function fetchDevices() {
 }
 
 export async function fetchPersons() {
-    const url = `${haUrl}/api/persons`;
+    const url = `${haUrl}/api/ha_tracker/persons`;
     try {
         const data = await fetchData(url);
         // Verificar si no hay personas en la respuesta
@@ -103,7 +113,7 @@ export async function fetchPersons() {
 }
 
 export async function fetchZones() {
-    const url = `${haUrl}/api/zones`;
+    const url = `${haUrl}/api/ha_tracker/zones`;
     try {
         const data = await fetchData(url);
         await setZones(data);
@@ -122,7 +132,7 @@ export async function deleteZone(zoneId) {
         id: zoneId
     });
 
-    const url = `${haUrl}/api/zones`;
+    const url = `${haUrl}/api/ha_tracker/zones`;
     try {
         const response = await fetchData(url, {
             method: 'DELETE', // Especificar el método DELETE
@@ -148,7 +158,7 @@ export async function updateZone(zoneId, name, radius, latitude, longitude) {
         return null;
     }
 
-    const url = `${haUrl}/api/zones`;
+    const url = `${haUrl}/api/ha_tracker/zones`;
     const body = JSON.stringify({
         id: zoneId,
         name: name,
@@ -182,7 +192,7 @@ export async function createZone(name, radius, latitude, longitude, icon = "mdi:
         return null;
     }
 
-    const url = `${haUrl}/api/zones`;
+    const url = `${haUrl}/api/ha_tracker/zones`;
     const body = JSON.stringify({
         name: name,
         radius: radius,
@@ -218,7 +228,7 @@ export async function fetchFilteredPositions(person_id, startDate, endDate) {
         return;
     }
 
-    const url = `${haUrl}/api/filtered_positions?person_id=${encodeURIComponent(person_id)}&start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
+    const url = `${haUrl}/api/ha_tracker/filtered_positions?person_id=${encodeURIComponent(person_id)}&start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
 
     try {
         const data = await fetchData(url);
@@ -269,7 +279,6 @@ export async function fetchAuthCallback(code) {
 
         try {
             localStorage.setItem("hassTokens", JSON.stringify(tokenData));
-            console.log("Token almacenado en localStorage:", tokenData);
         } catch (error) {
             console.error("Error al guardar el token en localStorage:", error);
             return;

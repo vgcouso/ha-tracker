@@ -1,18 +1,15 @@
 body {
- visibility: hidden; /* Oculta el contenido */
- opacity: 0; /* Evita parpadeo */
- transition: opacity 0.3s ease; /* Transición suave */
+  font-family: Arial, sans-serif;
+  margin: 0;
+  overflow: hidden;
+  visibility: hidden; /* Oculta el contenido */
+  opacity: 0; /* Evita parpadeo */
+  transition: opacity 0.3s ease; /* Transición suave */
 }
 
 body.loaded {
   visibility: visible; /* Hace visible el contenido */
   opacity: 1; /* Transición suave */
-}
-
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  overflow: hidden;
 }
 
 #filter-container, #zones-container, #persons-container {
@@ -47,7 +44,6 @@ body {
     vertical-align: middle; /* Centrar contenido verticalmente */
 }
 
-/* Reducir la altura de la fila de dirección */
 .person-address-row td {
     font-style: italic; /* Texto en cursiva */
     color: #555; /* Color más tenue */

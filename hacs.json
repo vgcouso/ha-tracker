@@ -6,6 +6,6 @@
   "render_readme": true,
   "country": ["ALL"], 
   "iot_class": "Local Push",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "icon": "icon.png"
 }

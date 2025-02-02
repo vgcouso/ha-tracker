@@ -160,7 +160,7 @@ async function addFilterMarkers(positions) {
         const lon = pos.attributes.longitude;
 
         if (!lat || !lon) {
-            console.warn("Marcador descartado: Posición sin coordenadas:", pos);
+            console.log("Marcador descartado: Posición sin coordenadas:", pos);
             return;
         }
 
@@ -238,7 +238,6 @@ async function applyFilter() {
         hideWindowOverlay(); // Ocultar ventana de carga
     }
 }
-
 
 export async function resetFilter() {
     document.getElementById('filter-table-body').innerHTML = '';
@@ -336,8 +335,12 @@ async function selectRow(row) {
 
 async function handleFilterRowSelection(uniqueId) {
     const filterTableBody = document.getElementById('filter-table-body');
+    if (!filterTableBody) {
+        console.error("No se encontró el tbody de la tabla de filter.");
+        return;
+    }	
+	
     const row = filterTableBody.querySelector(`tr[data-entity-id="${uniqueId}"]`);
-
     if (!row) {
         console.error("No se encontró la fila para la posición:", uniqueId);
         return;
@@ -403,7 +406,7 @@ async function addRouteLine(positions) {
         if (pos.attributes.latitude && pos.attributes.longitude) {
             return [pos.attributes.latitude, pos.attributes.longitude];
         }
-        console.warn("Posición inválida encontrada:", pos);
+        console.log("Posición inválida encontrada:", pos);
         return null; // Ignorar posiciones inválidas
     }).filter(coord => coord !== null); // Filtrar coordenadas inválidas
 

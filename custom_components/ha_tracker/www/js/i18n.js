@@ -16,7 +16,7 @@ export async function loadTranslations(lang) {
     console.log(`Traducciones cargadas para el idioma: ${lang}`);
     updateTexts(); // Actualizar textos en la página solo si se cargan traducciones
   } catch (error) {
-    console.warn(`Error cargando traducciones para ${lang}.`, error);
+    console.log(`Error cargando traducciones para ${lang}.`, error);
 
     if (lang === 'en') {
       console.error("No se pudo cargar el archivo de traducciones en inglés. No se realizarán cambios en los textos.");

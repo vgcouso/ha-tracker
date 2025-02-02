@@ -2,23 +2,28 @@ import os
 import shutil
 import logging
 import stat
+import aiofiles  # Para operaciones de archivo asíncronas
+import asyncio   # Para ejecutar funciones bloqueantes en otro hilo
 
 _LOGGER = logging.getLogger(__name__)
 
 MARKER_FILE = os.path.join(os.path.dirname(__file__), ".installed_version")
 
 async def copy_www_files(current_version):
-    """Copiar archivos del cliente a la carpeta www/ha-tracker si es necesario."""
+    """Copiar archivos del cliente a la carpeta www/ha-tracker de forma asíncrona."""
     source_dir = os.path.join(os.path.dirname(__file__), "www")
     target_dir = os.path.join(os.getenv("HASS_CONFIG", "/config"), "www", "ha-tracker")
 
-    # Verificar si ya se copió esta versión
+    # Verificar si ya se copió esta versión (lectura asíncrona)
     if os.path.exists(MARKER_FILE):
-        with open(MARKER_FILE, "r") as f:
-            installed_version = f.read().strip()
-        if installed_version == current_version:
-            _LOGGER.info("Archivos del cliente ya están actualizados. No es necesario copiarlos.")
-            return
+        try:
+            async with aiofiles.open(MARKER_FILE, "r") as f:
+                installed_version = await f.read()
+            if installed_version.strip() == current_version:
+                _LOGGER.info("Archivos del cliente ya están actualizados. No es necesario copiarlos.")
+                return
+        except Exception as e:
+            _LOGGER.warning(f"No se pudo leer {MARKER_FILE}: {e}")
 
     # Verificar si el directorio fuente existe
     if not os.path.exists(source_dir):
@@ -26,19 +31,18 @@ async def copy_www_files(current_version):
         return
 
     # Crear el directorio de destino si no existe
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir, exist_ok=True)
+    await asyncio.to_thread(os.makedirs, target_dir, exist_ok=True)
 
-    # Copiar archivos y carpetas
-    copy_tree_sync(source_dir, target_dir)
+    # Copiar archivos y carpetas en un hilo separado
+    await asyncio.to_thread(copy_tree_sync, source_dir, target_dir)
 
-    # Ajustar permisos de la carpeta y los archivos copiados
-    set_permissions(target_dir)
+    # Ajustar permisos de la carpeta y los archivos copiados en un hilo separado
+    await asyncio.to_thread(set_permissions, target_dir)
 
-    # Guardar la versión actual en el archivo marcador
+    # Guardar la versión actual en el archivo marcador (escritura asíncrona)
     try:
-        with open(MARKER_FILE, "w") as f:
-            f.write(current_version)
+        async with aiofiles.open(MARKER_FILE, "w") as f:
+            await f.write(str(current_version))
         _LOGGER.info(f"Versión {current_version} guardada en {MARKER_FILE}.")
     except Exception as e:
         _LOGGER.error(f"Error al escribir el archivo de versión {MARKER_FILE}: {e}")

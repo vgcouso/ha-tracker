@@ -63,7 +63,6 @@ async function authenticate() {
 
             // Verifica si el token aún es válido
             if (Date.now() < tokenData.expires) {
-                console.log("El token almacenado aún es válido.");
                 return; // Detiene el flujo si el token es válido
             }
 
@@ -160,7 +159,7 @@ const getTokenFromHassConnection = async() => {
 
             // Verificar si el token ha expirado
             if (expirationTime <= now) {
-                console.warn("El token ha expirado, intentando renovarlo...");
+                console.log("El token ha expirado, intentando renovarlo...");
                 const tokenData = await fetchTokenRefresh(refreshToken);
 
                 if (tokenData) {

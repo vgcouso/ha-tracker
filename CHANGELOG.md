@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.15] - 2025-02-02
+
+### Added
+- We do geocoding using: https://nominatim.openstreetmap.org
+
+### Fixed
+- Installing the application
+
+
 ## [0.0.14] - 2025-01-31
 
 ### Added
@@ -18,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 - Every time HA Tracker was updated, the zones were deleted
 - zIndex of the markers
+
 
 ## [0.0.13] - 2025-01-30
 

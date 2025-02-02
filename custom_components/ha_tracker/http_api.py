@@ -14,11 +14,56 @@ import aiofiles
 _LOGGER = logging.getLogger(__name__)
 
 ZONES_FILE = "ha-tracker-zones.json"
+DOMAIN = "ha_tracker"
+
+
+# Endpoint para devolver la configuración
+class ConfigEndpoint(HomeAssistantView):
+    url = "/api/ha_tracker/config"
+    name = "api:ha_tracker/config"
+    requires_auth = True
+
+    async def get(self, request):
+        """Devuelve la configuración validada en formato JSON."""
+        hass = request.app["hass"]
+        
+        # Obtener la configuración desde hass.data
+        config = hass.data.get(DOMAIN, {})
+
+        _LOGGER.debug("Datos originales desde configuration.yaml: %s", config)
+
+        # Validar update_interval: debe ser numérico y >= 10
+        update_interval = config.get("update_interval", 15)
+        if not isinstance(update_interval, (int, float)) or update_interval < 10:
+            update_interval = 15
+
+        # Validar enable_debug: debe ser True o False
+        enable_debug = config.get("enable_debug", False)
+        if not isinstance(enable_debug, bool):
+            enable_debug = False
+            
+        # Validar geocode_time: debe ser numérico y >= 30
+        geocode_time = config.get("geocode_time", 30)
+        if not isinstance(geocode_time, (int, float)) or geocode_time < 30:
+            geocode_time = 30
+
+        # Validar geocode_distance: debe ser numérico y >= 10
+        geocode_distance = config.get("geocode_distance", 20)
+        if not isinstance(geocode_distance, (int, float)) or geocode_distance < 20:
+            geocode_distance = 20            
+
+
+        return self.json({
+            "update_interval": update_interval,
+            "enable_debug": enable_debug,
+            "geocode_time": geocode_time,
+            "geocode_distance": geocode_distance
+        })
 
 # Endpoint para devolver todos los dispositivos (device_trackers)
 class DevicesEndpoint(HomeAssistantView):
-    url = "/api/devices"
-    name = "api:devices"
+    url = "/api/ha_tracker/devices"
+    name = "api:ha_tracker/devices"
     requires_auth = True
 
     async def get(self, request):
@@ -58,8 +103,8 @@ class DevicesEndpoint(HomeAssistantView):
 
 # Endpoint para devolver todas las personas
 class PersonsEndpoint(HomeAssistantView):
-    url = "/api/persons"
-    name = "api:persons"
+    url = "/api/ha_tracker/persons"
+    name = "api:ha_tracker/persons"
     requires_auth = True
 
     async def get(self, request):
@@ -80,8 +125,8 @@ class PersonsEndpoint(HomeAssistantView):
 
 # Endpoint para devolver posiciones filtradas por un usuario y rango de tiempo
 class FilteredPositionsEndpoint(HomeAssistantView):
-    url = "/api/filtered_positions"
-    name = "api:filtered_positions"
+    url = "/api/ha_tracker/filtered_positions"
+    name = "api:ha_tracker/filtered_positions"
     requires_auth = True
 
     async def get(self, request):
@@ -173,8 +218,8 @@ class FilteredPositionsEndpoint(HomeAssistantView):
         
 # Endpoint para verificar si el usuario es administrador
 class IsAdminEndpoint(HomeAssistantView):
-    url = "/api/is_admin"
-    name = "api:is_admin"
+    url = "/api/ha_tracker/is_admin"
+    name = "api:ha_tracker/is_admin"
     requires_auth = True
 
     async def get(self, request):
@@ -190,8 +235,8 @@ class IsAdminEndpoint(HomeAssistantView):
 
 # Endpoint para manejar zonas
 class ZonesAPI(HomeAssistantView):
-    url = "/api/zones"
-    name = "api:zones"
+    url = "/api/ha_tracker/zones"
+    name = "api:ha_tracker/zones"
     requires_auth = True
 
     async def get(self, request):

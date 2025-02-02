@@ -2,8 +2,9 @@
 // DEVICES
 //
 
+import {geocodeTime, geocodeDistance} from './globals.js';
 import {fetchPersons, fetchDevices} from './fetch.js';
-import {formatDate, isValidCoordinates} from './utils.js';
+import {formatDate, isValidCoordinates, getDistanceFromLatLonInMeters} from './utils.js';
 import {handleZonePosition} from './zones.js';
 import {map} from './map.js';
 import {t} from './i18n.js';
@@ -14,6 +15,9 @@ export let persons = [];
 let devices = [];
 let personsDevicesMap = {};
 let personsMarkers = {};
+
+const lastGeocodeRequests = {}; // { deviceId: {lat, lon, timestamp, address} }
+export let requestQueue = []; // Cola de solicitudes pendientes
 
 
 export async function updatePersons(){
@@ -148,7 +152,7 @@ async function updatePersonsDevicesMap() {
 
         // Verificar que source existe y tiene un valor válido
         if (!source || typeof source !== "string" || source.trim() === "") {
-            console.warn(`La persona ${person.attributes.friendly_name || person.entity_id} no tiene un 'source' válido.`);
+            console.log(`La persona ${person.attributes.friendly_name || person.entity_id} no tiene un 'source' válido.`);
             return; // Salta esta persona y continúa con la siguiente
         }
 
@@ -161,7 +165,7 @@ async function updatePersonsDevicesMap() {
 
         // Asegurar que el device tiene latitud y longitud
         if (!device.attributes.latitude || !device.attributes.longitude) {
-            console.warn(`El device_tracker ${source} de ${person.attributes.friendly_name || person.entity_id} no tiene lat/lng.`);
+            console.log(`El device_tracker ${source} de ${person.attributes.friendly_name || person.entity_id} no tiene lat/lng.`);
 			return; // Salta esta persona y continúa con la siguiente
         }
 
@@ -207,7 +211,7 @@ async function updatePersonsMarkers() {
         const iconUrl = persons.find(p => p.entity_id === personId)?.attributes.entity_picture || DEFAULT_ICON_URL;
 
         const popupContent = `
-            <strong>${ownerName}</strong><br>
+            <strong>${ownerName}</strong> (${friendly_name})<br>
             ${formattedDate}<br>
             ${t('speed')}: ${speed || 0} ${t('km_per_hour')}
 			${batteryLevel}
@@ -247,6 +251,60 @@ async function updatePersonsMarkers() {
     });
 }
 
+export async function handlePersonRowSelection(personId) {
+    console.log("Seleccionando fila para la persona:", personId);
+
+    const selectedPerson = personsMarkers[personId];
+    if (selectedPerson) {
+        // Restablecer el zIndexOffset de todos los marcadores para evitar conflictos
+        Object.values(personsMarkers).forEach(marker => marker.setZIndexOffset(500));
+        // Aumentar el zIndexOffset del marcador seleccionado para que esté encima
+        selectedPerson.setZIndexOffset(600);
+    }
+
+    const personTableBody = document.getElementById('persons-table-body');
+    if (!personTableBody) {
+        console.error("No se encontró el tbody de la tabla de persons.");
+        return;
+    }
+
+    // Seleccionar la fila principal
+    const row = personTableBody.querySelector(`tr[data-person-id="${personId}"]`);
+    if (!row) {
+        console.log("No se encontró la fila para la persona:", personId);
+        return;
+    }
+
+    // Seleccionar la fila de dirección (la siguiente fila después de la principal)
+    const addressRow = row.nextElementSibling;
+    if (!addressRow || !addressRow.classList.contains("person-address-row")) {
+        console.log("No se encontró la fila de dirección para la persona:", personId);
+    }
+
+    // Cambiar el combo a "users" si no está seleccionado
+    const comboSelect = document.getElementById('combo-select');
+    if (comboSelect && comboSelect.value !== 'users') {
+        comboSelect.value = 'users';
+
+        // Disparar evento de cambio para actualizar la interfaz
+        comboSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    // Quitar la selección de todas las filas
+    personTableBody.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
+
+    // Agregar la clase de selección a la fila principal y la de dirección
+    row.classList.add('selected');
+    if (addressRow) {
+        addressRow.classList.add('selected');
+    }
+
+    // Hacer scroll hacia la fila principal (ajustado para que incluya la dirección)
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    console.log("Fila de la persona y su dirección seleccionadas correctamente.");
+}
+
 export async function updatePersonsTable() {
     try {
         const tableBody = document.getElementById("persons-table-body");
@@ -275,23 +333,39 @@ export async function updatePersonsTable() {
             const personId = person.entity_id;
             const friendlyName = person.attributes.friendly_name || personId;
             const source = person.attributes.source || null; // El device_tracker vinculado
-
+			
+			let deviceName = "";
             let time = "";
             let speed = "";
 			let battery = "";
             let currentZoneName = "";
-            let address = ""; // Dirección por defecto
+            let address = lastGeocodeRequests[personId]?.address || ""; // Usar la dirección almacenada si existe
 
             // Si la persona tiene un device_tracker en personsDevicesMap, extraer datos
             if (source && personsDevicesMap[personId]) {
                 const device = personsDevicesMap[personId];
-
+				
+				deviceName = device.attributes.friendly_name ? `(${device.attributes.friendly_name})` : "";
+				battery = device.battery_level;
                 time = formatDate(device.last_updated);
                 speed = device.attributes.speed;
 				battery = device.battery_level;
                 const zone = handleZonePosition(device.attributes.latitude, device.attributes.longitude);
                 currentZoneName = zone ? zone.name : "";
-                address = device.geocoded_location;
+                //address = device.geocoded_location; // Dirección de Home Assistant
+				
+                // Agregar la solicitud a la cola sin filtrar (será filtrada en `processQueue()`)
+                requestQueue.push({
+                    lat: device.attributes.latitude,
+                    lon: device.attributes.longitude,
+                    deviceId: personId,
+                    updateCellCallback: (address) => {
+                        const addressCell = tableBody.querySelector(`tr[data-person-id="${personId}"] + .person-address-row td`);
+                        if (addressCell) {
+                            addressCell.textContent = address;
+                        }
+                    }
+                });				
             }
 
             let row = existingRows.find(row => row.dataset.personId === personId);
@@ -323,10 +397,10 @@ export async function updatePersonsTable() {
 
             // Actualizar el contenido de la fila principal si es necesario
             const newContent = `
-                <td><p style="font-weight: bold; color: #003366;">${friendlyName}</p></td>
+                <td><p style="font-weight: bold; color: #003366; margin: 0;">${friendlyName}</p>${deviceName}</td>
                 <td>${time}</td>
                 <td>${speed}</td>
-                <td>${battery}</td>				
+				<td>${battery}</td>
                 <td>${currentZoneName}</td>
             `;
 
@@ -382,62 +456,58 @@ export async function updatePersonsTable() {
             }
         });
 
-        console.log("Tabla de personas actualizada correctamente.");
     } catch (error) {
         console.error("Error al actualizar la tabla de personas:", error);
     }
 }
 
-export async function handlePersonRowSelection(personId) {
-    console.log("Seleccionando fila para la persona:", personId);
-
-    const selectedPerson = personsMarkers[personId];
-    if (selectedPerson) {
-        // Restablecer el zIndexOffset de todos los marcadores para evitar conflictos
-        Object.values(personsMarkers).forEach(marker => marker.setZIndexOffset(500));
-        // Aumentar el zIndexOffset del marcador seleccionado para que esté encima
-        selectedPerson.setZIndexOffset(600);
-    }
-
-    const personTableBody = document.getElementById('persons-table-body');
-    if (!personTableBody) {
-        console.error("No se encontró el tbody de la tabla de persons.");
+export async function processQueue() {
+    if (requestQueue.length === 0) {
         return;
     }
 
-    // Seleccionar la fila principal
-    const row = personTableBody.querySelector(`tr[data-person-id="${personId}"]`);
-    if (!row) {
-        console.warn("No se encontró la fila para la persona:", personId);
+    const now = Date.now();
+    
+    // Eliminar todas las solicitudes que no cumplen con los requisitos
+    requestQueue = requestQueue.filter(({ lat, lon, deviceId }) => {
+        if (!lastGeocodeRequests[deviceId]) return true;
+
+        const { lat: lastLat, lon: lastLon, timestamp } = lastGeocodeRequests[deviceId];
+        const timeDiff = (now - timestamp) / 1000; // Segundos
+        const distance = getDistanceFromLatLonInMeters(lastLat, lastLon, lat, lon); // Metros
+
+        if (timeDiff < geocodeTime || distance < geocodeDistance) {
+            return false; // Lo elimina de la cola
+        }
+
+        return true; // Se mantiene en la cola
+    });
+
+    // Después de la limpieza, verificar si aún hay elementos en la cola
+    if (requestQueue.length === 0) {
         return;
     }
 
-    // Seleccionar la fila de dirección (la siguiente fila después de la principal)
-    const addressRow = row.nextElementSibling;
-    if (!addressRow || !addressRow.classList.contains("person-address-row")) {
-        console.warn("No se encontró la fila de dirección para la persona:", personId);
+    // Tomar la primera solicitud de la cola y procesarla
+    const { lat, lon, deviceId, updateCellCallback } = requestQueue.shift();
+
+    try {
+        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+        console.log(`Haciendo solicitud a la API: ${url}`);
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+
+        const data = await response.json();
+        const address = data.display_name || "Dirección no disponible";
+
+        // Guardar la dirección en caché
+        lastGeocodeRequests[deviceId] = { lat, lon, timestamp: Date.now(), address };
+
+        console.log(`Dirección obtenida para ${deviceId}: ${address}`);
+        updateCellCallback(address);
+    } catch (error) {
+        console.error(`Error al obtener dirección para ${deviceId}:`, error);
+        updateCellCallback("Dirección no disponible");
     }
-
-    // Cambiar el combo a "users" si no está seleccionado
-    const comboSelect = document.getElementById('combo-select');
-    if (comboSelect && comboSelect.value !== 'users') {
-        comboSelect.value = 'users';
-
-        // Disparar evento de cambio para actualizar la interfaz
-        comboSelect.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-
-    // Quitar la selección de todas las filas
-    personTableBody.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
-
-    // Agregar la clase de selección a la fila principal y la de dirección
-    row.classList.add('selected');
-    if (addressRow) {
-        addressRow.classList.add('selected');
-    }
-
-    // Hacer scroll hacia la fila principal (ajustado para que incluya la dirección)
-    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    console.log("Fila de la persona y su dirección seleccionadas correctamente.");
 }

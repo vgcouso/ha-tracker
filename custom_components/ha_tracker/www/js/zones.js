@@ -65,7 +65,7 @@ export async function setZones(data) {
             zones = data; // Asigna los datos obtenidos a la variable global
             console.log("Zonas obtenidas:", zones);
         } else {
-            console.warn("No se obtuvieron zonas válidas desde el servidor.");
+            console.log("No se obtuvieron zonas válidas desde el servidor.");
             zones = []; // Asegura que `zones` sea un arreglo vacío en caso de error
         }
     } catch (error) {
@@ -357,8 +357,12 @@ export async function handleZoneRowSelection(zoneId) {
     console.log("Seleccionando fila para la zona:", zoneId);
 
     const zonesTableBody = document.getElementById('zones-table-body');
+    if (!zonesTableBody) {
+        console.error("No se encontró el tbody de la tabla de zone.");
+        return;
+    }	
+	
     const row = zonesTableBody.querySelector(`tr[data-zone-id="${zoneId}"]`);
-
     if (!row) {
         console.error("No se encontró la fila para la zona:", zoneId);
         return;
