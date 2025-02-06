@@ -2,7 +2,7 @@
 // MAIN
 //
 
-import {isConnected, updateConnection, updateAdmin, configureConsole, updateConfig, updateInterval} from './globals.js';
+import {isConnected, updateConnection, updateAdmin, updateConfig, updateInterval} from './globals.js';
 import {initMap} from './map.js';
 import {load, showWindowOverlay, hideWindowOverlay} from './utils.js';
 import {authCallback} from './auth.js';
@@ -25,8 +25,6 @@ document.addEventListener("DOMContentLoaded", async() => {
 
 async function init() {
     try {
-		await updateConfig();
-		await configureConsole();
 		await initializeI18n(); 
         await initMap();
         await update();
@@ -50,7 +48,7 @@ async function startUpdateLoop() {
         } catch (error) {
             console.error("Error durante la actualización, continuará el bucle:", error);
         }
-        await delay(updateInterval * 1000);
+        await delay(updateInterval*1000);
     }
 }
 
@@ -77,7 +75,8 @@ async function update() {
         //}
 
         // Ejecutar funciones en orden y detenerse si ocurre un error
-        try {			
+        try {	
+			await updateConfig();			
             await updateAdmin();
             await updatePersons();
             await updateZones();

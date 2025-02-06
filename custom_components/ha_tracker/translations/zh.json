@@ -1,0 +1,30 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "HA Tracker 配置",
+                "description": "配置集成的基本选项。",
+                "data": {
+                    "update_interval": "更新间隔（秒）",
+                    "enable_debug": "启用调试",
+                    "geocode_time": "地理编码时间（秒）",
+                    "geocode_distance": "地理编码最小距离（米）"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "HA Tracker 选项",
+                "description": "配置集成的高级选项。",
+                "data": {
+                    "update_interval": "更新间隔（秒）",
+                    "enable_debug": "启用调试",
+                    "geocode_time": "地理编码时间（秒）",
+                    "geocode_distance": "地理编码最小距离（米）"
+                }
+            }
+        }
+    }
+}

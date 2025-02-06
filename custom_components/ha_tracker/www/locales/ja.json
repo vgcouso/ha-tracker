@@ -57,5 +57,6 @@
   "users": "ユーザー",
   "date": "日付",
   "percentage": "%",
-  "battery": "バッテリー"
+  "battery": "バッテリー",
+  "type": "タイプ"
 }

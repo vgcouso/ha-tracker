@@ -57,5 +57,6 @@
   "users": "Users",
   "date": "Date",
   "percentage": "%",
-  "battery": "Battery"
+  "battery": "Battery",
+  "type": "Type"  
 }

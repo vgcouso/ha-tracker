@@ -1,15 +1,18 @@
 body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  overflow: hidden;
-  visibility: hidden; /* Oculta el contenido */
-  opacity: 0; /* Evita parpadeo */
-  transition: opacity 0.3s ease; /* Transición suave */
+ visibility: hidden; /* Oculta el contenido */
+ opacity: 0; /* Evita parpadeo */
+ transition: opacity 0.3s ease; /* Transición suave */
 }
 
 body.loaded {
   visibility: visible; /* Hace visible el contenido */
   opacity: 1; /* Transición suave */
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  overflow: hidden;
 }
 
 #filter-container, #zones-container, #persons-container {
@@ -44,6 +47,7 @@ body.loaded {
     vertical-align: middle; /* Centrar contenido verticalmente */
 }
 
+/* Reducir la altura de la fila de dirección */
 .person-address-row td {
     font-style: italic; /* Texto en cursiva */
     color: #555; /* Color más tenue */
@@ -55,6 +59,10 @@ body.loaded {
 /* Asegurar que solo afecta la tabla de personas */
 #persons-table-body tr:not(.person-address-row) td {
     border-bottom: none !important; /* Quitar la línea inferior solo de la fila principal */
+}
+
+#summary-zones-table thead th {
+  height: 30px !important; /* Fijar altura de los encabezados */
 }
 		
 #container {

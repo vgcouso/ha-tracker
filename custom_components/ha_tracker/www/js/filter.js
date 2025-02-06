@@ -1,4 +1,5 @@
 //
+//
 // FILTER
 //
 
@@ -10,6 +11,9 @@ import {handlePersonsSelection, updatePersonsFilter} from './persons.js';
 import {t} from './i18n.js';
 
 let filterMarkers = [], routeLine, selectedMarker;
+let cachedZoneStats = null;
+let summaryZonesSortColumn = "zone"; // Columna predeterminada para ordenar
+let summaryZonesSortAscending = true; // Orden ascendente por defecto
 
 const DEFAULT_ICON_URL = '/local/ha-tracker/images/location-blue.png';
 						 
@@ -60,6 +64,7 @@ export async function setFilter(data) {
         if (data && Array.isArray(data) && data.length > 0) {
             await resetFilter(); // Limpia el filtro anterior
             await updatePositionsTable(data); // Actualiza la tabla de posiciones
+			await calculateZoneStatistics(data);
             await updateSummaryTable(data); // Actualiza la tabla de resumen
             await updatesummaryZonesTable(data); // Actualiza la tabla de zonas
             await addFilterMarkers(data); // Añade marcadores al mapa
@@ -452,7 +457,7 @@ async function updateSummaryTable(positions) {
 
     // Formatear datos
     const totalTime = formatTotalTime(totalTimeMs);
-    const maxSpeed = maxSpeedPos.speed.toFixed(2);
+    const maxSpeed = maxSpeedPos.speed.toFixed(0);
     const avgSpeed = averageSpeed.toFixed(2);
 
     // Actualizar las celdas del resumen
@@ -477,64 +482,110 @@ async function updateSummaryTable(positions) {
     });
 }
 
-async function updatesummaryZonesTable(positions) {
-    const zonesTableBody = document.getElementById('summary-zones-table-body');
+function openTab(event, tabId) {
+    // Ocultar todas las pestañas
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
 
-    // Verificar si hay posiciones
-    if (!positions || positions.length === 0)
+    // Eliminar clase activa de todos los botones
+    document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+
+    // Mostrar la pestaña seleccionada
+    document.getElementById(tabId).classList.add('active');
+
+    // Activar el botón correspondiente
+    event.currentTarget.classList.add('active');
+}
+
+
+function calculateZoneStatistics(positions) {
+    if (!positions || positions.length === 0) {
+        console.error("No hay posiciones para calcular estadísticas de zonas.");
         return;
+    }
 
-    const zoneDurations = {}; // Almacenar duración total por zona
-    const zoneVisits = {}; // Almacenar cantidad de visitas por zona
-    let zonePositions = {}; // Almacenar posiciones por zona
+    // Asignar los objetos directamente a cachedZoneStats
+    cachedZoneStats = {
+        zoneDurations: {},
+        zoneVisits: {},
+        zonePositions: {}
+    };
+
     let previousZone = null;
     let previousTime = null;
-
-    let totalTimeByZones = 0; // Tiempo total por zonas
+	
+	let totalTimeByZones = 0; // Tiempo total por zonas
 
     positions.forEach((pos, index) => {
-        const zone = handleZonePosition(pos.attributes.latitude,pos.attributes.longitude);
+        const zone = handleZonePosition(pos.attributes.latitude, pos.attributes.longitude);
         const currentZoneName = zone ? zone.name : '';
         const currentTime = new Date(pos.last_updated).getTime();
 
-        // Guardar posición de la zona
-        if (zone && !zonePositions[currentZoneName]) {
-            zonePositions[currentZoneName] = {
+        if (zone && !cachedZoneStats.zonePositions[currentZoneName]) {
+            cachedZoneStats.zonePositions[currentZoneName] = {
                 lat: zone.latitude,
                 lon: zone.longitude,
                 id: zone.id
             };
         }
 
-        // Cambiar de zona
         if (previousZone !== null && currentZoneName !== previousZone) {
             const timeSpent = currentTime - previousTime;
             if (timeSpent > 0) {
-                zoneDurations[previousZone] = (zoneDurations[previousZone] || 0) + timeSpent;
-                totalTimeByZones += timeSpent;
-                zoneVisits[previousZone] = (zoneVisits[previousZone] || 0) + 1;
+                cachedZoneStats.zoneDurations[previousZone] = (cachedZoneStats.zoneDurations[previousZone] || 0) + timeSpent;
+                cachedZoneStats.zoneVisits[previousZone] = (cachedZoneStats.zoneVisits[previousZone] || 0) + 1;
+				totalTimeByZones += timeSpent;
             }
             previousZone = currentZoneName;
             previousTime = currentTime;
         } else if (index === 0) {
-            // Primera posición
             previousZone = currentZoneName;
             previousTime = currentTime;
         }
 
-        // Última posición
         if (index === positions.length - 1) {
             const timeSpent = currentTime - previousTime;
             if (timeSpent > 0) {
-                zoneDurations[currentZoneName] = (zoneDurations[currentZoneName] || 0) + timeSpent;
-                totalTimeByZones += timeSpent;
-                zoneVisits[currentZoneName] = (zoneVisits[currentZoneName] || 0) + 1;
+                cachedZoneStats.zoneDurations[currentZoneName] = (cachedZoneStats.zoneDurations[currentZoneName] || 0) + timeSpent;
+                cachedZoneStats.zoneVisits[currentZoneName] = (cachedZoneStats.zoneVisits[currentZoneName] || 0) + 1;
+				totalTimeByZones += timeSpent;
             }
         }
     });
+	
+    // Verificar consistencia con el tiempo total
+    const firstTime = new Date(positions[0].last_updated).getTime();
+    const lastTime = new Date(positions[positions.length - 1].last_updated).getTime();
+    const totalTime = lastTime - firstTime;
 
-    // Ordenar zonas alfabéticamente
-    const sortedZones = Object.entries(zoneDurations).sort(([zoneA], [zoneB]) => zoneA.localeCompare(zoneB));
+    console.log(`Tiempo total calculado: ${totalTime}`);
+    console.log(`Tiempo total por zonas: ${totalTimeByZones}`);	
+}
+
+async function updatesummaryZonesTable(positions) {
+    const zonesTableBody = document.getElementById('summary-zones-table-body');
+
+    if (!cachedZoneStats) {
+        console.error("No hay estadísticas guardadas de zonas. Asegúrate de aplicar el filtro primero.");
+        return;
+    }
+
+    const { zoneDurations, zoneVisits, zonePositions } = cachedZoneStats;
+
+    // Ordenar zonas según la columna seleccionada
+    const sortedZones = Object.entries(zoneDurations).sort(([zoneA, durationA], [zoneB, durationB]) => {
+        switch (summaryZonesSortColumn) {
+            case "zone":
+                return summaryZonesSortAscending ? zoneA.localeCompare(zoneB) : zoneB.localeCompare(zoneA);
+            case "time":
+                return summaryZonesSortAscending ? durationA - durationB : durationB - durationA;
+            case "visits":
+                return summaryZonesSortAscending 
+                    ? (zoneVisits[zoneA] || 0) - (zoneVisits[zoneB] || 0)
+                    : (zoneVisits[zoneB] || 0) - (zoneVisits[zoneA] || 0);
+            default:
+                return 0;
+        }
+    });
 
     // Limpiar la tabla antes de agregar filas
     zonesTableBody.innerHTML = '';
@@ -560,26 +611,63 @@ async function updatesummaryZonesTable(positions) {
 
         zonesTableBody.appendChild(row);
     }
-
-    // Verificar consistencia con el tiempo total
-    const firstTime = new Date(positions[0].last_updated).getTime();
-    const lastTime = new Date(positions[positions.length - 1].last_updated).getTime();
-    const totalTime = lastTime - firstTime;
-
-    console.log(`Tiempo total calculado: ${totalTime}`);
-    console.log(`Tiempo total por zonas: ${totalTimeByZones}`);
+	
+	updateSummaryZonesTableHeaders();
 }
 
-function openTab(event, tabId) {
-    // Ocultar todas las pestañas
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+function updateSummaryZonesTableHeaders() {
+    const table = document.querySelector("#summary-zones-table"); // Asegurarse de que busca en la tabla correcta
+    if (!table) {
+        console.error("No se encontró la tabla de resumen de zonas.");
+        return;
+    }
 
-    // Eliminar clase activa de todos los botones
-    document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
+    const headers = table.querySelectorAll("thead th");
 
-    // Mostrar la pestaña seleccionada
-    document.getElementById(tabId).classList.add('active');
+    headers.forEach((header) => {
+        const columnKey = header.getAttribute("data-i18n");
+        let columnName = "";
 
-    // Activar el botón correspondiente
-    event.currentTarget.classList.add('active');
+        switch (columnKey) {
+            case "zone":
+                columnName = "zone";
+                break;
+            case "time":
+                columnName = "time";
+                break;
+            case "visits":
+                columnName = "visits";
+                break;
+        }
+
+        if (!columnName) return;
+
+        // **Aplicamos el cursor para indicar que se puede ordenar**
+        header.style.cursor = "pointer";
+
+        // **Evento de clic para cambiar el orden**
+        header.onclick = () => {
+            if (summaryZonesSortColumn === columnName) {
+                summaryZonesSortAscending = !summaryZonesSortAscending;
+            } else {
+                summaryZonesSortColumn = columnName;
+                summaryZonesSortAscending = true;
+            }
+            updatesummaryZonesTable();
+        };
+
+        // **Actualizar el ícono de flecha en los encabezados**
+        let arrow = "";
+        if (summaryZonesSortColumn === columnName) {
+            arrow = summaryZonesSortAscending ? "▲" : "▼";
+        }
+
+        // **Actualizar la estructura del encabezado con el icono**
+        header.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 30px;">
+                <span>${t(columnKey)}</span>
+                <span style="font-size: 12px;">${arrow}</span>
+            </div>
+        `;
+    });
 }

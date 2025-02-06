@@ -6,10 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
-## [0.0.15] - 2025-02-02
+## [0.0.16] - 2025-02-06
 
 ### Added
-- We do geocoding using: https://nominatim.openstreetmap.org
+- Sorting in tables.
+- Installation from: "Settings &rarr; Devices and Services &rarr; Add Integration". 
+- Icon in HACS and in Integrations
+- Translations for the options configuration screen.
+- Changed the installation process in README.md
+
+### Fixed
+- 
+
+
+## [0.0.15] - 2025-02-01
+
+### Added
+- We get the address from: https://nominatim.openstreetmap.org
 
 ### Fixed
 - Installing the application

@@ -1,0 +1,30 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configuration de HA Tracker",
+                "description": "Configurez les options de base de l'intégration.",
+                "data": {
+                    "update_interval": "Intervalle de mise à jour (en secondes)",
+                    "enable_debug": "Activer le débogage",
+                    "geocode_time": "Temps de géocodage (en secondes)",
+                    "geocode_distance": "Distance minimale pour le géocodage (en mètres)"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Options de HA Tracker",
+                "description": "Configurez les options avancées de l'intégration.",
+                "data": {
+                    "update_interval": "Intervalle de mise à jour (en secondes)",
+                    "enable_debug": "Activer le débogage",
+                    "geocode_time": "Temps de géocodage (en secondes)",
+                    "geocode_distance": "Distance minimale pour le géocodage (en mètres)"
+                }
+            }
+        }
+    }
+}

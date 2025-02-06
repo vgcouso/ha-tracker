@@ -57,5 +57,6 @@
   "users": "用户",
   "date": "日期",
   "percentage": "%",
-  "battery": "电池"
+  "battery": "电池",
+  "type": "类型"
 }

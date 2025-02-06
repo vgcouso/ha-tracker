@@ -17,7 +17,7 @@ export async function load() {
 
         // Configura observadores al cargar la página
         observeTableContainers();
-
+		
         // Garantizar que todo el contenido esté oculto hasta que las hojas de estilo y el DOM estén listos
         if (!document.body.classList.contains('loaded')) {
             document.body.classList.add('loaded');
@@ -170,9 +170,9 @@ export function formatTotalTime(totalTimeMs) {
 export function formatDate(date) {
     const parsedDate = new Date(date);
     const options = {
-        weekday: 'long',
+        weekday: 'short',
         day: '2-digit',
-        month: 'long',
+        month: 'short',
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',

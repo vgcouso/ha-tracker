@@ -57,5 +57,6 @@
   "users": "उपयोगकर्ता",
   "date": "दिनांक",
   "percentage": "%",
-  "battery": "बैटरी"
+  "battery": "बैटरी",
+  "type": "प्रकार"
 }

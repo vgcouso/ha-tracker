@@ -1,0 +1,30 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "إعداد HA Tracker",
+                "description": "قم بتكوين الخيارات الأساسية للتكامل.",
+                "data": {
+                    "update_interval": "فاصل التحديث (بالثواني)",
+                    "enable_debug": "تمكين التصحيح",
+                    "geocode_time": "وقت التكويد الجغرافي (بالثواني)",
+                    "geocode_distance": "المسافة الدنيا للتكويد الجغرافي (بالمتر)"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "خيارات HA Tracker",
+                "description": "قم بتكوين الخيارات المتقدمة للتكامل.",
+                "data": {
+                    "update_interval": "فاصل التحديث (بالثواني)",
+                    "enable_debug": "تمكين التصحيح",
+                    "geocode_time": "وقت التكويد الجغرافي (بالثواني)",
+                    "geocode_distance": "المسافة الدنيا للتكويد الجغرافي (بالمتر)"
+                }
+            }
+        }
+    }
+}

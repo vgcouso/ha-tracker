@@ -10,6 +10,11 @@ import {updatePersonsTable} from './persons.js';
 import {t, tWithVars} from './i18n.js';
 
 let zones = [], zoneMarkers = {};
+let zonesSortColumn = "name"; // Columna predeterminada para ordenación
+let zonesSortAscending = true; // Orden ascendente predeterminado
+let previousSortColumn = "";
+let previousSortAscending = true;
+
 const editingZones = {};
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -72,114 +77,6 @@ export async function setZones(data) {
         console.error("Error al obtener zonas:", error);
         zones = []; // Asegura que `zones` no quede indefinido si ocurre un error
     }
-}
-
-async function updateZonesTable() {
-    const zonesTableBody = document.getElementById('zones-table-body');
-
-    if (!zonesTableBody) {
-        console.error("No se encontró el cuerpo de la tabla de zonas.");
-		updatePersonsTable();
-		updateZoneActionButtons();
-        return;
-    }
-
-    // Almacenar la fila seleccionada actual
-    const selectedRow = zonesTableBody.querySelector('tr.selected');
-    const selectedZoneId = selectedRow ? selectedRow.dataset.zoneId : null;
-
-    // Ordenar las zonas alfabéticamente por `name`
-    const sortedZones = [...zones].sort((a, b) => {
-        const nameA = (a.name || '').toLowerCase();
-        const nameB = (b.name || '').toLowerCase();
-        return nameA.localeCompare(nameB);
-    });
-
-    // Obtener las filas actuales de la tabla
-    const existingRows = Array.from(zonesTableBody.querySelectorAll('tr'));
-    const existingZoneIds = existingRows.map(row => row.dataset.zoneId);
-
-    // Actualizar o agregar filas
-    sortedZones.forEach((zone, index) => {
-        const {
-            id,
-            latitude,
-            longitude,
-            name,
-            custom
-        } = zone;
-
-        if (!latitude || !longitude) {
-            console.error("Coordenadas inválidas para la zona:", id);
-            return;
-        }
-
-        let row = existingRows.find(row => row.dataset.zoneId === id);
-
-        if (!row) {
-            // Crear una nueva fila si no existe
-            row = document.createElement('tr');
-            row.dataset.zoneId = id;
-            row.dataset.custom = custom;
-            row.dataset.name = name;
-			row.style.cursor = 'pointer'; // Cambiar el cursor al pasar
-            zonesTableBody.appendChild(row);
-        }
-
-        // Determinar el contenido de la primera columna
-        const adminColumnContent = `<div style="width: 10px; height: 10px; border: 2px solid ${custom ? 'green' : 'red'}; border-radius: 50%; background-color: ${custom ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)'}; margin: auto;" title="${custom ? 'Editable' : 'No editable'}"></div>`;
-
-        // Actualizar el contenido de la fila si es necesario
-        const newContent = `
-		  <td>${adminColumnContent}</td>
-		  <td>${name || t('zone_without_name')}</td>
-		`;
-
-        if (row.innerHTML !== newContent) {
-            row.innerHTML = newContent;
-			row.dataset.name = name;
-        }
-
-        // Asignar evento de clic para centrar en el mapa y mostrar el popup
-        row.onclick = () => {
-            const marker = zoneMarkers[id];
-            if (marker) {
-                const circleBounds = marker.getBounds(); // Obtener los límites del círculo
-                map.fitBounds(circleBounds); // Ajustar el zoom para encuadrar el círculo
-                marker.openPopup(); // Mostrar el popup
-            } else {
-                console.error("No se encontró un marcador para la zona:", id);
-            }
-
-            // Gestionar la selección de la fila
-            zonesTableBody.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
-            row.classList.add('selected');
-
-            // Actualizar botones después de seleccionar una fila
-            updateZoneActionButtons();
-        };
-
-        // Asegurar que la fila esté en la posición correcta (reordenar si es necesario)
-        if (zonesTableBody.children[index] !== row) {
-            zonesTableBody.insertBefore(row, zonesTableBody.children[index]);
-        }
-
-        // Mantener la selección si la zona actual está seleccionada
-        if (id === selectedZoneId) {
-            row.classList.add('selected');
-        }
-    });
-
-    // Eliminar filas de zonas que ya no existen
-    existingRows.forEach(row => {
-        if (!sortedZones.some(zone => zone.id === row.dataset.zoneId)) {
-            row.remove();
-        }
-    });
-
-    // Actualizar botones después de procesar las zonas
-    updateZoneActionButtons();
-	updatePersonsTable();
 }
 
 async function updateZoneMarkers() {
@@ -617,4 +514,182 @@ export async function showZone(idZone) {
     } else {
         console.error("No se encontró el marcador para la zona.");
     }
+}
+
+async function updateZonesTable() {
+    const zonesTableBody = document.getElementById('zones-table-body');
+
+    if (!zonesTableBody) {
+        console.error("No se encontró el cuerpo de la tabla de zonas.");
+		updatePersonsTable();
+		updateZoneActionButtons();
+        return;
+    }
+
+    // Almacenar la fila seleccionada actual
+    const selectedRow = zonesTableBody.querySelector('tr.selected');
+    const selectedZoneId = selectedRow ? selectedRow.dataset.zoneId : null;
+
+	// Ordenar las zonas por la columna seleccionada
+	const sortedZones = [...zones].sort((a, b) => {
+		let valueA, valueB;
+
+		switch (zonesSortColumn) {
+			case "type":
+				valueA = a.custom ? 1 : 0; // `true` → 1, `false` → 0
+				valueB = b.custom ? 1 : 0;
+				return zonesSortAscending ? valueA - valueB : valueB - valueA; // Orden numérico
+			case "name":
+			default:
+				valueA = (a.name || "").toLowerCase();
+				valueB = (b.name || "").toLowerCase();
+				return zonesSortAscending ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA); // Orden alfabético
+		}
+	});
+
+
+    // Obtener las filas actuales de la tabla
+    const existingRows = Array.from(zonesTableBody.querySelectorAll('tr'));
+    const existingZoneIds = existingRows.map(row => row.dataset.zoneId);
+
+    // Actualizar o agregar filas
+    sortedZones.forEach((zone, index) => {
+        const {
+            id,
+            latitude,
+            longitude,
+            name,
+            custom
+        } = zone;
+
+        if (!latitude || !longitude) {
+            console.error("Coordenadas inválidas para la zona:", id);
+            return;
+        }
+
+        let row = existingRows.find(row => row.dataset.zoneId === id);
+
+        if (!row) {
+            // Crear una nueva fila si no existe
+            row = document.createElement('tr');
+            row.dataset.zoneId = id;
+            row.dataset.custom = custom;
+            row.dataset.name = name;
+			row.style.cursor = 'pointer'; // Cambiar el cursor al pasar
+            zonesTableBody.appendChild(row);
+        }
+
+        // Determinar el contenido de la primera columna
+        const adminColumnContent = `<div style="width: 10px; height: 10px; border: 2px solid ${custom ? 'green' : 'red'}; border-radius: 50%; background-color: ${custom ? 'rgba(0, 255, 0, 0.3)' : 'rgba(255, 0, 0, 0.3)'}; margin: auto;" title="${custom ? 'Editable' : 'No editable'}"></div>`;
+
+        // Actualizar el contenido de la fila si es necesario
+        const newContent = `
+		  <td>${adminColumnContent}</td>
+		  <td>${name || t('zone_without_name')}</td>
+		`;
+
+        if (row.innerHTML !== newContent) {
+            row.innerHTML = newContent;
+			row.dataset.name = name;
+        }
+
+        // Asignar evento de clic para centrar en el mapa y mostrar el popup
+        row.onclick = () => {
+            const marker = zoneMarkers[id];
+            if (marker) {
+                const circleBounds = marker.getBounds(); // Obtener los límites del círculo
+                map.fitBounds(circleBounds); // Ajustar el zoom para encuadrar el círculo
+                marker.openPopup(); // Mostrar el popup
+            } else {
+                console.error("No se encontró un marcador para la zona:", id);
+            }
+
+            // Gestionar la selección de la fila
+            zonesTableBody.querySelectorAll('tr').forEach(r => r.classList.remove('selected'));
+            row.classList.add('selected');
+
+            // Actualizar botones después de seleccionar una fila
+            updateZoneActionButtons();
+        };
+
+        // Asegurar que la fila esté en la posición correcta (reordenar si es necesario)
+        if (zonesTableBody.children[index] !== row) {
+            zonesTableBody.insertBefore(row, zonesTableBody.children[index]);
+        }
+
+        // Mantener la selección si la zona actual está seleccionada
+        if (id === selectedZoneId) {
+            row.classList.add('selected');
+        }
+    });
+
+    // Eliminar filas de zonas que ya no existen
+    existingRows.forEach(row => {
+        if (!sortedZones.some(zone => zone.id === row.dataset.zoneId)) {
+            row.remove();
+        }
+    });
+
+    // Actualizar botones después de procesar las zonas
+    updateZoneActionButtons();
+	updatePersonsTable();
+	
+    // Actualizar encabezados con flechas de ordenación
+	if (previousSortColumn !== zonesSortColumn || previousSortAscending !== zonesSortAscending) {
+		updateZonesTableHeaders();	
+		previousSortColumn = zonesSortColumn;
+		previousSortAscending = zonesSortAscending;
+	}
+}
+
+function updateZonesTableHeaders() {
+    const table = document.querySelector("#zones-table"); // Asegurarse de que busca en la tabla correcta
+    if (!table) {
+        console.error("No se encontró la tabla de resumen de zonas.");
+        return;
+    }
+
+    const headers = table.querySelectorAll("thead th");
+
+    headers.forEach((header) => {
+        const columnKey = header.getAttribute("data-i18n");
+        let columnName = "";
+
+        switch (columnKey) {
+            case "type":
+                columnName = "type";
+                break;
+            case "name":
+                columnName = "name";
+                break;
+        }
+
+        if (!columnName) return;
+
+        // Aplicamos el cursor solo en esta tabla
+        header.style.cursor = "pointer";
+
+        header.onclick = () => {
+            if (zonesSortColumn === columnName) {
+                zonesSortAscending = !zonesSortAscending;
+            } else {
+                zonesSortColumn = columnName;
+                zonesSortAscending = true;
+            }
+            updateZonesTable();
+        };
+
+        let arrow = "";
+        if (zonesSortColumn === columnName) {
+            arrow = zonesSortAscending ? "▲" : "▼";
+        }
+
+        // Crear la estructura con un div para separar el título y la flecha con altura fija
+        header.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 30px;">
+                <span>${t(columnKey)}</span>
+                <span style="font-size: 12px;">${arrow}</span>
+            </div>
+        `;
+    });
 }
