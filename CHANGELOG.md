@@ -15,9 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Translations for the options configuration screen.
 - Changed the installation process in README.md
 
-### Fixed
-- 
-
 
 ## [0.0.15] - 2025-02-01
 
