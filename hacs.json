@@ -5,10 +5,9 @@
   "homeassistant": "2023.12.0",
   "render_readme": true,
   "iot_class": "Local Push",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "source": "github://vgcouso/ha-tracker",
   "filename": "custom_components/ha_tracker",
   "manifest": "custom_components/ha_tracker/manifest.json",
-  "zip_release": false,
-  "categories": ["integration"]
+  "zip_release": false
 }
