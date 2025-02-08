@@ -1,6 +1,5 @@
 {
   "name": "HA Tracker",
-  "description": "A Home Assistant integration to track users, create filters of positions, and manage zones, from an advanced web client with powerful features.",
   "domain": "ha_tracker",
   "homeassistant": "2023.12.0",
   "render_readme": true,
