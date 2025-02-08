@@ -1,6 +1,5 @@
 {
   "name": "HA Tracker",
-  "domain": "ha_tracker",
   "homeassistant": "2023.12.0",
   "render_readme": true,
   "iot_class": "Local Push",
