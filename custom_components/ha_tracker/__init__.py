@@ -3,11 +3,15 @@ import os
 import json
 import aiofiles
 import shutil
+import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from .const import DOMAIN
 from .api import register_api_views
 from .post_install import copy_www_files
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -72,8 +76,6 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     _LOGGER.info("Actualizando configuración de HA Tracker sin reiniciar...")
     await hass.config_entries.async_reload(entry.entry_id)
 
-import shutil
-import os
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Eliminar configuración y archivos cuando se desinstala la integración."""

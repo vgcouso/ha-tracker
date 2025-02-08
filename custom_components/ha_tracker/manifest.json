@@ -1,10 +1,10 @@
 {
   "domain": "ha_tracker",
   "name": "HA Tracker",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "config_flow": true,
   "requirements": [],
-  "dependencies": [],
+  "dependencies": ["http", "recorder"],
   "codeowners": ["@vgcouso"],
   "documentation": "https://github.com/vgcouso/ha-tracker",
   "issue_tracker": "https://github.com/vgcouso/ha-tracker/issues",
