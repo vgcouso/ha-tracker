@@ -5,6 +5,5 @@
   "version": "0.0.19",
   "source": "github://vgcouso/ha-tracker",
   "filename": "custom_components/ha_tracker",
-  "manifest": "custom_components/ha_tracker/manifest.json",
   "zip_release": false
 }
