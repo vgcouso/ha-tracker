@@ -2,6 +2,5 @@
   "name": "HA Tracker",
   "homeassistant": "2023.12.0",
   "render_readme": true,
-  "version": "0.0.19",
   "zip_release": false
 }
