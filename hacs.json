@@ -9,6 +9,5 @@
   "source": "github://vgcouso/ha-tracker",
   "filename": "custom_components/ha_tracker",
   "manifest": "custom_components/ha_tracker/manifest.json",
-  "zip_release": false,
-  "category": "integration"
+  "zip_release": false
 }
