@@ -1,12 +1,12 @@
 {
   "domain": "ha_tracker",
   "name": "HA Tracker",
-  "documentation": "https://github.com/vgcouso/ha-tracker",
-  "issue_tracker": "https://github.com/vgcouso/ha-tracker/issues",
-  "version": "0.0.19",
-  "config_flow": true,
   "codeowners": ["@vgcouso"],
+  "config_flow": true,
   "dependencies": ["http", "recorder"],
+  "documentation": "https://github.com/vgcouso/ha-tracker",
   "iot_class": "local_push",
-  "requirements": []
+  "issue_tracker": "https://github.com/vgcouso/ha-tracker/issues",
+  "requirements": [],
+  "version": "0.0.19"
 }
