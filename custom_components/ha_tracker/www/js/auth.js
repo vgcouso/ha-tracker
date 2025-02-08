@@ -28,7 +28,6 @@ export async function getToken() {
             if (!token || token.trim() === '') {
                 throw new Error("No se obtuvo un token válido desde iframe.");
             }
-            console.log("Token obtenido desde iframe:", token);
             return token;
         }
 
@@ -138,9 +137,6 @@ const getTokenFromHassConnection = async() => {
             const expires = config.auth.data.expires; // Fecha de expiración del token
             const refreshToken = config.auth.data.refresh_token; // Refresh token
 
-            console.log("Token obtenido:", token);
-            console.log("Fecha de expiración (sin procesar):", expires);
-
             // Verificar si el campo 'expires' existe y tiene un formato válido
             if (!expires) {
                 throw new Error("No se encontró la fecha de expiración en la respuesta");
@@ -154,8 +150,6 @@ const getTokenFromHassConnection = async() => {
 
             // Obtener el tiempo actual
             const now = Date.now();
-
-            console.log("Tiempo actual:", now, "Tiempo de expiración:", expirationTime);
 
             // Verificar si el token ha expirado
             if (expirationTime <= now) {
@@ -176,7 +170,6 @@ const getTokenFromHassConnection = async() => {
                 }
             }
 
-            console.log("Token válido, no expirado.");
             return token;
         } else {
             throw new Error("No se encontró el token en la respuesta de hassConnection");

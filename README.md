@@ -5,9 +5,9 @@
 
 # HA TRACKER
 
-HA Tracker is an application designed to track the position of users created in Home Assistant and who have the application installed on their smartphone. 
-
-It also allows you to filter the positions made by users between two dates and manage specific zones of the application.
+HA Tracker is an application designed to track the position of users registered in Home Assistant who have the app installed on their smartphones.
+You can manage specific zones of the application.
+It also allows you to filter positions between two dates with grouping by zone and detailed summary.
 
 
 ## INSTALLATION 
@@ -18,16 +18,12 @@ It also allows you to filter the positions made by users between two dates and m
 4. In the **"Repository"** field, enter: `https://github.com/vgcouso/ha-tracker` and select **"Integration"** as the type. Then click **"Add"**.
 5. Search for **HA Tracker** in HACS and click on it.
 6. Once it opens, click on **"Download"** in the bottom right corner and confirm the download in the pop-up window.
-7. Go to: **"Settings &rarr; Devices and Services &rarr; Add Integration"**
-8. Search for **HA Tracker**, select it and on the **Configuration screen** press **Send**
-9. **Restart** Home Assistant to apply changes.
+7. **Restart** Home Assistant to apply changes.
+8. Go to: **"Settings &rarr; Devices and Services &rarr; Add Integration"**
+9. Search for **HA Tracker**, select it and on the **Configuration screen** press **Send**
 
-The app can be accessed:
 
-- Via **Web Browser**.
-- It can be added as a **Control Panel** in Home Assistant. To do this go to: **"Settings &rarr; Control panels &rarr; Add control panel".**
-    
-	The URL in both cases is:
+    You can access the application by opening the panel from the menu on the left or also from a web browser at the address:
 
    `https://<server-address>/local/ha-tracker/index.html`
 

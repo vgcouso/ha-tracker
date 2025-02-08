@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.17] - 2025-02-08
+
+### Added
+- Files removed when integration is uninstalled
+- Add HA Tracker Dashboard after installing the integration
+
+### Fixed
+- Getting addresses on the user screen
+
+
 ## [0.0.16] - 2025-02-06
 
 ### Added

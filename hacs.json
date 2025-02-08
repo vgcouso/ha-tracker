@@ -1,10 +1,13 @@
 {
   "name": "HA Tracker",
-  "description": "A Home Assistant integration to track users, create filters of positions, and manage zones, from an avanced web client with advanced features.",
-  "domains": ["integration"], 
+  "description": "A Home Assistant integration to track users, create filters of positions, and manage zones, from an advanced web client with powerful features.",
+  "domain": "ha_tracker",
   "homeassistant": "2023.12.0",
   "render_readme": true,
-  "country": ["ALL"], 
   "iot_class": "Local Push",
-  "version": "0.0.16"
+  "version": "0.0.17",
+  "source": "github://vgcouso/ha-tracker",
+  "filename": "custom_components/ha_tracker",
+  "manifest": "custom_components/ha_tracker/manifest.json",
+  "zip_release": false
 }

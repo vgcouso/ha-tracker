@@ -310,6 +310,59 @@ export async function handlePersonRowSelection(personId) {
     console.log("Fila de la persona y su dirección seleccionadas correctamente.");
 }
 
+
+// **Actualizar encabezados de la tabla de personas con flechas de ordenación**
+export function updatePersonsTableHeaders() {
+    const table = document.querySelector("#persons-table"); // Asegurarse de que busca en la tabla correcta
+    if (!table) {
+        console.error("No se encontró la tabla de resumen de zonas.");
+        return;
+    }
+
+    const headers = table.querySelectorAll("thead th");
+
+    headers.forEach(header => {
+        const columnKey = header.getAttribute("data-i18n");
+        let columnName = "";
+
+        switch (columnKey) {
+            case "name": columnName = "name"; break;
+            case "date": columnName = "date"; break;
+            case "km/h": columnName = "km/h"; break;
+            case "percentage": columnName = "percentage"; break;
+            case "zone": columnName = "zone"; break;
+        }
+
+        if (!columnName) return;
+
+        // Aplicamos el cursor solo en esta tabla
+        header.style.cursor = "pointer";
+
+        header.onclick = () => {
+            if (sortColumn === columnName) {
+                sortAscending = !sortAscending;
+            } else {
+                sortColumn = columnName;
+                sortAscending = true;
+            }
+            updatePersonsTable();
+        };
+
+        let arrow = "";
+        if (sortColumn === columnName) {
+            arrow = sortAscending ? "▲" : "▼";
+        }
+
+        // Crear la estructura con un div para separar el título y la flecha con altura fija
+        header.innerHTML = `
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 30px;">
+                <span>${t(columnKey)}</span>
+                <span style="font-size: 12px;">${arrow}</span>
+            </div>
+        `;
+    });
+}
+
 export async function updatePersonsTable() {
     try {
         const tableBody = document.getElementById("persons-table-body");
@@ -385,29 +438,44 @@ export async function updatePersonsTable() {
                 currentZoneName = zone ? zone.name : "";
                 //address = device.geocoded_location; // Dirección de Home Assistant
 				
-				// Mostrar la dirección vacía si se ha movido mucho
                 const lat = device.attributes.latitude;
                 const lon = device.attributes.longitude;
-                if (lastGeocodeRequests[personId]) {
+				const lastUpdated = new Date(device.last_updated).getTime();
+				const timestamp = lastGeocodeRequests[personId]?.timestamp || 0;
+
+                let shouldRequestGeocode = false;
+
+                if (!lastGeocodeRequests[personId]) {
+                    shouldRequestGeocode = true;
+                } else {
                     const { lat: lastLat, lon: lastLon } = lastGeocodeRequests[personId];
                     const distance = getDistanceFromLatLonInMeters(lastLat, lastLon, lat, lon);
+                    const timeDiff = (lastUpdated - timestamp) / 1000;
+
                     if (distance >= geocodeDistance) {
-                        address = ""; // Mostrar cadena vacía mientras se procesa la dirección en processQueue
+                        address = "";
+                        if (timeDiff >= geocodeTime) {
+                            shouldRequestGeocode = true;
+                        }
                     }
                 }
-				
-                // Agregar la solicitud a la cola sin filtrar (será filtrada en `processQueue()`)
-				requestQueue.push({
-					lat: device.attributes.latitude,
-					lon: device.attributes.longitude,
-					deviceId: personId,
-					updateCellCallback: (address) => {
-						const addressCell = tableBody.querySelector(`tr[data-person-id="${personId}"] + .person-address-row td`);
-						if (addressCell) {
-							addressCell.textContent = address;
-						}
-					}
-				});		
+
+                if (shouldRequestGeocode) {
+                    // **Eliminar solicitudes previas antes de añadir una nueva**
+                    requestQueue = requestQueue.filter(req => req.deviceId !== personId);
+                    requestQueue.push({
+                        lat,
+                        lon,
+                        deviceId: personId,
+                        lastUpdated,
+                        updateCellCallback: (newAddress) => {
+                            const addressCell = tableBody.querySelector(`tr[data-person-id="${personId}"] + .person-address-row td`);
+                            if (addressCell) {
+                                addressCell.textContent = newAddress;
+                            }
+                        }
+                    });
+                }		
             }
 
             let row = existingRows.find(row => row.dataset.personId === personId);
@@ -510,58 +578,6 @@ export async function updatePersonsTable() {
     }
 }
 
-// **Actualizar encabezados de la tabla de personas con flechas de ordenación**
-export function updatePersonsTableHeaders() {
-    const table = document.querySelector("#persons-table"); // Asegurarse de que busca en la tabla correcta
-    if (!table) {
-        console.error("No se encontró la tabla de resumen de zonas.");
-        return;
-    }
-
-    const headers = table.querySelectorAll("thead th");
-
-    headers.forEach(header => {
-        const columnKey = header.getAttribute("data-i18n");
-        let columnName = "";
-
-        switch (columnKey) {
-            case "name": columnName = "name"; break;
-            case "date": columnName = "date"; break;
-            case "km/h": columnName = "km/h"; break;
-            case "percentage": columnName = "percentage"; break;
-            case "zone": columnName = "zone"; break;
-        }
-
-        if (!columnName) return;
-
-        // Aplicamos el cursor solo en esta tabla
-        header.style.cursor = "pointer";
-
-        header.onclick = () => {
-            if (sortColumn === columnName) {
-                sortAscending = !sortAscending;
-            } else {
-                sortColumn = columnName;
-                sortAscending = true;
-            }
-            updatePersonsTable();
-        };
-
-        let arrow = "";
-        if (sortColumn === columnName) {
-            arrow = sortAscending ? "▲" : "▼";
-        }
-
-        // Crear la estructura con un div para separar el título y la flecha con altura fija
-        header.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 30px;">
-                <span>${t(columnKey)}</span>
-                <span style="font-size: 12px;">${arrow}</span>
-            </div>
-        `;
-    });
-}
-
 export async function processQueue() {
     if (requestQueue.length === 0) {
         return;
@@ -573,48 +589,26 @@ export async function processQueue() {
     // Filtrar `requestQueue`, eliminando solicitudes de personas que ya no existen
     requestQueue = requestQueue.filter(({ deviceId }) => activePersonIds.has(deviceId));
 
-    const now = Date.now();
-    let newQueue = [];
-
-    // Procesar la cola sin eliminar solicitudes innecesarias
-    requestQueue.forEach(({ lat, lon, deviceId, updateCellCallback }) => {
-        if (!lastGeocodeRequests[deviceId]) {
-            // Si no hay datos previos, agregar la solicitud con updateCellCallback
-            newQueue.push({ lat, lon, deviceId, updateCellCallback });
-            return;
-        }
-
-        const { lat: lastLat, lon: lastLon, timestamp } = lastGeocodeRequests[deviceId];
-        const timeDiff = (now - timestamp) / 1000; // Diferencia de tiempo en segundos
-        const distance = getDistanceFromLatLonInMeters(lastLat, lastLon, lat, lon); // Distancia en metros
-
-        // **Solo añadir si supera ambos criterios**
-        if (timeDiff >= geocodeTime && distance >= geocodeDistance) {
-            console.log(`Nueva solicitud para ${deviceId} (Tiempo: ${timeDiff}s, Distancia: ${distance}m)`);
-            newQueue.push({ lat, lon, deviceId, updateCellCallback });
-        }
-    });
-
-    // Actualizar la cola con las solicitudes filtradas
-    requestQueue = newQueue;
-
     // Si después de la limpieza no hay solicitudes, salir
     if (requestQueue.length === 0) {
         return;
     }
 
     // Tomar la primera solicitud de la cola y procesarla
-    const { lat, lon, deviceId, updateCellCallback } = requestQueue.shift();
+    const { lat, lon, deviceId, lastUpdated, updateCellCallback } = requestQueue.shift();
 
     if (typeof updateCellCallback !== "function") {
         console.error(`Error: updateCellCallback no es una función para ${deviceId}`);
         return;
     }
 
+    // Actualizar lastGeocodeRequests antes de llamar a la API
+    lastGeocodeRequests[deviceId] = { lat, lon, timestamp: lastUpdated, address: "" };
+
     try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
         console.log(`Enviando solicitud a la API: ${url}`);
-
+		
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
 
@@ -622,8 +616,8 @@ export async function processQueue() {
         const address = data.display_name?.trim(); // Elimina espacios en blanco al inicio/final
 
         // Guardar en caché solo si el address es válido
-        if (address) {
-            lastGeocodeRequests[deviceId] = { lat, lon, timestamp: Date.now(), address };
+        if (address && lastUpdated) {
+            lastGeocodeRequests[deviceId] = { lat, lon, timestamp: lastUpdated, address };
             console.log(`Dirección obtenida para ${deviceId}: ${address}`);
         } else {
             console.warn(`Dirección vacía para ${deviceId}. No se almacenará en caché.`);

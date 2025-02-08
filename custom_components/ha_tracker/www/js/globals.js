@@ -91,7 +91,5 @@ export async function configureConsole() {
         console.info = (...args) => originalConsole.info(getTimeStamp(), ...args);
         console.warn = (...args) => originalConsole.warn(getTimeStamp(), "[WARNING]:", ...args);
         console.error = (...args) => originalConsole.error(getTimeStamp(), "[ERROR]:", ...args);
-
-        originalConsole.log("Modo de desarrollo: mostrando todos los mensajes de consola con marcas de tiempo.");
     }
 }
