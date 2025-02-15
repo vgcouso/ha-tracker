@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             await updatePersonsFilter();
         } catch (error) {
-            console.error("Error al actualizar la lista de usuarios:", error);
+            console.error("Error updating user list:", error);
         }
     });
 
@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 			resetFilter();
 			handlePersonsSelection(document.getElementById('person-select').value);
         } catch (error) {
-            console.error("Error al seleccionar un usuario:", error);
+            console.error("Error selecting a user:", error);
         }
     });
 
@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const tabName = button.getAttribute("data-tab"); // Obtener el nombre de la pestaña
                 openTab(event, tabName); // Llamar a la función con los parámetros necesarios
             } catch (error) {
-                console.error("Error al cambiar de pestaña:", error);
+                console.error("Error when changing tabs:", error);
             }
         });
     });
@@ -55,7 +55,7 @@ document.getElementById('filter-button').addEventListener('click', async() => {
     try {
         await applyFilter();
     } catch (error) {
-        console.error("Error durante la aplicación del filtro:", error);
+        console.error("Error during filter application:", error);
     }
 });
 
@@ -73,7 +73,7 @@ export async function setFilter(data) {
             alert(t('no_positions'));
         }
     } catch (error) {
-        console.error("Error al obtener posiciones filtradas:", error);
+        console.error("Error getting filtered positions:", error);
         alert(t('filter_problem'));
     }
 }
@@ -165,7 +165,7 @@ async function addFilterMarkers(positions) {
         const lon = pos.attributes.longitude;
 
         if (!lat || !lon) {
-            console.log("Marcador descartado: Posición sin coordenadas:", pos);
+            console.log("Discarded Marker: Position without coordinates:", pos);
             return;
         }
 
@@ -192,7 +192,7 @@ async function addFilterMarkers(positions) {
 
         marker.on('click', () => {
             const uniqueId = `${pos.entity_id}_${new Date(pos.last_updated).toISOString()}`;
-            console.log("Marcador clicado. Buscando fila con data-entity-id:", uniqueId);
+            console.log("Clicked marker. Searching row with data-entity-id:", uniqueId);
             handleFilterRowSelection(uniqueId);
         });
 
@@ -225,8 +225,8 @@ async function applyFilter() {
         return;
     }
 
-    // Validar que el rango entre fechas no sea mayor a 7 días
-    const maxDifferenceMs = 7 * 24 * 60 * 60 * 1000; // 7 días en milisegundos
+    // Validar que el rango entre fechas no sea mayor a 31 días
+    const maxDifferenceMs = 31 * 24 * 60 * 60 * 1000; // 31 días en milisegundos
     if (endDateTime - startDateTime > maxDifferenceMs) {
         alert(t('date_range'));
         return;
@@ -237,7 +237,7 @@ async function applyFilter() {
     try {
         await fetchFilteredPositions(selectedPersonId, startDate, endDate);
     } catch (error) {
-        console.error("Error durante el filtro:", error);
+        console.error("Error during filter:", error);
         alert(t('filter_error'));
     } finally {
         hideWindowOverlay(); // Ocultar ventana de carga
@@ -287,7 +287,7 @@ async function toggleGroup(groupClass, btn) {
 }
 
 async function selectRow(row) {
-    console.log("Fila seleccionada:", row.dataset.entityId);
+    console.log("Selected row:", row.dataset.entityId);
 
     // Asegurar que el pane "selectedMarker" existe (si no, crearlo)
     if (!map.getPane('selectedMarker')) {
@@ -330,7 +330,7 @@ async function selectRow(row) {
 
     // Añadir evento `click` al marcador seleccionado
     selectedMarker.on('click', () => {
-        console.log("Marcador clicado. Buscando fila con data-entity-id:", uniqueId);
+        console.log("Clicked marker. Searching row with data-entity-id:", uniqueId);
         handleFilterRowSelection(uniqueId);
     });
 
@@ -341,13 +341,13 @@ async function selectRow(row) {
 async function handleFilterRowSelection(uniqueId) {
     const filterTableBody = document.getElementById('filter-table-body');
     if (!filterTableBody) {
-        console.error("No se encontró el tbody de la tabla de filter.");
+        console.error("Filter table tbody not found.");
         return;
     }	
 	
     const row = filterTableBody.querySelector(`tr[data-entity-id="${uniqueId}"]`);
     if (!row) {
-        console.error("No se encontró la fila para la posición:", uniqueId);
+        console.error("Row not found for position:", uniqueId);
         return;
     }
 
@@ -355,13 +355,13 @@ async function handleFilterRowSelection(uniqueId) {
     const groupClass = [...row.classList].find(cls => cls.startsWith('group-'));
 
     if (!groupClass) {
-        console.error("La fila no pertenece a ningún grupo:", row);
+        console.error("The row does not belong to any group:", row);
         return;
     }
 
     // Si la fila está oculta, expandimos su grupo
     if (isHidden) {
-        console.log("Fila oculta. Expandimos el grupo:", groupClass);
+        console.log("Hidden row. We expand the group:", groupClass);
         const groupHeader = document.querySelector(`tr.${groupClass}.group-header`);
         if (groupHeader) {
             const toggleBtn = groupHeader.querySelector('.toggle-btn');
@@ -397,12 +397,12 @@ async function handleFilterRowSelection(uniqueId) {
         row.scrollIntoView({ behavior: 'smooth', block: 'center' });
     //}
 
-    console.log("Fila seleccionada en la tabla de filtro:", uniqueId);
+    console.log("Selected row in filter table:", uniqueId);
 }
 
 async function addRouteLine(positions) {
     if (!positions || positions.length === 0) {
-        console.error("No se encontraron posiciones válidas para la ruta.");
+        console.error("No valid positions found for the route.");
         return; // No continuar si no hay posiciones
     }
 
@@ -411,12 +411,12 @@ async function addRouteLine(positions) {
         if (pos.attributes.latitude && pos.attributes.longitude) {
             return [pos.attributes.latitude, pos.attributes.longitude];
         }
-        console.log("Posición inválida encontrada:", pos);
+        console.log("Invalid position found:", pos);
         return null; // Ignorar posiciones inválidas
     }).filter(coord => coord !== null); // Filtrar coordenadas inválidas
 
     if (coordinates.length === 0) {
-        console.error("No se encontraron coordenadas válidas para la ruta.");
+        console.error("No valid coordinates found for the route.");
         return; // No dibujar la línea si no hay coordenadas válidas
     }
 
@@ -430,7 +430,7 @@ async function addRouteLine(positions) {
 
 async function updateSummaryTable(positions) {
     if (!positions || positions.length === 0) {
-        console.error("No hay posiciones para calcular estadísticas.");
+        console.error("There are no positions to calculate statistics.");
         return;
     }
 
@@ -499,7 +499,7 @@ function openTab(event, tabId) {
 
 function calculateZoneStatistics(positions) {
     if (!positions || positions.length === 0) {
-        console.error("No hay posiciones para calcular estadísticas de zonas.");
+        console.error("There are no positions to calculate zone statistics.");
         return;
     }
 
@@ -557,15 +557,15 @@ function calculateZoneStatistics(positions) {
     const lastTime = new Date(positions[positions.length - 1].last_updated).getTime();
     const totalTime = lastTime - firstTime;
 
-    console.log(`Tiempo total calculado: ${totalTime}`);
-    console.log(`Tiempo total por zonas: ${totalTimeByZones}`);	
+    console.log(`Total calculated time: ${totalTime}`);
+    console.log(`Total time by zones: ${totalTimeByZones}`);	
 }
 
 async function updatesummaryZonesTable(positions) {
     const zonesTableBody = document.getElementById('summary-zones-table-body');
 
     if (!cachedZoneStats) {
-        console.error("No hay estadísticas guardadas de zonas. Asegúrate de aplicar el filtro primero.");
+        console.error("There are no saved statistics for zones. Make sure to apply the filter first.");
         return;
     }
 
@@ -618,7 +618,7 @@ async function updatesummaryZonesTable(positions) {
 function updateSummaryZonesTableHeaders() {
     const table = document.querySelector("#summary-zones-table"); // Asegurarse de que busca en la tabla correcta
     if (!table) {
-        console.error("No se encontró la tabla de resumen de zonas.");
+        console.error("Zone summary table not found.");
         return;
     }
 

@@ -2,7 +2,7 @@
 // MAIN
 //
 
-import {isConnected, updateConnection, updateAdmin, updateConfig, updateInterval} from './globals.js';
+import {isActive, updateAdmin, updateConfig, updateInterval} from './globals.js';
 import {initMap} from './map.js';
 import {load, showWindowOverlay, hideWindowOverlay} from './utils.js';
 import {authCallback} from './auth.js';
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async() => {
         // Inicializar la aplicación
         await init();
     } catch (error) {
-        console.error("Error durante la inicialización:", error);
+        console.error("Error during DOMContentLoaded:", error);
     }
 });
 
@@ -36,8 +36,9 @@ async function init() {
         // Inicia el ciclo de actualización
         startUpdateLoop();
 		startGeocodeLoop();
+		
     } catch (error) {
-        console.error("Error durante la inicialización:", error);
+        console.error("Error during init:", error);
     }
 }
 
@@ -46,7 +47,7 @@ async function startUpdateLoop() {
         try {
             await update();
         } catch (error) {
-            console.error("Error durante la actualización, continuará el bucle:", error);
+            console.error("Error during update, loop will continue:", error);
         }
         await delay(updateInterval*1000);
     }
@@ -57,7 +58,7 @@ async function startGeocodeLoop() {
         try {
             await processQueue();
         } catch (error) {
-            console.error("Error en el procesamiento de la cola, continuará el bucle:", error);
+            console.error("Error processing queue, loop will continue:", error);
         }
         await delay(1000);
     }
@@ -69,26 +70,18 @@ function delay(ms) {
 
 async function update() {
     try {
-		//await updateConnection();
-        //if (!isConnected) {
-        //    throw new Error("No está conectado");
-        //}
-
         // Ejecutar funciones en orden y detenerse si ocurre un error
-        try {	
+		const active = await isActive();
+		if (active){
 			await updateConfig();			
-            await updateAdmin();
-            await updatePersons();
-            await updateZones();
-        } catch (error) {
-            console.error("Error en una de las funciones:", error);
-            throw new Error("Error en una de las funciones.");
-        }
-
-        // Ocultar el overlay al finalizar todas las tareas correctamente
-        hideWindowOverlay();
+			await updateAdmin();
+			await updatePersons();
+			await updateZones();
+			hideWindowOverlay();
+		} else {
+			showWindowOverlay(t('disconnected'), "rgba(255, 0, 0, 0.5)", "white", "rgba(200, 0, 0, 0.8)");
+		}
     } catch (error) {
-        console.error("Error durante la actualización principal:", error);
-        showWindowOverlay(t('disconnected'), "rgba(255, 0, 0, 0.5)", "white", "rgba(200, 0, 0, 0.8)");
+        console.error("Error during major update:", error);
     }
 }

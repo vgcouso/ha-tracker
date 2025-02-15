@@ -39,7 +39,7 @@
   "select_device_filter": "在应用筛选之前请选择一个有效设备",
   "select_dates": "请选择两个日期以应用筛选",
   "invalid_dates": "开始日期必须早于结束日期",
-  "date_range": "日期范围不能超过7天",
+  "date_range": "日期范围不能超过31天",
   "filter_error": "执行筛选时发生错误",
   "select_delete_zone": "请选择要删除的区域",
   "error_deleting_zone": "尝试删除区域时发生错误",

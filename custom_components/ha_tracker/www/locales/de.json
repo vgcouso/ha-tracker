@@ -39,7 +39,7 @@
   "select_device_filter": "Bitte wählen Sie ein gültiges Gerät, bevor Sie den Filter anwenden",
   "select_dates": "Wählen Sie beide Daten aus, um den Filter anzuwenden",
   "invalid_dates": "Das Startdatum muss vor dem Enddatum liegen",
-  "date_range": "Der Zeitraum zwischen den Daten darf 7 Tage nicht überschreiten",
+  "date_range": "Der Zeitraum zwischen den Daten darf 31 Tage nicht überschreiten",
   "filter_error": "Es gab einen Fehler beim Ausführen des Filters",
   "select_delete_zone": "Bitte wählen Sie eine Zone zum Löschen aus",
   "error_deleting_zone": "Beim Löschen der Zone ist ein Fehler aufgetreten",

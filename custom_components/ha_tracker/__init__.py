@@ -1,126 +1,126 @@
+"""Módulo de inicialización para HA Tracker"""
+
+import json
 import logging
 import os
-import json
-import aiofiles
 import shutil
-import voluptuous as vol
+
+import aiofiles
+from homeassistant.components.panel_custom import async_register_panel
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
-from .const import DOMAIN
+
 from .api import register_api_views
+from .api.zones import register_zones, unregister_zones
+from .const import DOMAIN, INSTALLED_VERSION_FILE
 from .post_install import copy_www_files
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup(hass: HomeAssistant, config) -> bool:
+
+async def async_setup(_hass: HomeAssistant, _config) -> bool:
     """Configuración inicial de la integración."""
-    _LOGGER.info("Cargando la integración HA Tracker.")
     return True
+
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Configura HA Tracker desde una entrada de configuración."""
 
-    _LOGGER.info("Cargando HA Tracker desde configuración de la UI.")
-
-    # Usar valores de opciones si están disponibles, sino, usar los datos iniciales
+    # Usar valores de opciones si están disponibles, sino usar los iniciales
     config = {**entry.data, **entry.options} if entry.options else entry.data
 
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
 
-    hass.data[DOMAIN]["config"] = config  
-
-    _LOGGER.debug(f"Configuración cargada en hass.data: {config}")
+    hass.data[DOMAIN]["config"] = config
 
     # Obtener la versión del manifest.json
     current_version = await get_version_from_manifest()
     if not current_version:
-        _LOGGER.error("No se pudo obtener la versión desde manifest.json.")
+        _LOGGER.error("Could not get version from manifest.json.")
         return False
 
     # Copiar archivos si es necesario
     try:
-        await copy_www_files(current_version)
-    except Exception as e:
-        _LOGGER.error(f"Error copiando archivos del cliente: {e}")
+        await copy_www_files(hass, current_version)
+    except (OSError, ValueError) as e:
+        _LOGGER.error("Error copying client files: %s", e)
 
     # Registrar los endpoints de la API si aún no están registrados
     if "views_registered" not in hass.data[DOMAIN]:
         register_api_views(hass)
         hass.data[DOMAIN]["views_registered"] = True
 
+    # regitra zonas en Home Assistant
+    await register_zones(hass)
+
     # Escuchar actualizaciones de configuración sin reiniciar
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     # Registrar el panel en el menú lateral
-    hass.components.frontend.async_register_built_in_panel(
-        component_name="iframe",
+    await async_register_panel(  
+        hass,
+        "ha-tracker",
+        "ha-tracker",
         sidebar_title="HA Tracker",
         sidebar_icon="mdi:crosshairs-gps",
-        frontend_url_path="ha-tracker",
-        config={
-            "url": "/local/ha-tracker/index.html",  # Ruta interna de Home Assistant
-        },
-        require_admin=False,
+        module_url="/local/ha-tracker/ha-tracker.js",
+        require_admin=False
     )
 
-    _LOGGER.info("Integración HA Tracker configurada correctamente.")
     return True
 
 
 async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Actualizar la integración cuando se cambian las opciones en la UI."""
-    _LOGGER.info("Actualizando configuración de HA Tracker sin reiniciar...")
+    """Actualizar integración con la UI."""
     await hass.config_entries.async_reload(entry.entry_id)
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Eliminar configuración y archivos cuando se desinstala la integración."""
-    _LOGGER.info("Eliminando configuración de HA Tracker...")
+async def async_unload_entry(hass: HomeAssistant, _entry: ConfigEntry) -> bool:
+    """Eliminar zonas, configuración y archivos"""
 
     if DOMAIN in hass.data:
         hass.data.pop(DOMAIN)
 
+    # elimina zonas de Home Assistant
+    await unregister_zones(hass)
+
     # Ruta del archivo y la carpeta a eliminar
-    file_path = hass.config.path("custom_components/ha_tracker/.installed_version")
+    file_path = hass.config.path(".storage", INSTALLED_VERSION_FILE)
     folder_path = hass.config.path("www/ha-tracker")
 
     # Intentar eliminar el archivo de manera asíncrona
     if os.path.exists(file_path):
         try:
-            _LOGGER.info(f"Intentando eliminar archivo: {file_path}")
             await hass.async_add_executor_job(os.remove, file_path)
-            _LOGGER.info(f"Archivo eliminado correctamente: {file_path}")
-        except Exception as e:
-            _LOGGER.error(f"Error eliminando archivo {file_path}: {e}")
+        except OSError as e:  # Errores de archivo
+            _LOGGER.error("Error deleting file %s: %s", file_path, e)
     else:
-        _LOGGER.warning(f"El archivo {file_path} no existe, no se eliminó.")
+        _LOGGER.warning("File %s does not exist", file_path)
 
     # Intentar eliminar la carpeta de manera asíncrona
     if os.path.exists(folder_path):
         try:
-            _LOGGER.info(f"Intentando eliminar carpeta: {folder_path}")
             await hass.async_add_executor_job(shutil.rmtree, folder_path)
-            _LOGGER.info(f"Carpeta eliminada correctamente: {folder_path}")
-        except Exception as e:
-            _LOGGER.error(f"Error eliminando carpeta {folder_path}: {e}")
+        except OSError as e:  # Errores de directorios
+            _LOGGER.error("Error deleting folder %s: %s", folder_path, e)
     else:
-        _LOGGER.warning(f"La carpeta {folder_path} no existe, no se eliminó.")
+        _LOGGER.warning("The folder %s does not exist", folder_path)
 
-    # Eliminar el panel de la UI si existe
+    # Eliminar el panel personalizado correctamente
     try:
         await hass.components.frontend.async_remove_panel("ha-tracker")
-        _LOGGER.info("Panel de HA Tracker eliminado correctamente.")
+        _LOGGER.info("HA Tracker panel removed successfully.")
     except Exception as e:
-        _LOGGER.error(f"Error eliminando el panel de HA Tracker: {e}")
+        _LOGGER.error("Error removing HA Tracker panel: %s", e)
 
     return True
+    
 
-
-async def get_version_from_manifest():
+async def get_version_from_manifest() -> str | None:
     """Obtener la versión del archivo manifest.json de forma asíncrona."""
     manifest_path = os.path.join(os.path.dirname(__file__), "manifest.json")
 
@@ -129,6 +129,6 @@ async def get_version_from_manifest():
             manifest_data = await f.read()
             manifest_json = json.loads(manifest_data)
             return manifest_json.get("version")
-    except Exception as e:
-        _LOGGER.error(f"Error al leer manifest.json: {e}")
+    except (OSError, json.JSONDecodeError) as e:  # Errores de lectura JSON
+        _LOGGER.error("Error reading manifest.json: %s", e)
         return None

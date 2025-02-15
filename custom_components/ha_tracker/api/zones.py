@@ -1,22 +1,28 @@
-import os
+"""Manejo de las zonas de HA Tracker"""
+
 import json
 import logging
-import aiofiles
-
+import os
 from datetime import datetime
+
+import aiofiles
 from homeassistant.components.http import HomeAssistantView
+
 from ..const import ZONES_FILE
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class ZonesAPI(HomeAssistantView):
+    """Punto de acceso a la API para manejar zonas"""
+
     url = "/api/ha_tracker/zones"
     name = "api:ha_tracker/zones"
     requires_auth = True
 
     async def get(self, request):
-        """Obtener todas las zonas, tanto personalizadas como de Home Assistant."""
+        """Devuelve las zonas"""
+
         hass = request.app["hass"]
         zones_path = os.path.join(hass.config.path(), ZONES_FILE)
 
@@ -34,7 +40,8 @@ class ZonesAPI(HomeAssistantView):
                 "passive": state.attributes.get("passive", False),
                 "custom": False,
             }
-            for state in hass.states.async_all() if state.entity_id.startswith("zone.")
+            for state in hass.states.async_all()
+            if state.entity_id.startswith("zone.")
         ]
 
         # Agregar solo zonas de HA que no estén en custom_zones
@@ -46,9 +53,12 @@ class ZonesAPI(HomeAssistantView):
 
     async def post(self, request):
         """Crear una nueva zona."""
+
         user = request["hass_user"]
         if not user.is_admin:
-            return self.json({"error": "User is not an administrator."}, status_code=403)
+            return self.json(
+                {"error": "User is not an administrator."}, status_code=403
+            )
 
         hass = request.app["hass"]
         data = await request.json()
@@ -56,19 +66,23 @@ class ZonesAPI(HomeAssistantView):
         # Generar ID si no está presente
         if "id" not in data or not data["id"].strip():
             timestamp = int(datetime.now().timestamp() * 1000)
-            data["id"] = f"{data['name'].replace(' ', '_').lower()}_{timestamp}"
+            name = data["name"].replace(" ", "_").lower()
+            data["id"] = f"{name}_{timestamp}"
 
         # Validar zona
         is_valid, error = validate_zone(data)
         if not is_valid:
-            return self.json({"error": f"Skipping invalid zone: {data}. Reason: {error}"}, status_code=400)
+            return self.json(
+                {"error": f"Skipping invalid zone: {data}. Reason: {error}"},
+                status_code=400,
+            )
 
         zones_path = os.path.join(hass.config.path(), ZONES_FILE)
         zones = await read_zones_file(zones_path)
 
         # Evitar duplicados
         if any(zone["id"] == data["id"] for zone in zones):
-            return self.json({"error": "Zone ID already exists"}, status_code=400)
+            return self.json({"error": "Zone already exists"}, status_code=400)
 
         data["custom"] = True  # Solo las creadas manualmente son "custom"
         zones.append(data)
@@ -78,13 +92,17 @@ class ZonesAPI(HomeAssistantView):
 
         await register_zones(hass)
 
-        return self.json({"success": True, "message": "Zone created successfully", "id": data["id"]})
+        msg = {"success": True, "message": "Zone created", "id": data["id"]}
+        return self.json(msg)
 
     async def delete(self, request):
         """Eliminar una zona."""
+
         user = request["hass_user"]
         if not user.is_admin:
-            return self.json({"error": "User is not an administrator."}, status_code=403)
+            return self.json(
+                {"error": "User is not an administrator."}, status_code=403
+            )
 
         hass = request.app["hass"]
         data = await request.json()
@@ -97,9 +115,12 @@ class ZonesAPI(HomeAssistantView):
         zones = await read_zones_file(zones_path)
 
         # Verificar existencia
-        target_zone = next((zone for zone in zones if zone["id"] == zone_id), None)
+        filtered_zones = (zone for zone in zones if zone["id"] == zone_id)
+        target_zone = next(filtered_zones, None)
+
         if not target_zone or not target_zone.get("custom", False):
-            return self.json({"error": "Zone not found or cannot be deleted"}, status_code=404)
+            error_msg = {"error": "Zone not found or cannot be deleted"}
+            return self.json(error_msg, status_code=404)
 
         updated_zones = [zone for zone in zones if zone["id"] != zone_id]
 
@@ -107,13 +128,17 @@ class ZonesAPI(HomeAssistantView):
         await write_zones_file(zones_path, updated_zones)
         await register_zones(hass)
 
-        return self.json({"success": True, "message": "Zone deleted successfully"})
+        error_msg = {"success": True, "message": "Zone deleted successfully"}
+        return self.json(error_msg)
 
     async def put(self, request):
         """Actualizar una zona existente."""
+
         user = request["hass_user"]
         if not user.is_admin:
-            return self.json({"error": "User is not an administrator."}, status_code=403)
+            return self.json(
+                {"error": "User is not an administrator."}, status_code=403
+            )
 
         hass = request.app["hass"]
         data = await request.json()
@@ -125,7 +150,10 @@ class ZonesAPI(HomeAssistantView):
         # Validar la zona
         is_valid, error = validate_zone(data)
         if not is_valid:
-            return self.json({"error": f"Skipping invalid zone: {data}. Reason: {error}"}, status_code=400)
+            return self.json(
+                {"error": f"Skipping invalid zone: {data}. Reason: {error}"},
+                status_code=400,
+            )
 
         zones_path = os.path.join(hass.config.path(), ZONES_FILE)
         zones = await read_zones_file(zones_path)
@@ -135,43 +163,83 @@ class ZonesAPI(HomeAssistantView):
                 zone.update(data)
                 await write_zones_file(zones_path, zones)
                 await register_zones(hass)
-                return self.json({"success": True, "message": "Zone updated successfully"})
+                return self.json(
+                    {"success": True, "message": "Zone updated successfully"}
+                )
 
-        return self.json({"error": "Zone ID not found or cannot be updated"}, status_code=404)
+        return self.json(
+            {"error": "Zone not found or cannot be updated"}, status_code=404
+        )
+
+
+async def unregister_zones(hass):
+    """Eliminar zonas de Home Assistant."""
+
+    zones_path = os.path.join(hass.config.path(), ZONES_FILE)
+
+    if not os.path.exists(zones_path):
+        _LOGGER.warning("Zones file not found")
+        return
+
+    try:
+        # Eliminar solo zonas personalizadas
+        for state in hass.states.async_all():
+            if state.entity_id.startswith("zone.") and state.attributes.get(
+                "custom", False
+            ):
+                hass.states.async_remove(state.entity_id)
+    except (OSError, ValueError, KeyError) as e:
+        _LOGGER.error("Error unregistering zones: %s", e)
 
 
 async def register_zones(hass):
     """Registrar zonas en Home Assistant."""
+
     zones_path = os.path.join(hass.config.path(), ZONES_FILE)
+
+    if not os.path.exists(zones_path):
+        _LOGGER.warning("Zones file not found, creating empty zones file.")
+        await write_zones_file(zones_path, [])
+        return
 
     try:
         zones = await read_zones_file(zones_path)
 
-        # Eliminar solo zonas personalizadas
-        for state in hass.states.async_all():
-            if state.entity_id.startswith("zone.") and state.attributes.get("custom", False):
-                hass.states.async_remove(state.entity_id)
+        # Desregistrar zonas antes de volver a registrarlas
+        await unregister_zones(hass)
 
         for zone in zones:
-            hass.states.async_set(
-                f"zone.{zone['id']}",
-                "active",
-                {
-                    "friendly_name": zone["name"],
-                    "latitude": zone["latitude"],
-                    "longitude": zone["longitude"],
-                    "radius": zone["radius"],
-                    "icon": zone.get("icon", "mdi:map-marker"),
-                    "passive": zone.get("passive", False),
-                    "custom": True,
-                },
-            )
-    except Exception as e:
-        _LOGGER.error(f"Error registrando zonas: {str(e)}")
+            is_valid, error = validate_zone(zone)
+            if not is_valid:
+                _LOGGER.warning("Invalid zone '%s'", zone.get("id", "unknown"))
+                _LOGGER.warning("Error details: %s", error)
+                continue
+
+            try:
+                # Registrar la zona personalizada
+                hass.states.async_set(
+                    f"zone.{zone['id']}",
+                    "active",
+                    {
+                        "friendly_name": zone["name"],
+                        "latitude": zone["latitude"],
+                        "longitude": zone["longitude"],
+                        "radius": zone["radius"],
+                        "icon": zone.get("icon", "mdi:map-marker"),
+                        "passive": zone.get("passive", False),
+                        "custom": True,
+                    },
+                )
+            except (OSError, ValueError, KeyError) as e:
+                _LOGGER.exception("Failed to register %s: %s", zone["id"], e)
+
+    except (OSError, ValueError, KeyError) as e:
+        _LOGGER.error("Error registering zones: %s", e)
 
 
 async def read_zones_file(zones_path):
     """Leer y parsear archivo JSON de zonas."""
+
     if not os.path.exists(zones_path):
         return []
 
@@ -184,17 +252,37 @@ async def read_zones_file(zones_path):
 
 async def write_zones_file(zones_path, data):
     """Escribir en el archivo de zonas."""
+
     async with aiofiles.open(zones_path, mode="w") as f:
         await f.write(json.dumps(data, indent=4))
 
 
 def validate_zone(zone):
-    """Validar estructura de zona."""
-    try:
-        if not all(k in zone for k in ["id", "name", "latitude", "longitude", "radius"]):
-            return False, "Missing required fields"
-        float(zone["latitude"])
-        float(zone["longitude"])
-        return True, None
-    except ValueError:
-        return False, "Invalid numeric values"
+    """Valida que una zona tenga los datos correctos."""
+
+    required_keys = {"id", "name", "latitude", "longitude", "radius"}
+
+    # Validar que estén todos los campos requeridos
+    if not required_keys.issubset(zone):
+        error_msg = "Missing required fields"
+    else:
+        try:
+            lat = float(zone["latitude"])
+            lon = float(zone["longitude"])
+            radius = float(zone["radius"])
+        except (ValueError, TypeError):
+            error_msg = "Latitude, longitude, and radius must be numeric"
+        else:
+            # Validar rangos de valores
+            if not -90 <= lat <= 90:
+                error_msg = "Latitude must be between -90 and 90"
+            elif not -180 <= lon <= 180:
+                error_msg = "Longitude must be between -180 and 180"
+            elif radius < 20:
+                error_msg = "Radius must be at least 20 meters"
+            elif not isinstance(zone["name"], str) or not zone["name"].strip():
+                error_msg = "Name cannot be empty"
+            else:
+                return True, None  # ✅ Solo un `return` exitoso al final
+
+    return False, error_msg  # ✅ Solo un `return` de error al final

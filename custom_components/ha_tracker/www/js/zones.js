@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 await handleCreateZone();
             } catch (error) {
-                console.error("Error al añadir una zona:", error);
+                console.error("Error adding a zone:", error);
             }
         });
     }
@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 await handleDeleteZone();
             } catch (error) {
-                console.error("Error al eliminar una zona:", error);
+                console.error("Error deleting a zone:", error);
             }
         });
     }
@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 await handleEditZone();
             } catch (error) {
-                console.error("Error al modificar una zona:", error);
+                console.error("Error when modifying a zone:", error);
             }
         });
     }
@@ -59,7 +59,7 @@ export async function updateZones(){
 		await updateZonesTable();
 		await updateZoneMarkers();
     } catch (error) {
-		console.error("Error al actualizar zonas:", error);
+		console.error("Error updating zones:", error);
 		throw error;
     }
 }
@@ -68,13 +68,13 @@ export async function setZones(data) {
     try {
         if (data && Array.isArray(data)) {
             zones = data; // Asigna los datos obtenidos a la variable global
-            console.log("Zonas obtenidas:", zones);
+            console.log("Zones:", zones);
         } else {
-            console.log("No se obtuvieron zonas válidas desde el servidor.");
+            console.log("No valid zones were obtained from the server.");
             zones = []; // Asegura que `zones` sea un arreglo vacío en caso de error
         }
     } catch (error) {
-        console.error("Error al obtener zonas:", error);
+        console.error("Error getting zones:", error);
         zones = []; // Asegura que `zones` no quede indefinido si ocurre un error
     }
 }
@@ -109,7 +109,7 @@ async function updateZoneMarkers() {
         } = zone;
 
         if (!latitude || !longitude || !radius) {
-            console.error("Zona inválida:", zone.id);
+            console.error("Invalid zone:", zone.id);
             return;
         }
 
@@ -196,7 +196,7 @@ async function updateZoneMarkers() {
                 // Llama a la función asíncrona para manejar la selección de fila
                 await handleZoneRowSelection(zone.id);
             } catch (error) {
-                console.error("Error al manejar la selección de fila de zona:", error);
+                console.error("Error handling zone row selection:", error);
             }
         });
 
@@ -213,7 +213,7 @@ async function updateZoneMarkers() {
             const updatedRadius = circle.getRadius(); // Obtén el nuevo radio
 
             const updatedPopupContent = `
-			<strong>${zone.name || 'Zona sin nombre'}</strong><br>
+			<strong>${zone.name || ''}</strong><br>
 			 ${t('radius')}: ${updatedRadius.toFixed(2)} ${t('meters')}
 		    `;
 			
@@ -235,12 +235,12 @@ async function updateZoneMarkers() {
                     await handleZoneRowSelection(zone.id);
 
                     if (response && response.success) {
-                        console.log(`Zona con ID ${zone.id} actualizada en el servidor.`);
+                        console.log(`Zone with ID ${zone.id} updated on server.`);
                     } else {
-                        console.error(`Error al actualizar la zona con ID ${zone.id} en el servidor.`);
+                        console.error(`Error updating zone with ID ${zone.id} on server.`);
                     }
                 } catch (error) {
-                    console.error("Error en la solicitud de actualización de la zona:", error);
+                    console.error("Error in zone update request:", error);
                 }
             }
         });
@@ -251,17 +251,17 @@ async function updateZoneMarkers() {
 }
 
 export async function handleZoneRowSelection(zoneId) {
-    console.log("Seleccionando fila para la zona:", zoneId);
+    console.log("Selecting row for zone:", zoneId);
 
     const zonesTableBody = document.getElementById('zones-table-body');
     if (!zonesTableBody) {
-        console.error("No se encontró el tbody de la tabla de zone.");
+        console.error("The zone table tbody was not found.");
         return;
     }	
 	
     const row = zonesTableBody.querySelector(`tr[data-zone-id="${zoneId}"]`);
     if (!row) {
-        console.error("No se encontró la fila para la zona:", zoneId);
+        console.error("No row found for the zone:", zoneId);
         return;
     }
 
@@ -291,7 +291,7 @@ export async function handleZoneRowSelection(zoneId) {
 async function updateZoneActionButtons() {
     const zonesTableBody = document.getElementById('zones-table-body');
     if (!zonesTableBody) {
-        console.error("No se encontró el cuerpo de la tabla de zonas.");
+        console.error("Zone table body not found.");
         return;
     }
 
@@ -359,7 +359,7 @@ async function handleDeleteZone() {
     const name = selectedRow.dataset.name;
 
     if (!zoneId) {
-        console.error("No se encontró el ID de la zona seleccionada.");
+        console.error("The selected zone ID was not found.");
         return;
     }
 
@@ -377,7 +377,7 @@ async function handleDeleteZone() {
         await updateZonesTable();
         await updateZoneMarkers();
     } catch (error) {
-        console.error("Error al intentar eliminar la zona:", error);
+        console.error("Error trying to delete zone:", error);
         alert(t('error_deleting_zone'));
     }
 }
@@ -386,14 +386,14 @@ async function handleEditZone() {
     const zonesTableBody = document.getElementById('zones-table-body');
 
     if (!zonesTableBody) {
-        console.error("No se encontró el cuerpo de la tabla de zonas.");
+        console.error("Zone table body not found.");
         return;
     }
 
     // Obtener la fila seleccionada
     const selectedRow = zonesTableBody.querySelector('tr.selected');
     if (!selectedRow) {
-        console.error("No hay ninguna zona seleccionada.");
+        console.error("There is no zone selected.");
         alert(t('select_zone'));
         return;
     }
@@ -402,7 +402,7 @@ async function handleEditZone() {
     const zone = zones.find(z => z.id === zoneId); // Buscar la zona en la lista global `zones`
 
     if (!zone) {
-        console.error("No se encontró la zona seleccionada.");
+        console.error("The selected zone was not found.");
         alert(t('error_finding_zone'));
         return;
     }
@@ -425,7 +425,7 @@ async function handleEditZone() {
                 zone.longitude);
 
         if (response && response.success) {
-            console.log(`Zona con ID ${zone.id} actualizada con éxito.`);
+            console.log(`Zone with ID ${zone.id} successfully updated.`);
 
             // Actualizar el nombre en la lista `zones`
             zone.name = newName;
@@ -435,25 +435,25 @@ async function handleEditZone() {
             await updateZoneMarkers();
             await handleZoneRowSelection(zone.id);
         } else {
-            console.error(`Error al actualizar la zona con ID ${zone.id}. Respuesta:`, response);
+            console.error(`Error updating zone with ID ${zone.id}. Response:`, response);
             alert(t('error_updating_zone'));
         }
     } catch (error) {
-        console.error("Error en la solicitud de actualización de la zona:", error);
+        console.error("Error in zone update request:", error);
         alert(t('error_updating_zone'));
     }
 }
 
 async function handleCreateZone() {
     if (!map) {
-        console.error("El mapa no está inicializado.");
+        console.error("The map is not initialized.");
         return null;
     }
 
     // Solicitar el nombre de la zona al usuario
     const zoneName = prompt(t('enter_zone_name'));
     if (!zoneName || zoneName.trim() === "") {
-        console.error("El nombre de la zona es obligatorio.");
+        console.error("The name of the zone is mandatory.");
 		alert(t('empty_name'));
         return null;
     }
@@ -475,10 +475,10 @@ async function handleCreateZone() {
     await handleZoneRowSelection(newZoneId);
 
     if (newZoneId) {
-        console.log(`Zona creada con éxito. ID: ${newZoneId}`);
+        console.log(`Zone created successfully. ID: ${newZoneId}`);
         return newZoneId;
     } else {
-        console.error("No se pudo crear la zona.");
+        console.error("Failed to create zone.");
         return null;
     }
 }
@@ -512,7 +512,7 @@ export async function showZone(idZone) {
         map.setView(circle.getLatLng(), map.getZoom()); // Centrar el mapa en la zona
         circle.openPopup(); // Abrir el popup del círculo
     } else {
-        console.error("No se encontró el marcador para la zona.");
+        console.error("Marker for zone not found.");
     }
 }
 
@@ -520,7 +520,7 @@ async function updateZonesTable() {
     const zonesTableBody = document.getElementById('zones-table-body');
 
     if (!zonesTableBody) {
-        console.error("No se encontró el cuerpo de la tabla de zonas.");
+        console.error("Zone table body not found.");
 		updatePersonsTable();
 		updateZoneActionButtons();
         return;
@@ -563,7 +563,7 @@ async function updateZonesTable() {
         } = zone;
 
         if (!latitude || !longitude) {
-            console.error("Coordenadas inválidas para la zona:", id);
+            console.error("Invalid coordinates for the zone:", id);
             return;
         }
 
@@ -601,7 +601,7 @@ async function updateZonesTable() {
                 map.fitBounds(circleBounds); // Ajustar el zoom para encuadrar el círculo
                 marker.openPopup(); // Mostrar el popup
             } else {
-                console.error("No se encontró un marcador para la zona:", id);
+                console.error("No marker found for the zone:", id);
             }
 
             // Gestionar la selección de la fila
@@ -645,7 +645,7 @@ async function updateZonesTable() {
 function updateZonesTableHeaders() {
     const table = document.querySelector("#zones-table"); // Asegurarse de que busca en la tabla correcta
     if (!table) {
-        console.error("No se encontró la tabla de resumen de zonas.");
+        console.error("Zone summary table not found.");
         return;
     }
 

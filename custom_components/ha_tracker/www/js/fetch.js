@@ -17,7 +17,7 @@ async function fetchData(url, options = {
         if (authRequired) {
             token = await getToken();
             if (!token || token.trim() === '') {
-                throw new Error("Token no válido.");
+                throw new Error("Invalid token.");
             }
         }
 
@@ -40,7 +40,7 @@ async function fetchData(url, options = {
 
         return await response.json();
     } catch (error) {
-        console.error("Error en fetchData:", error);
+        console.error("Error in fetchData:", error);
         throw error;
     }
 }
@@ -51,7 +51,7 @@ export async function fetchConfig() {
         const data = await fetchData(url);
         return data;
     } catch (error) {
-        console.error("Error al obtener la configuración:", error);
+        console.error("Error getting configuration:", error);
         throw error;
     }
 }
@@ -63,7 +63,7 @@ export async function fetchAdmin() {
         const data = await fetchData(url);
         return data?.is_admin ?? false; // Usa optional chaining y nullish coalescing para mayor claridad
     } catch (error) {
-        console.error("Error al verificar el estado de administrador:", error);
+        console.error("Error checking admin status:", error);
         throw error;
     }
 }
@@ -74,14 +74,13 @@ export async function fetchConnection() {
         const data = await fetchData(url);
 
         if (!data || typeof data !== "object") {
-            console.log(" Home Assistant responde, pero no parece estar listo.");
+            console.log("Home Assistant responds, but doesn't seem ready.");
             return false;
         }
 
-        console.log("Home Assistant está disponible.");
         return true; // Si `api/config` devuelve datos, consideramos que HA está listo
     } catch (error) {
-        console.error('Error al comprobar el estado de Home Assistant:', error);
+        console.error('Error checking Home Assistant status:', error);
         throw error;
     }
 }
@@ -92,7 +91,7 @@ export async function fetchDevices() {
         const data = await fetchData(url);
         await setDevices(data);
     } catch (error) {
-        console.error("Error al obtener Devices:", error);
+        console.error("Error getting Devices:", error);
         throw error; // Propagar el error para que el llamador pueda manejarlo
     }
 }
@@ -103,11 +102,11 @@ export async function fetchPersons() {
         const data = await fetchData(url);
         // Verificar si no hay personas en la respuesta
         if (!data || !Array.isArray(data) || data.length === 0) {
-            throw new Error("La respuesta no contiene personas válidas.");
+            throw new Error("The answer does not contain valid persons.");
         }
         await setPersons(data);
     } catch (error) {
-        console.error("Error al obtener Personas:", error);
+        console.error("Error getting Persons:", error);
         throw error; // Propagar el error para que el llamador pueda manejarlo
     }
 }
@@ -118,14 +117,14 @@ export async function fetchZones() {
         const data = await fetchData(url);
         await setZones(data);
     } catch (error) {
-        console.error("Error al obtener zonas:", error);
+        console.error("Error getting zones:", error);
         throw error; // Propagar el error para que el llamador pueda manejarlo
     }
 }
 
 export async function deleteZone(zoneId) {
     if (!zoneId) {
-        console.error("El ID de la zona es obligatorio.");
+        console.error("Zone ID is required.");
         return null;
     }
     const body = JSON.stringify({
@@ -140,21 +139,21 @@ export async function deleteZone(zoneId) {
         });
 
         if (response && response.success) {
-            console.log(`Zona con ID ${zoneId} eliminada con éxito.`);
+            console.log(`Zone with ID ${zoneId} deleted successfully.`);
             return true; // Indicar que la operación fue exitosa
         } else {
-            console.error(`Error al eliminar la zona: ${response?.error || "Error desconocido"}`);
+            console.error(`Error deleting zone: ${response?.error || "Unknown error"}`);
             return false; // Indicar que falló
         }
     } catch (error) {
-        console.error("Error al intentar eliminar la zona:", error);
+        console.error("Error trying to delete zone:", error);
         return false; // Indicar que falló
     }
 }
 
 export async function updateZone(zoneId, name, radius, latitude, longitude) {
     if (!zoneId || !name || !radius || !latitude || !longitude) {
-        console.error("Todos los parámetros (zoneId, name, radius, latitude, longitude) son obligatorios.");
+        console.error("All parameters (zoneId, name, radius, latitude, longitude) are mandatory.");
         return null;
     }
 
@@ -174,21 +173,21 @@ export async function updateZone(zoneId, name, radius, latitude, longitude) {
         });
 
         if (response && response.success) {
-            console.log(`Zona con ID ${zoneId} actualizada con éxito.`);
+            console.log(`Zone with ID ${zoneId} updated successfully.`);
             return response; // Retornar la respuesta completa si fue exitosa
         } else {
-            console.error(`Error al actualizar la zona: ${response?.error || "Error desconocido"}`);
+            console.error(`Error updating zone: ${response?.error || "Unknown error"}`);
             return null; // Retornar nulo si falló
         }
     } catch (error) {
-        console.error("Error al intentar actualizar la zona:", error);
+        console.error("Error trying to update the zone:", error);
         return null; // Retornar nulo si ocurrió un error
     }
 }
 
 export async function createZone(name, radius, latitude, longitude, icon = "mdi:map-marker", passive = false, custom = true) {
     if (!name || !radius || !latitude || !longitude) {
-        console.error("Todos los parámetros (name, radius, latitude, longitude) son obligatorios.");
+        console.error("All parameters (name, radius, latitude, longitude) are mandatory.");
         return null;
     }
 
@@ -210,21 +209,21 @@ export async function createZone(name, radius, latitude, longitude, icon = "mdi:
         });
 
         if (response && response.success) {
-            console.log(`Zona creada con éxito. ID: ${response.id}`);
+            console.log(`Zone created successfully. ID: ${response.id}`);
             return response.id; // Retornar el ID de la nueva zona
         } else {
-            console.error(`Error al crear la zona: ${response?.error || "Error desconocido"}`);
+            console.error(`Error creating zone: ${response?.error || "Unknown error"}`);
             return null; // Retornar null si falló
         }
     } catch (error) {
-        console.error("Error al intentar crear la zona:", error);
+        console.error("Error trying to create zone:", error);
         return null; // Retornar null si ocurrió un error
     }
 }
 
 export async function fetchFilteredPositions(person_id, startDate, endDate) {
     if (!person_id || !startDate || !endDate) {
-        console.error("Los parámetros person_id, startDate y endDate son obligatorios.");
+        console.error("The person_id, startDate and endDate parameters are required.");
         return;
     }
 
@@ -234,7 +233,7 @@ export async function fetchFilteredPositions(person_id, startDate, endDate) {
         const data = await fetchData(url);
         await setFilter(data);
     } catch (error) {
-        console.error("Error al obtener posiciones filtradas:", error);
+        console.error("Error getting filtered positions:", error);
         throw error; // Propagar el error para que el llamador pueda manejarlo
     }
 }
@@ -242,7 +241,7 @@ export async function fetchFilteredPositions(person_id, startDate, endDate) {
 export async function fetchAuthCallback(code) {
 
     if (!code) {
-        console.error("No se encontró un code de autorización en la URL.");
+        console.error("No authorization code found in the URL.");
         return;
     }
 
@@ -263,11 +262,11 @@ export async function fetchAuthCallback(code) {
         }, false);
 
         if (!data) {
-            console.error("Error al obtener el token");
+            console.error("Error getting token");
             return;
         }
 
-        console.log("************ Token obtenido ************", data);
+        console.log("************ Token Obtained ************", data);
 
         // Guardar token en localStorage
         const tokenData = {
@@ -280,7 +279,7 @@ export async function fetchAuthCallback(code) {
         try {
             localStorage.setItem("hassTokens", JSON.stringify(tokenData));
         } catch (error) {
-            console.error("Error al guardar el token en localStorage:", error);
+            console.error("Error saving token to localStorage:", error);
             return;
         }
 
@@ -288,16 +287,14 @@ export async function fetchAuthCallback(code) {
         const newUrl = `${haUrl}/local/ha-tracker/index.html`;
         window.history.replaceState({}, document.title, newUrl);
     } catch (error) {
-        console.error("Error durante la obtención del token", error);
+        console.error("Error while obtaining token", error);
     }
 }
 
 export async function fetchTokenRefresh(refreshToken) {
     try {
         if (!haUrl || !refreshToken) {
-            console.error("La URL base o el refresh_token no están definidos correctamente.");
-            console.log("haUrl:", haUrl);
-            console.log("refreshToken:", refreshToken);
+			console.error(`The base URL or refresh_token is not defined correctly.	haUrl: ${haUrl}	refreshToken: ${refreshToken}`);
             return null;
         }
 
@@ -317,11 +314,11 @@ export async function fetchTokenRefresh(refreshToken) {
         }, false);
 
         if (!data) {
-            console.error("Error al renovar el token");
+            console.error("Error renewing token");
             return;
         }
 
-        console.log("************ Token renovado ************", data);
+        console.log("************ Renewed Token ************", data);
 
         return data; // Devuelve el objeto del token
     } catch (error) {

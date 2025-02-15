@@ -23,7 +23,7 @@ export async function load() {
             document.body.classList.add('loaded');
         }
     } catch (error) {
-        console.error("Error durante el load:", error);
+        console.error("Error during load:", error);
     }
 }
 
@@ -36,7 +36,7 @@ document.getElementById('hamburger-button').addEventListener('click', async() =>
     try {
         await toggleContainer();
     } catch (error) {
-        console.error("Error al manejar el botón de menú:", error);
+        console.error("Error handling menu button:", error);
     }
 });
 
@@ -64,7 +64,7 @@ document.getElementById('combo-select').addEventListener('change', function () {
 			personsContainer.style.display = 'block';			
 		}
     } catch (error) {
-        console.error("Error durante el combo-select:", error);
+        console.error("Error during combo-select:", error);
     }
 });
 
@@ -88,7 +88,7 @@ async function toggleContainer() {
             formsContainer.classList.remove('visible');
         }
     } catch (error) {
-        console.error("Error durante el toggleContainer:", error);
+        console.error("Error during toggleContainer:", error);
     }
 }
 
@@ -105,7 +105,7 @@ async function adjustTableContainerHeight(container) {
             });
         }
     } catch (error) {
-        console.error("Error ajustando la altura de la tabla:", error);
+        console.error("Error adjusting table height:", error);
     }
 }
 
@@ -149,7 +149,7 @@ async function observeTableContainers() {
         }
 
     } catch (error) {
-        console.error("Error en observeTableContainers:", error);
+        console.error("Error in observeTableContainers:", error);
     }
 }
 
@@ -203,7 +203,7 @@ export function showWindowOverlay(message = "Mensaje", bgColor = "rgba(0, 0, 255
     const messageElement = document.getElementById('window-message');
 
     if (!overlay || !messageElement) {
-        console.error('El overlay o el mensaje no se encuentra en el DOM.');
+        console.error('The overlay or message is not in the DOM.');
         return;
     }
 
@@ -227,7 +227,7 @@ export function hideWindowOverlay() {
     const overlay = document.getElementById('window-overlay');
 
     if (!overlay) {
-        console.error('El overlay no se encuentra en el DOM.');
+        console.error('The overlay is not in the DOM.');
         return;
     }
 

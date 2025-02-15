@@ -11,18 +11,18 @@ export async function loadTranslations(lang) {
     try {
         const response = await fetch(`locales/${lang}.json`);
         if (!response.ok)
-            throw new Error(`Traducción no encontrada para ${lang}`);
+            throw new Error(`Translation not found for ${lang}`);
         translations = await response.json();
         currentLang = lang;
         updateTexts(); // Actualizar textos en la página solo si se cargan traducciones
     } catch (error) {
-        console.log(`Error cargando traducciones para ${lang}.`, error);
+        console.error(`Error loading translations for ${lang}.`, error);
 
         if (lang === 'en') {
-            console.error("No se pudo cargar el archivo de traducciones en inglés. No se realizarán cambios en los textos.");
+            console.error("The English translation file could not be loaded. No changes will be made to the texts.");
             return; // No hacer nada si no se encuentra inglés
         } else {
-            console.log("Intentando cargar inglés como fallback.");
+            console.error("Trying to load english as fallback.");
             await loadTranslations('en'); // Intentar cargar inglés como fallback
         }
     }

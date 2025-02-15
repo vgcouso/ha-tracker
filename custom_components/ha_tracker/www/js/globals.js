@@ -27,7 +27,7 @@ export async function updateAdmin() {
     try {
 		isAdmin = await fetchAdmin();
     } catch (error) {
-        console.error("Error al verificar el establecer admin:", error);
+        console.error("Error checking admin set:", error);
 		throw error;
     }
 }
@@ -51,9 +51,9 @@ export async function updateConfig() {
 			}				
 		}
 		await configureConsole();		
-		console.log("Configuración obtenida:", config);
+		console.log("Configuration:", config);
     } catch (error) {
-        console.error("Error al verificar el establecer admin:", error);
+        console.error("Error checking admin set:", error);
 		throw error;
     }
 }
@@ -62,8 +62,28 @@ export async function updateConnection() {
     try {
 		isConnected = await fetchConnection();
     } catch (error) {
-        console.error("Error al verificar el establecer connection:", error);
+        console.error("Error checking the connection establishment:", error);
 		throw error;
+    }
+}
+
+export async function isActive(url = haUrl, timeout = 3000) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        const response = await fetch(`${url}/manifest.json`, {
+            method: "GET",
+            mode: "no-cors", //Evitar problemas de CORS en navegadores
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+		
+        return true;
+    } catch (error) {
+        console.warn(`HA is Inactive: ${url}`);
+        return false;
     }
 }
 

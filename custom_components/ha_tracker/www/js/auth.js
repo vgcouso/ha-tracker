@@ -13,7 +13,7 @@ export async function authCallback() {
             await fetchAuthCallback(code);
         }    
 	} catch (error) {
-        console.error("Error durante la autenticación:", error);
+        console.error("Error during authentication:", error);
 		throw error;
     }		
 }
@@ -24,11 +24,43 @@ export async function getToken() {
         const inIframe = window !== window.parent;
 
         if (inIframe) {
-            const token = await getTokenFromHassConnection();
-            if (!token || token.trim() === '') {
-                throw new Error("No se obtuvo un token válido desde iframe.");
-            }
-            return token;
+			const homeAssistantRoot = window.parent.document.querySelector("home-assistant");
+			if (!homeAssistantRoot) {
+				throw new Error("<home-assistant> not found in parent document.");
+			}
+
+			const panelResolver = homeAssistantRoot.shadowRoot
+				?.querySelector("home-assistant-main")
+				?.shadowRoot?.querySelector("partial-panel-resolver");
+
+			if (!panelResolver) {
+				throw new Error("<partial-panel-resolver> not found in Home Assistant.");
+			}
+
+			const panelCustom = panelResolver.querySelector("ha-panel-custom");
+			if (!panelCustom) {
+				throw new Error("<ha-panel-custom> not found inside <partial-panel-resolver>.");
+			}
+
+			const panel = panelCustom.querySelector("ha-tracker");
+			if (!panel) {
+				throw new Error("<ha-tracker> not found within <ha-panel-custom>.");
+			}
+
+			// Obtener el token y su expiración
+			const token = panel.token;
+			const expiration = panel.tokenExpiration;
+			const now = Date.now(); 
+		
+			if (!token || token.trim() === '') {
+				throw new Error("A valid token was not obtained from Panel.");
+			}
+
+			if (!expiration || isNaN(expiration) || expiration <= now) {
+				throw new Error("The token has expired. An invalid token will not be returned.");
+			}
+				
+			return token;		
         }
 
         // Asegurar que el token sea válido usando authenticate
@@ -40,15 +72,15 @@ export async function getToken() {
 
         if (tokens?.access_token) {
             if (Date.now() >= tokens.expires) {
-                throw new Error("El token ha expirado.");
+                throw new Error("Token has expired.");
             }
             return tokens.access_token;
         }
 
-        console.error("No se encontró un token válido incluso después de autenticar.");
-        throw new Error("No se encontró un token válido.");
+        console.error("No valid token found even after authenticating.");
+        throw new Error("No valid token found even after authenticating.");
     } catch (error) {
-        console.error("Error en getToken:", error);
+        console.error("Error in getToken:", error);
         return null; // Retorna null en caso de error
     }
 }
@@ -65,20 +97,20 @@ async function authenticate() {
                 return; // Detiene el flujo si el token es válido
             }
 
-            console.log("El token ha expirado. Intentando renovarlo...");
+            console.log("The token has expired. Trying to renew it...");
             const renewed = await renewToken(tokenData.refresh_token);
             if (renewed)
                 return; // Detiene el flujo si el token se renueva correctamente
         }
 
         // Redirige si no hay token válido
-        console.log("No se encontró un token válido. Redirigiendo para autorizar...");
+        console.log("No valid token found. Redirecting to authorize...");
 
         const redirectUri = `${haUrl}/local/ha-tracker/index.html`;
         const authUrl = `${haUrl}/auth/authorize?client_id=${encodeURIComponent(`${haUrl}/`)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
         window.location.href = authUrl;
     } catch (error) {
-        console.error("Error durante authenticate:", error);
+        console.error("Error during authenticate:", error);
     }
 }
 
@@ -87,14 +119,14 @@ async function renewToken(refreshToken) {
         const tokenData = await fetchTokenRefresh(refreshToken);
 
         if (!tokenData) {
-            console.error("No se pudo renovar el token.");
+            console.error("Failed to renew token.");
             return false;
         }
 
         // Recuperar el token original para copiar datos faltantes
         const storedTokensRaw = localStorage.getItem("hassTokens");
         if (!storedTokensRaw) {
-            console.error("No se encontró un token existente en el almacenamiento local.");
+            console.error("No existing token found in local storage.");
             return false;
         }
 
@@ -111,71 +143,11 @@ async function renewToken(refreshToken) {
 
         // Almacenar el token renovado en localStorage
         localStorage.setItem("hassTokens", JSON.stringify(tokenData));
-        console.log("Token renovado y almacenado:", tokenData);
+        console.log("Token renewed and stored:", tokenData);
 
         return true;
     } catch (error) {
-        console.error("Error al procesar el token renovado:", error);
+        console.error("Error processing renewed token:", error);
         return false; // Indica que la renovación falló
     }
 }
-
-const getTokenFromHassConnection = async() => {
-    let hassConnection = window.hassConnection || window.parent?.hassConnection;
-
-    if (!hassConnection) {
-        throw new Error("No se encontró una conexión existente");
-    }
-
-    try {
-        // Asegúrate de que hassConnection sea una promesa y espera su resolución
-        const config = typeof hassConnection.then === "function" ? await hassConnection : hassConnection;
-
-        // Verifica si config tiene los datos esperados
-        if (config?.auth?.data?.access_token) {
-            let token = config.auth.data.access_token;
-            const expires = config.auth.data.expires; // Fecha de expiración del token
-            const refreshToken = config.auth.data.refresh_token; // Refresh token
-
-            // Verificar si el campo 'expires' existe y tiene un formato válido
-            if (!expires) {
-                throw new Error("No se encontró la fecha de expiración en la respuesta");
-            }
-
-            // Intentar convertir 'expires' a un timestamp
-            const expirationTime = new Date(expires).getTime();
-            if (isNaN(expirationTime)) {
-                throw new Error("Formato de fecha de expiración no válido");
-            }
-
-            // Obtener el tiempo actual
-            const now = Date.now();
-
-            // Verificar si el token ha expirado
-            if (expirationTime <= now) {
-                console.log("El token ha expirado, intentando renovarlo...");
-                const tokenData = await fetchTokenRefresh(refreshToken);
-
-                if (tokenData) {
-                    console.log("Token renovado con éxito:", tokenData);
-
-                    // Actualizar `hassConnection` con el nuevo token y expiración
-                    config.auth.data.access_token = tokenData.access_token;
-                    config.auth.data.expires = new Date(Date.now() + tokenData.expires_in * 1000).toISOString();
-                    config.auth.data.refresh_token = tokenData.refresh_token;
-
-                    token = tokenData.access_token;
-                } else {
-                    throw new Error("No se pudo renovar el token.");
-                }
-            }
-
-            return token;
-        } else {
-            throw new Error("No se encontró el token en la respuesta de hassConnection");
-        }
-    } catch (err) {
-        console.error("Error obteniendo el token de hassConnection:", err);
-        return ``; // Token vacío en caso de error
-    }
-};

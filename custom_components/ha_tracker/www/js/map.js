@@ -57,17 +57,6 @@ export async function initMap() {
             layersControlElement.style.left = `${zoomControlRect.right}px`;
         }
     } catch (error) {
-        console.error("Error al iniciar el mapa:", error);
-    }
-}
-
-export async function getAddressFromCoordinates(lat, lng) {
-    try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-        const data = await response.json();
-        return data.display_name || "";
-    } catch (error) {
-        console.error("Error obteniendo dirección:", error);
-        return "";
+        console.error("Error starting map:", error);
     }
 }

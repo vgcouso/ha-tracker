@@ -12,8 +12,8 @@ import {t} from './i18n.js';
 const DEFAULT_ICON_URL = '/local/ha-tracker/images/location-red.png';
 
 export let persons = [];
-export let requestQueue = []; // Cola de solicitudes pendientes
 
+let requestQueue = []; // Cola de solicitudes pendientes
 let devices = [];
 let personsDevicesMap = {};
 let personsMarkers = {};
@@ -34,7 +34,7 @@ export async function updatePersons(){
 		await updatePersonsMarkers();
 		await updatePersonsFilter();
     } catch (error) {
-		console.error("Error al actualizar dispositivos:", error);
+		console.error("Error updating devices:", error);
 		throw error;
     }
 }
@@ -42,9 +42,9 @@ export async function updatePersons(){
 export async function setDevices(data) {
     try {
         devices = Array.isArray(data) ? data.filter(d => d.entity_id && d.attributes) : [];
-        console.log("Devices válidos obtenidos:", devices);
+        console.log("Devices:", devices);
     } catch (error) {
-        console.error("Error al procesar dispositivos:", error);
+        console.error("Error processing devices:", error);
         devices = [];
     }
 }
@@ -52,9 +52,9 @@ export async function setDevices(data) {
 export async function setPersons(data) {
     try {
         persons = Array.isArray(data) ? data.filter(p => p.attributes?.friendly_name) : [];
-        console.log("Personas válidas obtenidas:", persons);
+        console.log("Persons:", persons);
     } catch (error) {
-        console.error("Error al procesar personas:", error);
+        console.error("Error processing persons:", error);
         persons = [];
     }
 }
@@ -68,7 +68,7 @@ export async function handlePersonsSelection(personId) {
     // Verificar si personsDevicesMap[personId] existe antes de acceder a sus propiedades
     const selectedDevice = personsDevicesMap[personId];
     if (!selectedDevice) {
-        console.error(`No se encontró un device para la persona con ID: ${personId}`);
+        console.error(`No device was found for the person with ID: ${personId}`);
         return;
     }
 
@@ -81,7 +81,7 @@ export async function handlePersonsSelection(personId) {
     // Obtener coordenadas desde el device_tracker almacenado
     const { latitude: lat, longitude: lng } = selectedDevice.attributes || {};
     if (!isValidCoordinates(lat, lng)) {
-        console.error(`Coordenadas no válidas para ${personId}: lat=${lat}, lng=${lng}`);
+        console.error(`Invalid coordinates for ${personId}: lat=${lat}, lng=${lng}`);
         return;
     }
 
@@ -129,7 +129,7 @@ export async function fitMapToAllPersons() {
             .map(device => [device.attributes.latitude, device.attributes.longitude]);
 
         if (!coords.length) {
-            console.log("No hay dispositivos con coordenadas para ajustar el mapa.");
+            console.log("There are no devices with coordinates to adjust the map.");
             map.setView([40.4168, -3.7038], 6); // Fallback a Madrid, por ejemplo
             return;
         }
@@ -145,7 +145,7 @@ export async function fitMapToAllPersons() {
         // Ajustar el mapa para que todas las coordenadas encajen en la vista
         map.fitBounds(bounds);
     } catch (error) {
-        console.error("Error al hacer fitMapToAllDevices:", error);
+        console.error("Error doing fitMapToAllDevices:", error);
     }
 }
 
@@ -157,7 +157,7 @@ async function updatePersonsDevicesMap() {
 
         // Verificar que source existe y tiene un valor válido
         if (!source || typeof source !== "string" || source.trim() === "") {
-            console.log(`La persona ${person.attributes.friendly_name || person.entity_id} no tiene un 'source' válido.`);
+            console.log(`The person ${person.attributes.friendly_name || person.entity_id} does not have a valid 'source'.`);
             return; // Salta esta persona y continúa con la siguiente
         }
 
@@ -165,12 +165,12 @@ async function updatePersonsDevicesMap() {
         const device = devices.find(device => device.entity_id === source);
 
         if (!device) {
-            throw new Error(`El 'source' (${source}) de ${person.attributes.friendly_name || person.entity_id} no está en devices_tracker.`);
+            throw new Error(`The 'source' (${source}) of ${person.attributes.friendly_name || person.entity_id} not in devices_tracker.`);
         }
 
         // Asegurar que el device tiene latitud y longitud
         if (!device.attributes.latitude || !device.attributes.longitude) {
-            console.log(`El device_tracker ${source} de ${person.attributes.friendly_name || person.entity_id} no tiene lat/lng.`);
+            console.log(`The device_tracker ${source} of ${person.attributes.friendly_name || person.entity_id} does not have lat/lng.`);
 			return; // Salta esta persona y continúa con la siguiente
         }
 
@@ -178,7 +178,7 @@ async function updatePersonsDevicesMap() {
         personsDevicesMap[person.entity_id] = device;
     });
 
-    console.log("Mapeo de personas a dispositivos actualizado:", personsDevicesMap);
+    console.log("Devices to persons:", personsDevicesMap);
 }
 
 async function updatePersonsMarkers() {
@@ -257,7 +257,7 @@ async function updatePersonsMarkers() {
 }
 
 export async function handlePersonRowSelection(personId) {
-    console.log("Seleccionando fila para la persona:", personId);
+    console.log("Selecting row for person:", personId);
 
     const selectedPerson = personsMarkers[personId];
     if (selectedPerson) {
@@ -269,21 +269,21 @@ export async function handlePersonRowSelection(personId) {
 
     const personTableBody = document.getElementById('persons-table-body');
     if (!personTableBody) {
-        console.error("No se encontró el tbody de la tabla de persons.");
+        console.error("Person table tbody not found.");
         return;
     }
 
     // Seleccionar la fila principal
     const row = personTableBody.querySelector(`tr[data-person-id="${personId}"]`);
     if (!row) {
-        console.log("No se encontró la fila para la persona:", personId);
+        console.log("No row found for person:", personId);
         return;
     }
 
     // Seleccionar la fila de dirección (la siguiente fila después de la principal)
     const addressRow = row.nextElementSibling;
     if (!addressRow || !addressRow.classList.contains("person-address-row")) {
-        console.log("No se encontró la fila de dirección para la persona:", personId);
+        console.log("Address row not found for person:", personId);
     }
 
     // Cambiar el combo a "users" si no está seleccionado
@@ -307,7 +307,7 @@ export async function handlePersonRowSelection(personId) {
     // Hacer scroll hacia la fila principal (ajustado para que incluya la dirección)
     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    console.log("Fila de la persona y su dirección seleccionadas correctamente.");
+    console.log("Row of the person and their address selected correctly.");
 }
 
 
@@ -315,7 +315,7 @@ export async function handlePersonRowSelection(personId) {
 export function updatePersonsTableHeaders() {
     const table = document.querySelector("#persons-table"); // Asegurarse de que busca en la tabla correcta
     if (!table) {
-        console.error("No se encontró la tabla de resumen de zonas.");
+        console.error("Zone summary table not found.");
         return;
     }
 
@@ -367,7 +367,7 @@ export async function updatePersonsTable() {
     try {
         const tableBody = document.getElementById("persons-table-body");
         if (!tableBody) {
-            console.error("No se encontró el tbody de la tabla de persons.");
+            console.error("Person table tbody not found.");
             return;
         }
 
@@ -574,7 +574,7 @@ export async function updatePersonsTable() {
 		}
 
     } catch (error) {
-        console.error("Error al actualizar la tabla de personas:", error);
+        console.error("Error updating people table:", error);
     }
 }
 
@@ -598,7 +598,7 @@ export async function processQueue() {
     const { lat, lon, deviceId, lastUpdated, updateCellCallback } = requestQueue.shift();
 
     if (typeof updateCellCallback !== "function") {
-        console.error(`Error: updateCellCallback no es una función para ${deviceId}`);
+        console.error(`Error: updateCellCallback is not a function for ${deviceId}`);
         return;
     }
 
@@ -607,7 +607,6 @@ export async function processQueue() {
 
     try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
-        console.log(`Enviando solicitud a la API: ${url}`);
 		
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
@@ -618,14 +617,14 @@ export async function processQueue() {
         // Guardar en caché solo si el address es válido
         if (address && lastUpdated) {
             lastGeocodeRequests[deviceId] = { lat, lon, timestamp: lastUpdated, address };
-            console.log(`Dirección obtenida para ${deviceId}: ${address}`);
+            console.log(`Address for ${deviceId}: ${address}`);
         } else {
-            console.warn(`Dirección vacía para ${deviceId}. No se almacenará en caché.`);
+            console.warn(`Empty address for ${deviceId}. Will not be cached.`);
         }
 
         updateCellCallback(address || "");
     } catch (error) {
-        console.error(`Error al obtener dirección para ${deviceId}:`, error);
+        console.error(`Error getting address for ${deviceId}:`, error);
         updateCellCallback("Error");
     }
 }
