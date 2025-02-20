@@ -55,7 +55,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN]["views_registered"] = True
 
     # regitra zonas en Home Assistant
-    await register_zones(hass)
+    try:
+        await register_zones(hass)
+    except Exception as e:
+        _LOGGER.error("Error while registering zones: %s", e)
 
     # Escuchar actualizaciones de configuración sin reiniciar
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))

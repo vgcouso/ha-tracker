@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+import re
 from datetime import datetime
 
 import aiofiles
@@ -63,11 +64,12 @@ class ZonesAPI(HomeAssistantView):
         hass = request.app["hass"]
         data = await request.json()
 
-        # Generar ID si no está presente
+        # Generate ID if not present
         if "id" not in data or not data["id"].strip():
+            name = data["name"]
             timestamp = int(datetime.now().timestamp() * 1000)
-            name = data["name"].replace(" ", "_").lower()
-            data["id"] = f"{name}_{timestamp}"
+            sanitized_name = sanitize_id(name)  # Sanitize the name
+            data["id"] = f"{sanitized_name}_{timestamp}"
 
         # Validar zona
         is_valid, error = validate_zone(data)
@@ -191,7 +193,6 @@ async def unregister_zones(hass):
     except (OSError, ValueError, KeyError) as e:
         _LOGGER.error("Error unregistering zones: %s", e)
 
-
 async def register_zones(hass):
     """Registrar zonas en Home Assistant."""
 
@@ -218,7 +219,7 @@ async def register_zones(hass):
             try:
                 # Registrar la zona personalizada
                 hass.states.async_set(
-                    f"zone.{zone['id']}",
+                    f"zone.{sanitize_id(zone['id'])}",
                     "active",
                     {
                         "friendly_name": zone["name"],
@@ -283,6 +284,10 @@ def validate_zone(zone):
             elif not isinstance(zone["name"], str) or not zone["name"].strip():
                 error_msg = "Name cannot be empty"
             else:
-                return True, None  # ✅ Solo un `return` exitoso al final
+                return True, None  # Solo un `return` exitoso al final
 
-    return False, error_msg  # ✅ Solo un `return` de error al final
+    return False, error_msg  # Solo un `return` de error al final
+
+def sanitize_id(zone_name):
+    # Replace spaces with underscores and remove non-alphanumeric characters
+    return re.sub('[^0-9a-zA-Z_]+', '', zone_name.replace(' ', '_')).lower()
