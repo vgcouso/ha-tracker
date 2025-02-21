@@ -1,2 +1,0 @@
-- Would it be possible to integrate with the "dashboard" menu, so we can choose ha-tracker appear in the side bar or not and more importantly choose to limit access to administrator only, as this contain sensitive personal information.
-- Would it be possible to use the default color theme from HA?
