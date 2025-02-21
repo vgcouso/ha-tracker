@@ -6,10 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.23] - 2025-02-21
+
+### Fixed
+- No Users in the normal Person menu #6
+- Object NoneType can't be used in 'await' expression #5
+
+
 ## [0.0.22] - 2025-02-20
 
 ### Fixed
-- Zones with non-alphanumeric names
+- HA Tracker won't load after creating new zones #4
+  (Zones with non-alphanumeric names)
 
 
 ## [0.0.21] - 2025-02-15

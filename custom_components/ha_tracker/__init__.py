@@ -7,6 +7,7 @@ import shutil
 
 import aiofiles
 from homeassistant.components.panel_custom import async_register_panel
+from homeassistant.components.frontend import async_remove_panel
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
@@ -115,8 +116,7 @@ async def async_unload_entry(hass: HomeAssistant, _entry: ConfigEntry) -> bool:
 
     # Eliminar el panel personalizado correctamente
     try:
-        await hass.components.frontend.async_remove_panel("ha-tracker")
-        _LOGGER.info("HA Tracker panel removed successfully.")
+        async_remove_panel(hass, "ha-tracker")
     except Exception as e:
         _LOGGER.error("Error removing HA Tracker panel: %s", e)
 

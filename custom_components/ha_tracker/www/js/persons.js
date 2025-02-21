@@ -165,7 +165,8 @@ async function updatePersonsDevicesMap() {
         const device = devices.find(device => device.entity_id === source);
 
         if (!device) {
-            throw new Error(`The 'source' (${source}) of ${person.attributes.friendly_name || person.entity_id} not in devices_tracker.`);
+            console.error(`The 'source' (${source}) of ${person.attributes.friendly_name || person.entity_id} is not in device_trackers.`);
+            return; // Continúa con la siguiente persona en vez de lanzar una excepción			
         }
 
         // Asegurar que el device tiene latitud y longitud
