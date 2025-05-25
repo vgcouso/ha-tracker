@@ -72,7 +72,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         sidebar_title="HA Tracker",
         sidebar_icon="mdi:crosshairs-gps",
         module_url="/local/ha-tracker/ha-tracker.js",
-        require_admin=False
+        require_admin=config.get("only_admin", False),
     )
 
     return True

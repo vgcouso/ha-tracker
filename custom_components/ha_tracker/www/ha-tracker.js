@@ -65,9 +65,12 @@ class HATrackerPanel extends LitElement {
             height: 100%;
         }
         app-header {
-            background-color: var(--primary-color);
-            color: white;
-            --mdc-theme-primary: var(--primary-color);
+		    background-color: var(--app-header-background-color,
+		                          var(--primary-color));
+		    color: var(--app-header-text-color,
+		               var(--primary-text-color));
+		    --mdc-theme-primary: var(--app-header-background-color,
+		                             var(--primary-color));
             height: 56px;
             display: flex;
             align-items: center;
@@ -80,12 +83,14 @@ class HATrackerPanel extends LitElement {
         }
         ha-menu-button {
             display: block;
+			color: inherit;
         }
         .title {
             font-size: 20px;
             flex-grow: 1;
             text-align: left;
             padding-left: 16px;
+			color: inherit;
         }
         .iframe-container {
             flex-grow: 1;

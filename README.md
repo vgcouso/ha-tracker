@@ -34,7 +34,8 @@ It also allows you to filter positions between two dates with grouping by zone a
 - **Geocoding Time:** (Minimum value: 30 seconds) Time between positions to request a person's address.
 - **Minimum Distance for Geocoding:** (Minimum value: 20 meters) Distance between positions to request a person's address.
 - **Enable Debugging:** Messages in the web browser console (F12 key).
-
+- **Admin only** Make the integration accessible only by admin.
+- **Speed in miles per hour** Speed visible in miles per hour.
     
 ## QUICK START
 

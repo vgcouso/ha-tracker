@@ -9,6 +9,7 @@ from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.util import dt as dt_util
 
 from ..const import MAX_DAYS_FOR_FILTER
+from ..const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -180,6 +181,22 @@ class FilteredPositionsEndpoint(HomeAssistantView):
         """Devuelve posiciones filtradas de un usuario entre fechas"""
 
         hass = request.app["hass"]
+        
+        
+        """Devuelve solo si es administrador o only_admin es false"""
+        only_admin = False
+        entries = hass.config_entries.async_entries(DOMAIN)
+        if entries:                             # Normalmente solo habrá una entrada
+            entry = entries[0]
+            only_admin = entry.options.get(
+                "only_admin",
+                entry.data.get("only_admin", False),
+            )
+        user = request["hass_user"]             
+        if only_admin and (user is None or not user.is_admin):
+            return self.json([])        
+        
+        
         query = request.query
 
         # Validar parámetros

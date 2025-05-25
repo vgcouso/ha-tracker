@@ -6,6 +6,14 @@ from homeassistant.core import callback
 
 from .const import DOMAIN
 
+DEFAULTS = {
+    "update_interval": 10,
+    "geocode_time": 30,
+    "geocode_distance": 20,
+    "only_admin": False,          
+    "enable_debug": False,    
+    "use_mph": False,
+}
 
 class HATrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Define el flujo de configuración para la integración HA Tracker."""
@@ -21,16 +29,15 @@ class HATrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         data_schema = vol.Schema(
             {
-                vol.Required("update_interval", default=10): vol.All(
-                    vol.Coerce(int), vol.Range(min=10)
-                ),
-                vol.Required("geocode_time", default=30): vol.All(
-                    vol.Coerce(int), vol.Range(min=30)
-                ),
-                vol.Required("geocode_distance", default=20): vol.All(
-                    vol.Coerce(int), vol.Range(min=20)
-                ),
-                vol.Required("enable_debug", default=False): bool,
+                vol.Required("update_interval", default=DEFAULTS["update_interval"]):
+                    vol.All(vol.Coerce(int), vol.Range(min=10)),
+                vol.Required("geocode_time",    default=DEFAULTS["geocode_time"]):
+                    vol.All(vol.Coerce(int), vol.Range(min=30)),
+                vol.Required("geocode_distance", default=DEFAULTS["geocode_distance"]):
+                    vol.All(vol.Coerce(int), vol.Range(min=20)),
+                vol.Required("only_admin",    default=DEFAULTS["only_admin"]): bool,
+                vol.Required("enable_debug",  default=DEFAULTS["enable_debug"]): bool,
+                vol.Required("use_mph",       default=DEFAULTS["use_mph"]): bool,
             }
         )
 
@@ -71,22 +78,15 @@ class HATrackerOptionsFlowHandler(config_entries.OptionsFlow):
 
         options_schema = vol.Schema(
             {
-                vol.Required(
-                    "update_interval",
-                    default=options.get("update_interval", 10),
-                ): vol.All(vol.Coerce(int), vol.Range(min=10)),
-                vol.Required(
-                    "geocode_time",
-                    default=options.get("geocode_time", 30),
-                ): vol.All(vol.Coerce(int), vol.Range(min=30)),
-                vol.Required(
-                    "geocode_distance",
-                    default=options.get("geocode_distance", 20),
-                ): vol.All(vol.Coerce(int), vol.Range(min=20)),
-                vol.Required(
-                    "enable_debug",
-                    default=options.get("enable_debug", False),
-                ): bool,
+                vol.Required("update_interval",  default=options.get("update_interval", 10)):
+                    vol.All(vol.Coerce(int), vol.Range(min=10)),
+                vol.Required("geocode_time",     default=options.get("geocode_time", 30)):
+                    vol.All(vol.Coerce(int), vol.Range(min=30)),
+                vol.Required("geocode_distance", default=options.get("geocode_distance", 20)):
+                    vol.All(vol.Coerce(int), vol.Range(min=20)),
+                vol.Required("only_admin",       default=options.get("only_admin", False)): bool,  
+                vol.Required("enable_debug",     default=options.get("enable_debug", False)): bool,
+                vol.Required("use_mph",          default=options.get("use_mph", False)): bool,
             }
         )
 

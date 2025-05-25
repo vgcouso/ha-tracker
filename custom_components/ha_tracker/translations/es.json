@@ -8,8 +8,10 @@
                     "update_interval": "Intervalo de actualización (en segundos)",
                     "enable_debug": "Habilitar depuración",
                     "geocode_time": "Tiempo para geocodificación (en segundos)",
-                    "geocode_distance": "Distancia mínima para geocodificación (en metros)"
-                }
+                    "geocode_distance": "Distancia mínima para geocodificación (en metros)",
+					"only_admin": "Solo Administrador",
+					"use_mph": "Velocidad en millas por hora"
+                }	
             }
         }
     },
@@ -22,8 +24,10 @@
                     "update_interval": "Intervalo de actualización (en segundos)",
                     "enable_debug": "Habilitar depuración",
                     "geocode_time": "Tiempo para geocodificación (en segundos)",
-                    "geocode_distance": "Distancia mínima para geocodificación (en metros)"
-                }
+                    "geocode_distance": "Distancia mínima para geocodificación (en metros)",
+					"only_admin": "Solo Administrador",
+					"use_mph": "Velocidad en millas por hora"
+                }			
             }
         }
     }

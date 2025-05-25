@@ -100,10 +100,6 @@ export async function fetchPersons() {
     const url = `${haUrl}/api/ha_tracker/persons`;
     try {
         const data = await fetchData(url);
-        // Verificar si no hay personas en la respuesta
-        if (!data || !Array.isArray(data) || data.length === 0) {
-            throw new Error("The answer does not contain valid persons.");
-        }
         await setPersons(data);
     } catch (error) {
         console.error("Error getting Persons:", error);

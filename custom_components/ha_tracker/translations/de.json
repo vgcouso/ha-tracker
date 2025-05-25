@@ -8,7 +8,9 @@
                     "update_interval": "Aktualisierungsintervall (in Sekunden)",
                     "enable_debug": "Debugging aktivieren",
                     "geocode_time": "Geokodierungszeit (in Sekunden)",
-                    "geocode_distance": "Mindestentfernung für Geokodierung (in Metern)"
+                    "geocode_distance": "Mindestentfernung für Geokodierung (in Metern)",
+					"only_admin": "Nur Administrator",
+					"use_mph": "Geschwindigkeit in Meilen pro Stunde"
                 }
             }
         }
@@ -22,7 +24,9 @@
                     "update_interval": "Aktualisierungsintervall (in Sekunden)",
                     "enable_debug": "Debugging aktivieren",
                     "geocode_time": "Geokodierungszeit (in Sekunden)",
-                    "geocode_distance": "Mindestentfernung für Geokodierung (in Metern)"
+                    "geocode_distance": "Mindestentfernung für Geokodierung (in Metern)",
+					"only_admin": "Nur Administrator",
+					"use_mph": "Geschwindigkeit in Meilen pro Stunde"
                 }
             }
         }

@@ -13,6 +13,7 @@ export let updateInterval = 10;
 export let enableDebug = false;
 export let geocodeTime = 30;
 export let geocodeDistance = 20;
+export let use_mph = false;
 
 // Almacén para las referencias originales de console
 const originalConsole = {
@@ -48,6 +49,9 @@ export async function updateConfig() {
 			}	
 			if (typeof config.geocode_distance === "number" && config.geocode_distance >= 20) {
 				geocodeDistance = config.geocode_distance;
+			}	
+			if (typeof config.use_mph === "boolean") {
+				use_mph = config.use_mph;
 			}				
 		}
 		await configureConsole();		

@@ -40,5 +40,6 @@ class ConfigEndpoint(HomeAssistantView):
                 "enable_debug": config.get("enable_debug", False),
                 "geocode_time": config.get("geocode_time", 30),
                 "geocode_distance": config.get("geocode_distance", 20),
+                "use_mph": config.get("use_mph", False),
             }
         )

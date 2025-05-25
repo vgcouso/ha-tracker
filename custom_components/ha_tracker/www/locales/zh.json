@@ -32,6 +32,7 @@
   "radius": "半径",
   "meters": "米",
   "km_per_hour": "公里/小时",  
+  "mi_per_hour": "英里/小时",
   "disconnected": "与服务器断开连接",
   "running_filter": "正在运行筛选",
   "no_positions": "未找到符合筛选条件的有效位置",

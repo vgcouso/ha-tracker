@@ -45,7 +45,9 @@ async function init() {
 async function startUpdateLoop() {
     while (true) {
         try {
-            await update();
+			if (document.visibilityState === 'visible') {
+				await update();
+			}
         } catch (error) {
             console.error("Error during update, loop will continue:", error);
         }
@@ -56,7 +58,9 @@ async function startUpdateLoop() {
 async function startGeocodeLoop() {
     while (true) {
         try {
-            await processQueue();
+			if (document.visibilityState === 'visible') {
+				await processQueue();
+			}
         } catch (error) {
             console.error("Error processing queue, loop will continue:", error);
         }

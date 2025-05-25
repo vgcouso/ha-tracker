@@ -8,7 +8,9 @@
                     "update_interval": "更新间隔（秒）",
                     "enable_debug": "启用调试",
                     "geocode_time": "地理编码时间（秒）",
-                    "geocode_distance": "地理编码最小距离（米）"
+                    "geocode_distance": "地理编码最小距离（米）",
+					"only_admin": "仅管理员",
+					"use_mph": "以英里每小时计的速度"
                 }
             }
         }
@@ -22,7 +24,9 @@
                     "update_interval": "更新间隔（秒）",
                     "enable_debug": "启用调试",
                     "geocode_time": "地理编码时间（秒）",
-                    "geocode_distance": "地理编码最小距离（米）"
+                    "geocode_distance": "地理编码最小距离（米）",
+					"only_admin": "仅管理员",
+					"use_mph": "以英里每小时计的速度"
                 }
             }
         }

@@ -8,7 +8,9 @@
                     "update_interval": "更新間隔（秒）",
                     "enable_debug": "デバッグを有効にする",
                     "geocode_time": "ジオコーディング時間（秒）",
-                    "geocode_distance": "ジオコーディングの最小距離（メートル）"
+                    "geocode_distance": "ジオコーディングの最小距離（メートル）",
+					"only_admin": "管理者のみ",
+					"use_mph": "時速マイル"
                 }
             }
         }
@@ -22,7 +24,9 @@
                     "update_interval": "更新間隔（秒）",
                     "enable_debug": "デバッグを有効にする",
                     "geocode_time": "ジオコーディング時間（秒）",
-                    "geocode_distance": "ジオコーディングの最小距離（メートル）"
+                    "geocode_distance": "ジオコーディングの最小距離（メートル）",
+					"only_admin": "管理者のみ",
+					"use_mph": "時速マイル"
                 }
             }
         }

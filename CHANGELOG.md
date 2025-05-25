@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.24] - 2025-05-25
+
+### Added
+- If the website is not active, it does not update to save resources.
+- Default Filter settings #8
+- Use default theme colors #2
+- Make the integration accessible only by admin or selected users  #7
+- Dashboard menu integration #3
+- Measurement unit options: imperial or metric #11
+
+### Fixed
+- Speed value is metres per second and not km/hr #14
+- Support users with multiple trackers #12
+
 ## [0.0.23] - 2025-02-21
 
 ### Fixed

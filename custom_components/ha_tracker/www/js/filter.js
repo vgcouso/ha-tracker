@@ -4,6 +4,7 @@
 //
 
 import {map} from './map.js';
+import {use_mph} from './globals.js';
 import {showWindowOverlay, hideWindowOverlay, formatDate, formatTotalTime, isValidCoordinates} from './utils.js';
 import {fetchFilteredPositions} from './fetch.js';
 import {handleZonePosition, showZone} from './zones.js';
@@ -18,8 +19,9 @@ let summaryZonesSortAscending = true; // Orden ascendente por defecto
 const DEFAULT_ICON_URL = '/local/ha-tracker/images/location-blue.png';
 						 
 document.addEventListener("DOMContentLoaded", () => {
-    const personSelect = document.getElementById("person-select");
-
+    resetFilter();
+	
+	const personSelect = document.getElementById("person-select");
     personSelect.addEventListener("focus", async() => {
         try {
             await updatePersonsFilter();
@@ -101,7 +103,7 @@ async function updatePositionsTable(positions) {
 
         const groupClass = `group-${groupClassIndex}`;
         const fecha = formatDate(pos.last_updated);
-        const vel = pos.attributes.speed || 0;
+		const vel = Math.round((pos.attributes.speed || 0) * (use_mph ? 2.23694 : 3.6));
 
         const uniqueId = `${pos.entity_id}_${new Date(pos.last_updated).toISOString()}`;
 
@@ -111,7 +113,7 @@ async function updatePositionsTable(positions) {
         row.dataset.latitude = pos.attributes.latitude;
         row.dataset.longitude = pos.attributes.longitude;
         row.dataset.lastUpdated = pos.last_updated;
-        row.dataset.speed = pos.attributes.speed || 0;
+		row.dataset.speed = Math.round((pos.attributes.speed || 0) * (use_mph ? 2.23694 : 3.6));
 
         row.style.cursor = "pointer"; // Cambia el cursor al pasar por encima
 
@@ -245,8 +247,35 @@ async function applyFilter() {
 }
 
 export async function resetFilter() {
+	const startInput = document.getElementById('start-date');
+	if (!startInput.value) {
+	  const now = new Date();          // fecha/hora locales
+	  now.setHours(0, 0, 0, 0);        // 00:00:00.000
+	  // ---- formateo manual “YYYY-MM-DDTHH:MM” ----
+	  const pad = n => n.toString().padStart(2, '0');
+	  const formatted =
+		`${now.getFullYear()}-` +
+		`${pad(now.getMonth() + 1)}-` +
+		`${pad(now.getDate())}T00:00`;
+	  startInput.value = formatted;
+	}
+	
+	const endInput = document.getElementById('end-date');
+	if (!endInput.value) {
+	  const now = new Date();          // fecha/hora locales
+	  now.setHours(0, 0, 0, 0);        // 00:00:00.000
+	  now.setDate(now.getDate() + 1);  // +1 día
+	  // ---- formateo manual “YYYY-MM-DDTHH:MM” ----
+	  const pad = n => n.toString().padStart(2, '0');
+	  const formatted =
+		`${now.getFullYear()}-` +
+		`${pad(now.getMonth() + 1)}-` +
+		`${pad(now.getDate())}T00:00`;
+	  endInput.value = formatted;
+	}	
+	
     document.getElementById('filter-table-body').innerHTML = '';
-
+		
     // Eliminar la línea de la ruta, si existe
     if (routeLine)
         map.removeLayer(routeLine);
@@ -308,7 +337,7 @@ async function selectRow(row) {
     const latitude = parseFloat(row.dataset.latitude);
     const longitude = parseFloat(row.dataset.longitude);
     const lastUpdated = row.dataset.lastUpdated;
-    const speed = row.dataset.speed || 0;
+	const speed = Math.round(row.dataset.speed || 0);
     const uniqueId = row.dataset.entityId;
 
     // Crear el nuevo marcador 
@@ -324,7 +353,7 @@ async function selectRow(row) {
     .addTo(map)
     .bindPopup(`
         ${formatDate(lastUpdated)}<br>
-        ${t('speed')}: ${speed} ${t('km_per_hour')}
+        ${speed} ${t(use_mph ? 'mi_per_hour' : 'km_per_hour')}
     `)
     .openPopup();
 
@@ -442,7 +471,7 @@ async function updateSummaryTable(positions) {
     const totalTimeMs = lastDate - firstDate;
 
     const maxSpeedPos = positions.reduce((max, pos) => {
-        const speed = pos.attributes.speed || 0;
+		const speed = Math.round((pos.attributes.speed || 0) * (use_mph ? 2.23694 : 3.6));
         return speed > max.speed ? {
             speed,
             position: pos
@@ -453,8 +482,8 @@ async function updateSummaryTable(positions) {
         position: null
     });
 
-    const averageSpeed = positions.reduce((sum, pos) => sum + (pos.attributes.speed || 0), 0) / totalPositions;
-
+    const averageSpeed = positions.reduce((sum, pos) => sum + (Math.round((pos.attributes.speed || 0) * (use_mph ? 2.23694 : 3.6)) || 0), 0) / totalPositions;
+	
     // Formatear datos
     const totalTime = formatTotalTime(totalTimeMs);
     const maxSpeed = maxSpeedPos.speed.toFixed(0);
@@ -463,8 +492,8 @@ async function updateSummaryTable(positions) {
     // Actualizar las celdas del resumen
     document.getElementById('positions-count').textContent = totalPositions;
     document.getElementById('total-time').textContent = totalTime;
-    document.getElementById('max-speed').textContent = `${maxSpeed} ${t('km_per_hour')}`;
-    document.getElementById('average-speed').textContent = `${avgSpeed} ${t('km_per_hour')}`;
+    document.getElementById('max-speed').textContent = `${maxSpeed} ${t(use_mph ? 'mi_per_hour' : 'km_per_hour')}`;
+    document.getElementById('average-speed').textContent = `${avgSpeed} ${t(use_mph ? 'mi_per_hour' : 'km_per_hour')}`;
 
     // Hacer clic en la fila de Velocidad Máxima para centrar en la posición correspondiente
     const maxSpeedRow = document.querySelector('#summary table tbody tr:nth-child(3)');

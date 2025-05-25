@@ -2,7 +2,7 @@
 // DEVICES
 //
 
-import {geocodeTime, geocodeDistance} from './globals.js';
+import {geocodeTime, geocodeDistance, use_mph} from './globals.js';
 import {fetchPersons, fetchDevices} from './fetch.js';
 import {formatDate, isValidCoordinates, getDistanceFromLatLonInMeters} from './utils.js';
 import {handleZonePosition} from './zones.js';
@@ -160,7 +160,7 @@ async function updatePersonsDevicesMap() {
             console.log(`The person ${person.attributes.friendly_name || person.entity_id} does not have a valid 'source'.`);
             return; // Salta esta persona y continúa con la siguiente
         }
-
+		
         // Buscar el device_tracker completo en la lista de devices
         const device = devices.find(device => device.entity_id === source);
 
@@ -216,10 +216,11 @@ async function updatePersonsMarkers() {
         const ownerName = persons.find(p => p.entity_id === personId)?.attributes.friendly_name || '';
         const iconUrl = persons.find(p => p.entity_id === personId)?.attributes.entity_picture || DEFAULT_ICON_URL;
 
+		
         const popupContent = `
             <strong>${ownerName}</strong> (${friendly_name})<br>
             ${formattedDate}<br>
-            ${t('speed')}: ${speed || 0} ${t('km_per_hour')}
+            ${Math.round((speed || 0) * (use_mph ? 2.23694 : 3.6))} ${t(use_mph ? 'mi_per_hour' : 'km_per_hour')}
 			${batteryLevel}
         `;
 
@@ -312,7 +313,7 @@ export async function handlePersonRowSelection(personId) {
 }
 
 
-// **Actualizar encabezados de la tabla de personas con flechas de ordenación**
+// **Actualizar encabezados de la tabla de personas**
 export function updatePersonsTableHeaders() {
     const table = document.querySelector("#persons-table"); // Asegurarse de que busca en la tabla correcta
     if (!table) {
@@ -329,7 +330,7 @@ export function updatePersonsTableHeaders() {
         switch (columnKey) {
             case "name": columnName = "name"; break;
             case "date": columnName = "date"; break;
-            case "km/h": columnName = "km/h"; break;
+            case "speed": columnName = "speed"; break;
             case "percentage": columnName = "percentage"; break;
             case "zone": columnName = "zone"; break;
         }
@@ -392,7 +393,7 @@ export async function updatePersonsTable() {
                     valueA = deviceA.last_updated ? new Date(deviceA.last_updated).getTime() : 0;
                     valueB = deviceB.last_updated ? new Date(deviceB.last_updated).getTime() : 0;
                     return sortAscending ? valueA - valueB : valueB - valueA;
-                case "km/h":
+                case "speed":
                     valueA = parseFloat(deviceA.attributes?.speed) || 0;
                     valueB = parseFloat(deviceB.attributes?.speed) || 0;
                     return sortAscending ? valueA - valueB : valueB - valueA;
@@ -433,7 +434,7 @@ export async function updatePersonsTable() {
 				deviceName = device.attributes.friendly_name ? `(${device.attributes.friendly_name})` : "";
 				battery = device.battery_level;
                 time = formatDate(device.last_updated);
-                speed = device.attributes.speed;
+				speed = Math.round((device.attributes.speed || 0) * (use_mph ? 2.23694 : 3.6));
 				battery = device.battery_level;
                 const zone = handleZonePosition(device.attributes.latitude, device.attributes.longitude);
                 currentZoneName = zone ? zone.name : "";

@@ -10,6 +10,7 @@ import aiofiles
 from homeassistant.components.http import HomeAssistantView
 
 from ..const import ZONES_FILE
+from ..const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,8 +26,23 @@ class ZonesAPI(HomeAssistantView):
         """Devuelve las zonas"""
 
         hass = request.app["hass"]
+        
+        
+        """Devuelve solo si es administrador o only_admin es false"""
+        only_admin = False
+        entries = hass.config_entries.async_entries(DOMAIN)
+        if entries:                             # Normalmente solo habrá una entrada
+            entry = entries[0]
+            only_admin = entry.options.get(
+                "only_admin",
+                entry.data.get("only_admin", False),
+            )
+        user = request["hass_user"]             
+        if only_admin and (user is None or not user.is_admin):
+            return self.json([])
+            
+        
         zones_path = os.path.join(hass.config.path(), ZONES_FILE)
-
         custom_zones = await read_zones_file(zones_path)
 
         # Obtener zonas de Home Assistant
