@@ -148,32 +148,26 @@ class HATrackerPanel extends LitElement {
         document.addEventListener("visibilitychange", () => {
             if (!document.hidden) {
                 console.log("Back to the tab. Checking iframe...");
-                this.checkIframeAndReloadPage();
+                this.handleVisibilityReturn();
             }
         });
     }
 
-    /** Espera 1 segundo antes de verificar si el `iframe` está cargado */
-    checkIframeAndReloadPage() {
-        setTimeout(() => {
-            const iframe = this.shadowRoot.querySelector("#myIframe");
+	handleVisibilityReturn() {
+		const iframe = this.renderRoot?.querySelector("#myIframe");
 
-			// **Condiciones para determinar si el iframe no es válido o visible**
-			if (
-				!iframe || 
-				!iframe.contentWindow || 
-				!iframe.contentWindow.document || 
-				iframe.contentWindow.location.href === "about:blank" || 
-				iframe.getBoundingClientRect().width === 0 ||  // No tiene ancho visible
-				iframe.getBoundingClientRect().height === 0    // No tiene alto visible
-			) {
-                console.warn("The iframe is not loading correctly. Reloading page...");
-                window.location.reload(); // Recargar toda la página
-            } else {
-                console.log("The iframe is loaded correctly.");
-            }
-        }, 1000); // Espera 1 segundo antes de decidir recargar la página
-    }
+		const iframeBlank = !iframe?.contentDocument?.body?.childElementCount;
+		const layoutBlank = !this.shadowRoot?.querySelector("ha-app-layout");
+
+		// Si el iframe está en blanco o el layout desapareció: recarga completa
+		if (iframeBlank || layoutBlank) {
+			console.warn("The Panel is not loading correctly. Reloading...");
+			window.location.reload();
+			return;
+		}
+
+		console.log("The iframe is loaded correctly.");
+	}
 
     /** Verifica si Home Assistant ha cargado y obtiene el token */
 	async checkHassConnection() {

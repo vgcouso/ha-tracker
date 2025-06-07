@@ -10,6 +10,7 @@ import {updatePersons, fitMapToAllPersons, processQueue} from './persons.js';
 import {updateZones} from './zones.js';
 import {initializeI18n, t} from './i18n.js';
 
+let isTabVisible = document.visibilityState === 'visible';
 
 document.addEventListener("DOMContentLoaded", async() => {
     try {
@@ -45,7 +46,7 @@ async function init() {
 async function startUpdateLoop() {
     while (true) {
         try {
-			if (document.visibilityState === 'visible') {
+			if (isTabVisible) {
 				await update();
 			}
         } catch (error) {
@@ -58,7 +59,7 @@ async function startUpdateLoop() {
 async function startGeocodeLoop() {
     while (true) {
         try {
-			if (document.visibilityState === 'visible') {
+			if (isTabVisible) {
 				await processQueue();
 			}
         } catch (error) {
@@ -89,3 +90,8 @@ async function update() {
         console.error("Error during major update:", error);
     }
 }
+
+// Escuchar cambios de visibilidad
+document.addEventListener('visibilitychange', () => {
+	isTabVisible = document.visibilityState === 'visible';
+});

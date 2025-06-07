@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.25] - 2025-
+
+### Added
+- 
+
+### Fixed
+- Reload of panel
+- If the website is not active, it does not update to save resources.
+
+
 ## [0.0.24] - 2025-05-25
 
 ### Added
