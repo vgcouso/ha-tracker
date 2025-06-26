@@ -6,10 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
-## [0.0.25] - 2025-
+## [0.0.28] - 2025-06/26
+- version for HACS
 
-### Added
-- 
+
+## [0.0.27] - 2025-06/26
+- version for HACS
+
+
+## [0.0.26] - 2025-06/26
+- version for HACS
+
+
+## [0.0.25] - 2025-06-07
 
 ### Fixed
 - Reload of panel
