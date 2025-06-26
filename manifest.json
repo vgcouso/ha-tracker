@@ -1,0 +1,12 @@
+{
+  "domain": "ha_tracker",
+  "name": "HA Tracker",
+  "codeowners": ["@vgcouso"],
+  "config_flow": true,
+  "dependencies": ["http", "recorder", "websocket_api"],
+  "documentation": "https://github.com/vgcouso/ha-tracker",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/vgcouso/ha-tracker/issues",
+  "requirements": ["voluptuous", "python-dateutil", "aiofiles"],
+  "version": "0.0.26"
+}

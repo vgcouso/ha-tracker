@@ -1,0 +1,393 @@
+body {
+ visibility: hidden; /* Oculta el contenido */
+ opacity: 0; /* Evita parpadeo */
+ transition: opacity 0.3s ease; /* Transición suave */
+}
+
+body.loaded {
+  visibility: visible; /* Hace visible el contenido */
+  opacity: 1; /* Transición suave */
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  overflow: hidden;
+}
+
+#filter-container, #zones-container, #persons-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  margin: 0; /* Sin margen adicional */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Sombra ligera */
+  border-radius: 8px; /* Bordes redondeados */
+  background-color: #fff; /* Fondo blanco */
+  padding: 10px; /* Espaciado interno */
+  box-sizing: border-box; /* Asegura que el padding y el borde no alteren el tamaño total */
+  width: calc(100%); /* Mantiene el ancho completo */
+  height: calc(100% - 60px); /* Ocupa el 70% del espacio disponible, ajustando con padding */
+  margin-bottom: auto; /* Ajusta automáticamente el espacio inferior */
+}
+
+#zones-container .table-container,
+#persons-container .table-container {
+  border-radius: 8px; /* Bordes redondeados para todo el contenedor */
+  overflow: hidden; /* Asegura que el contenido no sobresalga de las esquinas */
+  overflow-y: auto; /* Habilita el scroll vertical si el contenido excede la altura */
+}
+
+#zones-container, #persons-container {
+  display: none; /* Oculto por defecto */
+}
+
+#persons-table-body td {
+    min-height: 50px; /* Altura mínima de cada celda */
+    height: 50px; /* Altura predeterminada */
+    vertical-align: middle; /* Centrar contenido verticalmente */
+}
+
+/* Reducir la altura de la fila de dirección */
+.person-address-row td {
+    font-style: italic; /* Texto en cursiva */
+    color: #555; /* Color más tenue */
+    height: 15px !important; /* Altura fija para la fila */
+    min-height: 15px !important;
+    vertical-align: middle; /* Centrar verticalmente */
+}
+
+/* Asegurar que solo afecta la tabla de personas */
+#persons-table-body tr:not(.person-address-row) td {
+    border-bottom: none !important; /* Quitar la línea inferior solo de la fila principal */
+}
+
+#summary-zones-table thead th {
+  height: 30px !important; /* Fijar altura de los encabezados */
+}
+		
+#container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0; /* Asegura que el mapa esté detrás del filtro */
+}
+
+#forms-container {
+  width: 400px; /* Ancho predeterminado */
+  max-width: 100vw; /* Asegura que no exceda el ancho de la pantalla */
+  background-color: rgba(247, 247, 247, 0.8); /* Fondo semi-transparente */
+  padding: 10px;
+  box-sizing: border-box;
+  position: fixed; /* Cambiado a fixed */
+  top: 0;
+  right: 0;
+  height: 100%;
+  z-index: 1000; /* Asegura que esté sobre el mapa */
+  transition: transform 0.3s ease-in-out;
+  transform: translateX(0);
+}
+
+#forms-container.visible {
+  transform: translateX(0); /* Muestra el filtro */
+}
+
+#forms-container.hidden {
+  transform: translateX(100%); /* Oculta el filtro */
+}
+
+#combo-container {
+  margin-bottom: 20px;
+}
+
+#combo-select {
+  background: linear-gradient(to bottom, #003366, #00509e); /* Degradado para el select cerrado */
+  color: white; /* Texto blanco */
+  font-size: 18px; /* Tamaño del texto */
+  font-weight: bold; /* Texto en negrita */
+  border: none; /* Sin bordes */
+  border-radius: 10px; /* Bordes redondeados */
+  padding: 10px 20px; /* Espaciado interno */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5); /* Sombra */
+  outline: none; /* Sin borde de enfoque */
+  appearance: none; /* Quita el estilo por defecto del navegador */
+  cursor: pointer; /* Cursor al pasar el mouse */
+  text-align: center; /* Centra el texto */
+  width: calc(100% - 100px); /* Ajusta el ancho para el margen derecho */
+  margin-right: 100px; /* Margen derecho */
+  background-size: 100% 100%; /* Ajusta el degradado */
+}
+
+#combo-select option {
+  background: white; /* Fondo blanco para las opciones */
+  color: black; /* Texto negro */
+  font-size: 16px; /* Ajusta el tamaño del texto */
+}
+
+#combo-select:hover {
+  background: linear-gradient(to bottom, #00274d, #004080); /* Cambia el degradado al pasar el cursor */
+  color: white; /* Asegura que el texto se mantenga visible */
+  transition: background 0.3s ease; /* Transición suave para el cambio de color */
+}
+
+#combo-select:focus {
+  outline: 2px solid #00509e; /* Resalta al enfocarlo */
+}
+
+.group {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center; /* Alinear verticalmente */
+  justify-content: center; /* Centrar el contenido horizontalmente */
+}
+
+.group label {
+  font-weight: bold;
+  min-width: 120px; /* Ancho fijo para los labels */
+  text-align: center; /* Alinear el texto */
+  margin-right: 10px; /* Espaciado entre el label y el input */
+}
+
+.group input, .group select {
+  text-align: center; /* Alinear el texto */
+  flex: 1; /* Ocupa el resto del espacio disponible */
+  font-size: 14px;
+  height: 40px;
+  width: calc(100% - 130px); /* Ajustar el tamaño considerando el espacio del label y margen */
+  border: 1px solid #ccc; /* Borde opcional */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5); /* Sombra */
+  background: #f7f7f7; /* Fondo claro */
+  transition: box-shadow 0.3s ease, transform 0.2s ease; /* Transición suave */
+}
+
+#person-select, #start-date, #end-date {
+  font-size: 14px;	
+  height: 40px;
+  width: calc(100%);
+  border: 1px solid #ccc; /* Opcional: Define el color del borde */
+  border-radius: 8px; /* Define las esquinas redondeadas */
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2); /* Opcional: Añade un efecto interno */
+}
+
+.group label[for="start-date"], .group label[for="end-date"] {
+  color: #003366; /* Azul */  
+  font-weight: bold; /* Mantiene el texto en negrita */
+  font-size: 14px;
+}
+
+.action-button {
+  min-height: 40px; /* Altura mínima asegurada */
+  height: auto; /* Ajuste automático según el contenido */
+  border: none;
+  background: linear-gradient(to bottom, #28a745, #218838); /* Degradado */
+  color: white;
+  font-size: 14px;
+  width: calc(100%); /* Ocupa todo el ancho por defecto */
+  cursor: pointer;
+  border-radius: 5px;
+  margin-bottom: 10px; /* Añade espacio debajo del botón */
+  font-weight: bold;
+  transition: background 0.3s ease; /* Transición suave al hover */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5); /* Sombra */
+}
+
+.action-button:hover {
+  background: linear-gradient(to bottom, #218838, #1e7e34); /* Degradado en hover */
+}
+
+.zone-actions {
+  display: flex;
+  justify-content: space-between; /* Espaciado uniforme entre los botones */
+  margin-bottom: 0px;
+}
+
+.zone-actions .action-button {
+  flex: 1; /* Cada botón ocupa el mismo ancho */
+  margin-right: 5px; /* Espaciado entre botones */
+}
+
+.zone-actions .action-button:last-child {
+  margin-right: 0; /* Elimina el margen derecho del último botón */
+}
+
+.zone-actions .hidden {
+  display: none; /* Oculta los botones cuando sea necesario */
+}
+
+.zone-actions.single-button .action-button {
+  margin-right: 0; /* Sin margen cuando hay un solo botón visible */
+}
+
+.table-container {
+  height: auto;
+  overflow-y: auto; /* Scroll para contenido desbordado */
+  border: 1px solid #003366;
+  box-sizing: border-box;
+  flex: 1;
+  display: flex;
+  flex-direction: column; /* Apila las tablas verticalmente */
+  border-top: none;
+  overflow-x: hidden;
+  border-radius: 0 0 8px 8px; /* Esquinas inferiores redondeadas */
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+th {
+  background-color: #003366; 
+  color: white;
+  padding: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 1; /* Asegura que se superponga al contenido */
+  height: 20px; /* Alto fijo para las celdas de encabezado */
+  font-size: 12px;
+  font-weight: bold;
+}
+
+td {
+  padding: 6px;
+  font-size: 11px;
+  text-align: center;
+  word-wrap: break-word; /* Permite que el texto se ajuste */
+  min-height: 25px; /* Altura mínima de cada celda */
+  height: 25px; /* Altura predeterminada */  
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+tr.selected {
+  background-color: #add8e6;
+}
+
+.fixed-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.hamburger-button {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(to bottom, #003366, #00509e); /* Degradado para el select cerrado */
+  color: white;
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  font-size: 24px;
+  line-height: 40px;
+  text-align: center;
+  border-radius: 5px;
+  transition: background 0.3s ease; /* Transición suave */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5); /* Sombra */
+}
+
+.hamburger-button:hover {
+  background: linear-gradient(to bottom, #00274d, #004080); /* Cambia el degradado al pasar el cursor */
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: blue; /* o el color que quieras */
+}
+
+#window-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3); /* Fondo semi-transparente oscuro */
+  display: none; /* Oculto por defecto */
+  align-items: center; /* Centrar verticalmente */
+  justify-content: center; /* Centrar horizontalmente */
+  z-index: 9999; /* Asegura que esté por encima de otros elementos */
+}
+
+#window-message {
+  background-color: rgba(0, 0, 255, 0.5);
+  border: 2px solid rgba(0, 0, 200, 0.8); 
+  border-radius: 12px; /* Esquinas redondeadas */
+  color: white; 
+  padding: 20px 40px; /* Espaciado interno */
+  font-size: 18px;
+  font-weight: bold; /* Texto en negrita */
+  text-align: center; /* Centrar texto */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5); /* Sombra para destacar */
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 0px;
+  margin-bottom: 0px;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 10px 20px;
+  background: linear-gradient(to bottom, #4a90e2, #336699); /* Degradado para pestañas inactivas */
+  color: white;
+  border: 0px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  outline: none;
+  border-radius: 10px 10px 0 0; /* Esquinas superiores redondeadas */
+  transition: background 0.3s ease; /* Transición suave para el degradado */
+}
+
+.tab-button:hover {
+  background: linear-gradient(to bottom, #5aa4f2, #3b78a6); /* Efecto más claro al pasar el cursor */
+}
+
+.tab-button.active {
+  background: linear-gradient(to bottom,#001f4d, #003366); /* Degradado más oscuro para pestañas activas */
+  color: white;
+  border-bottom: 0px;
+}
+
+
+.tab {
+  display: none;
+}
+
+.tab.active {
+  display: block;
+}
+
+/* En pantallas pequeñas, ocultar por defecto */
+@media (max-width: 400px) {
+  #forms-container {
+    transform: translateX(100%);
+  }
+}
+
+.leaflet-control-layers-expanded {
+  width: auto;
+  white-space: nowrap;
+  overflow-x: auto; /* Permite desplazamiento horizontal */
+}
+
+.leaflet-control-layers-list {
+  max-height: 300px; /* Define una altura máxima */
+  overflow-y: auto; /* Permite desplazamiento vertical */
+}
+
