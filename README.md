@@ -10,20 +10,21 @@ You can manage specific zones of the application.
 It also allows you to filter positions between two dates with grouping by zone and detailed summary.
 
 
+## REQUIREMENTS
+
+To install this integration in Home Assistant, you will need:
+- An installation of Home Assistant (see https://www.home-assistant.io/)
+- HACS installed in your Home Assistant environment (see https://hacs.xyz/)
+Installation
+
+
 ## INSTALLATION 
 
-1. Ensure you have HACS installed.
-2. Open HACS, go to the top right corner, and click on the three dots.
-3. Select **"Custom repositories"**.
-4. In the **"Repository"** field, enter: `https://github.com/vgcouso/ha-tracker` and select **"Integration"** as the type. Then click **"Add"**.
-5. Search for **HA Tracker** in HACS and click on it.
-6. Once it opens, click on **"Download"** in the bottom right corner and confirm the download in the pop-up window.
-7. **Restart** Home Assistant to apply changes.
-8. Go to: **"Settings &rarr; Devices and Services &rarr; Add Integration"**
-9. Search for **HA Tracker**, select it and on the **Configuration screen** press **Send**
+Once you have met the above objectives, the steps to install this integration are as follows:
+- Click [![hacs_badge](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=vgcouso&repository=ha-tracker&category=integration)
+- Restart Home Assistant.
 
-
-    You can access the application by opening the panel from the menu on the left or also from a web browser at the address:
+You can access the application by opening the panel from the menu on the left or also from a web browser at the address:
 
    `https://<server-address>/local/ha-tracker/index.html`
 
