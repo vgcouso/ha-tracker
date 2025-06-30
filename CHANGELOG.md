@@ -6,15 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.29] - 2025-06/30
+
+### Changes
+- Changed the README.md file to update the update from HACS
+
+
 ## [0.0.28] - 2025-06/26
+
+### Changes
 - version for HACS
 
 
 ## [0.0.27] - 2025-06/26
+
+### Changes
 - version for HACS
 
 
 ## [0.0.26] - 2025-06/26
+
+### Changes
 - version for HACS
 
 
@@ -38,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 - Speed value is metres per second and not km/hr #14
 - Support users with multiple trackers #12
+
 
 ## [0.0.23] - 2025-02-21
 
