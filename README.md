@@ -21,8 +21,10 @@ Installation
 ## INSTALLATION 
 
 Once you have met the above objectives, the steps to install this integration are as follows:
-- Click [![hacs_badge](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=vgcouso&repository=ha-tracker&category=integration)
-- Restart Home Assistant.
+1. Click [![hacs_badge](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=vgcouso&repository=ha-tracker&category=integration)
+2. Restart Home Assistant.
+3. Go to: **"Settings &rarr; Devices and Services &rarr; Add Integration"**
+4. Search for **HA Tracker**, select it and on the **Configuration screen** press **Send**
 
 You can access the application by opening the panel from the menu on the left or also from a web browser at the address:
 
