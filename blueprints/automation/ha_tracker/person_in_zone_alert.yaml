@@ -1,0 +1,146 @@
+blueprint:
+  name: Person in Zone Alert (multilingual push & TTS)
+  description: >
+    Sends either a push notification or a TTS announcement when the chosen
+    person enters or leaves the selected zone.
+
+    • Languages: Arabic (ar), German (de), English (en), Spanish (es),
+      French (fr), Hindi (hi), Italian (it), Japanese (ja), Portuguese (pt),
+      Chinese (zh).
+    • Separate device lists: TTS-capable phones/tablets and normal push targets.
+    • Falls back to notify.notify if no device is selected.
+  domain: automation
+  homeassistant:
+    min_version: "2024.6.0"        # templated service names need 2024.6+
+  
+  input:
+    # ---------- Basics ----------
+    person_entity:
+      name: Person
+      description: Person to monitor
+      selector:
+        entity:
+          domain: person
+
+    zone_entity:
+      name: Zone
+      description: Zone to watch
+      selector:
+        entity:
+          domain: zone
+
+    direction:
+      name: Direction
+      description: Trigger on entry or exit
+      default: enter
+      selector:
+        select:
+          options: [enter, leave]
+
+    language:
+      name: Message language
+      description: ISO-639-1 code
+      default: en
+      selector:
+        select:
+          options: [ar, de, en, es, fr, hi, it, ja, pt, zh]
+
+    # ---------- Destinations ----------
+    tts_devices:
+      name: TTS devices
+      description: >
+        Android/iOS devices that should speak the message
+        (Companion-App “TTS” feature).
+      selector:
+        device:
+          integration: mobile_app
+          multiple: true
+
+    push_devices:
+      name: Push-only devices
+      description: Devices that should get a normal push notification
+      selector:
+        device:
+          integration: mobile_app
+          multiple: true
+
+# ---------- Automation ----------
+trigger:
+  - platform: zone
+    entity_id: !input person_entity
+    zone: !input zone_entity
+    event: !input direction
+
+variables:
+  # Inputs expuestos como variables simples
+  zone_entity_id: !input zone_entity
+  lang_code: !input language
+
+  tts_devs: !input tts_devices
+  push_devs_raw: !input push_devices
+
+  # Data derived from states / templates
+  zone_name: "{{ state_attr(zone_entity_id, 'friendly_name') or zone_entity_id }}"
+
+  phrase: >
+    {% set t = {
+      'ar': {'enter': 'دخل إلى',        'leave': 'غادر'},
+      'de': {'enter': 'hat betreten',   'leave': 'hat verlassen'},
+      'en': {'enter': 'has entered',    'leave': 'has left'},
+      'es': {'enter': 'ha entrado en',  'leave': 'ha salido de'},
+      'fr': {'enter': 'est entré dans', 'leave': 'est sorti de'},
+      'hi': {'enter': 'में प्रवेश किया',  'leave': 'से निकल गया'},
+      'it': {'enter': 'è entrato in',   'leave': 'è uscito da'},
+      'ja': {'enter': 'に入りました',       'leave': 'から出ました'},
+      'pt': {'enter': 'entrou em',      'leave': 'saiu de'},
+      'zh': {'enter': '进入了',           'leave': '离开了'}
+    } %}
+    {{ t.get(lang_code, t['en'])[trigger.event] }}
+
+  message_text: "{{ trigger.to_state.name }} {{ phrase }} {{ zone_name }}"
+
+  # Push list sin duplicar dispositivos TTS
+  push_devs: "{{ push_devs_raw | reject('in', tts_devs) | list }}"
+
+action:
+  - choose:
+      # --------- TTS loop ---------
+      - conditions: "{{ tts_devs | length > 0 }}"
+        sequence:
+          - repeat:
+              for_each: "{{ tts_devs }}"
+              sequence:
+                - service: >
+                    {{ 'notify.mobile_app_' ~ device_attr(repeat.item, 'name')
+                       | lower | replace(' ', '_') }}
+                  data:
+                    message: "TTS"
+                    data:
+                      tts_text: "{{ message_text }}"
+                      priority: high
+                      ttl: 0
+
+      # --------- Push loop ---------
+      - conditions: "{{ push_devs | length > 0 }}"
+        sequence:
+          - repeat:
+              for_each: "{{ push_devs }}"
+              sequence:
+                - service: >
+                    {{ 'notify.mobile_app_' ~ device_attr(repeat.item, 'name')
+                       | lower | replace(' ', '_') }}
+                  data:
+                    message: "{{ message_text }}"
+                    data:
+                      priority: high
+                      ttl: 0
+    default:
+      - service: notify.notify
+        data:
+          message: "{{ message_text }}"
+          data:
+            priority: high
+            ttl: 0
+
+mode: single
+
