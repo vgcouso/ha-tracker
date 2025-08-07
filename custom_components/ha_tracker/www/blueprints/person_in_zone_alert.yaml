@@ -11,6 +11,9 @@ blueprint:
       and phones that should just **display** it.  
     • Falls back to notify.notify if no device is chosen.
   domain: automation
+  homeassistant:
+    min_version: "2024.6.0"        # templated service names need 2024.6+  
+    
   input:
     # ── Basics ──────────────────────────────────────────────────────
     person_entity:
@@ -56,8 +59,6 @@ blueprint:
           integration: mobile_app
           multiple: true
 
-homeassistant:
-  min_version: "2024.6.0"        # templated service names need 2024.6+
 
 # ── Automation body ────────────────────────────────────────────────
 trigger:
@@ -159,3 +160,4 @@ action:
             ttl: 0
 
 mode: single
+
