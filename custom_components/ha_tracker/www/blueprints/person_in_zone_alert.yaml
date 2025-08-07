@@ -6,16 +6,10 @@ blueprint:
 
     • Languages: Arabic (ar), German (de), English (en), Spanish (es),
       French (fr), Hindi (hi), Italian (it), Japanese (ja), Portuguese (pt),
-      Chinese (zh).  
-    • Separate device lists: TTS-capable phones/tablets and normal push targets.  
+      Chinese (zh).
+    • Separate device lists: TTS-capable phones/tablets and normal push targets.
     • Falls back to notify.notify if no device is selected.
   domain: automation
-
-  # ─── Version guard ────────────────────────────────────────────────
-  homeassistant:
-    min_version: "2024.6.0"      # needed for templated service names
-  # ──────────────────────────────────────────────────────────────────
-
   input:
     # ---------- Basics ----------
     person_entity:
@@ -67,6 +61,11 @@ blueprint:
           integration: mobile_app
           multiple: true
 
+# ─── Version guard ───────────────────────────────────────────────────
+homeassistant:
+  min_version: "2024.6.0"        # templated service names need 2024.6+
+# ─────────────────────────────────────────────────────────────────────
+
 # ---------- Automation ----------
 trigger:
   - platform: zone
@@ -75,9 +74,16 @@ trigger:
     event: !input direction
 
 variables:
-  zone_name: "{{ state_attr(!input zone_entity, 'friendly_name') }}"
+  # Inputs expuestos como variables simples
+  zone_entity_id: !input zone_entity
+  lang_code: !input language
 
-  # Translation dictionary
+  tts_devs: !input tts_devices
+  push_devs_raw: !input push_devices
+
+  # Data derived from states / templates
+  zone_name: "{{ state_attr(zone_entity_id, 'friendly_name') or zone_entity_id }}"
+
   phrase: >
     {% set t = {
       'ar': {'enter': 'دخل إلى',        'leave': 'غادر'},
@@ -91,14 +97,12 @@ variables:
       'pt': {'enter': 'entrou em',      'leave': 'saiu de'},
       'zh': {'enter': '进入了',           'leave': '离开了'}
     } %}
-    {{ t[!input language][trigger.event] }}
+    {{ t.get(lang_code, t['en'])[trigger.event] }}
 
   message_text: "{{ trigger.to_state.name }} {{ phrase }} {{ zone_name }}"
 
-  # Device lists
-  tts_devs: !input tts_devices
-  push_devs_raw: !input push_devices
-  push_devs: "{{ push_devs_raw | reject('in', tts_devs) | list }}"   # avoid duplicates
+  # Push list sin duplicar dispositivos TTS
+  push_devs: "{{ push_devs_raw | reject('in', tts_devs) | list }}"
 
 action:
   - choose:
