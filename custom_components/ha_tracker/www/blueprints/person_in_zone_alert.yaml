@@ -4,37 +4,30 @@ blueprint:
     Sends either a push notification or a TTS announcement when the chosen
     person enters or leaves the selected zone.
 
-    • Languages: Arabic (ar), German (de), English (en), Spanish (es),
+    · Languages: Arabic (ar), German (de), English (en), Spanish (es),
       French (fr), Hindi (hi), Italian (it), Japanese (ja), Portuguese (pt),
-      Chinese (zh).  
-    • Separate device lists: TTS-capable phones/tablets and normal push targets.  
-    • Falls back to notify.notify if no device is selected.
+      Chinese (zh).
+    · Separate device lists: TTS-capable phones/tablets and normal push targets.
+    · Falls back to notify.notify if no device is selected.
   domain: automation
-
-  # ─── Version guard ────────────────────────────────────────────────
-  homeassistant:
-    min_version: "2024.6.0"      # needed for templated service names
-  # ──────────────────────────────────────────────────────────────────
+  min_version: "2024.6.0"
 
   input:
     # ---------- Basics ----------
     person_entity:
       name: Person
-      description: Person to monitor
       selector:
         entity:
           domain: person
 
     zone_entity:
       name: Zone
-      description: Zone to watch
       selector:
         entity:
           domain: zone
 
     direction:
       name: Direction
-      description: Trigger on entry or exit
       default: enter
       selector:
         select:
@@ -42,7 +35,6 @@ blueprint:
 
     language:
       name: Message language
-      description: ISO-639-1 code
       default: en
       selector:
         select:
@@ -53,7 +45,7 @@ blueprint:
       name: TTS devices
       description: >
         Android/iOS devices that should speak the message
-        (Companion-App “TTS” feature).
+        (Companion-App «TTS» feature).
       selector:
         device:
           integration: mobile_app
@@ -98,4 +90,46 @@ variables:
   # Device lists
   tts_devs: !input tts_devices
   push_devs_raw: !input push_devices
-  push_devs: "{{ push_devs_raw_
+  push_devs: "{{ push_devs_raw | reject('in', tts_devs) | list }}"   # avoid duplicates
+
+action:
+  - choose:
+      # --------- TTS loop ---------
+      - conditions: "{{ tts_devs | length > 0 }}"
+        sequence:
+          - repeat:
+              for_each: "{{ tts_devs }}"
+              sequence:
+                - service: >
+                    {{ 'notify.mobile_app_' ~ device_attr(repeat.item, 'name')
+                       | lower | replace(' ', '_') }}
+                  data:
+                    message: "TTS"
+                    data:
+                      tts_text: "{{ message_text }}"
+                      priority: high
+                      ttl: 0
+
+      # --------- Push loop ---------
+      - conditions: "{{ push_devs | length > 0 }}"
+        sequence:
+          - repeat:
+              for_each: "{{ push_devs }}"
+              sequence:
+                - service: >
+                    {{ 'notify.mobile_app_' ~ device_attr(repeat.item, 'name')
+                       | lower | replace(' ', '_') }}
+                  data:
+                    message: "{{ message_text }}"
+                    data:
+                      priority: high
+                      ttl: 0
+    default:
+      - service: notify.notify
+        data:
+          message: "{{ message_text }}"
+          data:
+            priority: high
+            ttl: 0
+
+mode: single
