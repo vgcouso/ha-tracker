@@ -7,15 +7,10 @@ blueprint:
     • Languages: Arabic (ar), German (de), English (en), Spanish (es),
       French (fr), Hindi (hi), Italian (it), Japanese (ja), Portuguese (pt),
       Chinese (zh).  
-    • Two device lists: one for phones that should **speak** the message
-      (TTS) and another for phones that should just **display** it.  
+    • Two device lists: phones that should **speak** the message (TTS)
+      and phones that should just **display** it.  
     • Falls back to notify.notify if no device is chosen.
   domain: automation
-
-  # put the version requirement HERE ⬇
-  homeassistant:
-    min_version: "2024.6.0"     # templated service names need 2024.6+
-
   input:
     # ── Basics ──────────────────────────────────────────────────────
     person_entity:
@@ -61,6 +56,9 @@ blueprint:
           integration: mobile_app
           multiple: true
 
+homeassistant:
+  min_version: "2024.6.0"        # templated service names need 2024.6+
+
 # ── Automation body ────────────────────────────────────────────────
 trigger:
   - platform: zone
@@ -69,13 +67,10 @@ trigger:
     event: !input direction
 
 variables:
-  # raw inputs (no Jinja with !input!)
   zone_id: !input zone_entity
   lang: !input language
   tts_devs: !input tts_devices
   push_raw: !input push_devices
-
-  # push list without duplicates
   push_devs: "{{ push_raw | reject('in', tts_devs) | list }}"
 
 action:
