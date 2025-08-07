@@ -11,6 +11,11 @@ blueprint:
       (TTS) and another for phones that should just **display** it.  
     • Falls back to notify.notify if no device is chosen.
   domain: automation
+
+  # put the version requirement HERE ⬇
+  homeassistant:
+    min_version: "2024.6.0"     # templated service names need 2024.6+
+
   input:
     # ── Basics ──────────────────────────────────────────────────────
     person_entity:
@@ -56,12 +61,7 @@ blueprint:
           integration: mobile_app
           multiple: true
 
-# ── Version guard (needs templated service names) ───────────────────
-homeassistant:
-  min_version: "2024.6.0"
-# ────────────────────────────────────────────────────────────────────
-
-# ── Automation proper ───────────────────────────────────────────────
+# ── Automation body ────────────────────────────────────────────────
 trigger:
   - platform: zone
     entity_id: !input person_entity
@@ -69,20 +69,18 @@ trigger:
     event: !input direction
 
 variables:
-  # Plain copies of inputs (no Jinja here!)
-  zone_entity_id: !input zone_entity
-  lang_code: !input language
+  # raw inputs (no Jinja with !input!)
+  zone_id: !input zone_entity
+  lang: !input language
   tts_devs: !input tts_devices
-  push_devs_raw: !input push_devices
+  push_raw: !input push_devices
 
-  # Remove duplicates so a phone can’t receive both TTS and push
-  push_devs: "{{ push_devs_raw | reject('in', tts_devs) | list }}"
+  # push list without duplicates
+  push_devs: "{{ push_raw | reject('in', tts_devs) | list }}"
 
 action:
-  # Everything below is *after* inputs exist, so Jinja is safe
   - choose:
-
-      # ── TTS loop ────────────────────────────────────────────
+      # ── TTS loop ─────────────────────────────────────────
       - conditions: "{{ tts_devs | length > 0 }}"
         sequence:
           - repeat:
@@ -108,12 +106,12 @@ action:
                           'zh': {'enter':'进入了','leave':'离开了'}
                         } %}
                         {{ trigger.to_state.name }} 
-                        {{ txt.get(lang_code, txt['en'])[trigger.event] }} 
-                        {{ state_attr(zone_entity_id, 'friendly_name') or zone_entity_id }}
+                        {{ txt.get(lang, txt['en'])[trigger.event] }} 
+                        {{ state_attr(zone_id, 'friendly_name') or zone_id }}
                       priority: high
                       ttl: 0
 
-      # ── Push loop ───────────────────────────────────────────
+      # ── Push loop ─────────────────────────────────────────
       - conditions: "{{ push_devs | length > 0 }}"
         sequence:
           - repeat:
@@ -137,12 +135,11 @@ action:
                         'zh': {'enter':'进入了','leave':'离开了'}
                       } %}
                       {{ trigger.to_state.name }} 
-                      {{ txt.get(lang_code, txt['en'])[trigger.event] }} 
-                      {{ state_attr(zone_entity_id, 'friendly_name') or zone_entity_id }}
+                      {{ txt.get(lang, txt['en'])[trigger.event] }} 
+                      {{ state_attr(zone_id, 'friendly_name') or zone_id }}
                     data:
                       priority: high
                       ttl: 0
-
     default:
       - service: notify.notify
         data:
@@ -160,8 +157,8 @@ action:
               'zh': {'enter':'进入了','leave':'离开了'}
             } %}
             {{ trigger.to_state.name }} 
-            {{ txt.get(lang_code, txt['en'])[trigger.event] }} 
-            {{ state_attr(zone_entity_id, 'friendly_name') or zone_entity_id }}
+            {{ txt.get(lang, txt['en'])[trigger.event] }} 
+            {{ state_attr(zone_id, 'friendly_name') or zone_id }}
           data:
             priority: high
             ttl: 0
