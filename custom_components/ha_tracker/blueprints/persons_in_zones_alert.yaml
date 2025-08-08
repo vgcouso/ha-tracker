@@ -1,0 +1,218 @@
+blueprint:
+  name: Persons in Zones Alert (HA Tracker)
+  description: "
+    Sends TTS/Push via the HA Companion app when any selected person enters or leaves any selected zone.
+    On a cross-zone jump A→B (both configured), ONLY enter B is sent.
+    Messages use {person} and {zone} placeholders.
+    
+    version: 0.0.1
+    "
+  domain: automation
+  homeassistant:
+    min_version: "2024.6.0"
+
+  input:
+    person_entities:
+      name: Persons
+      description: Select one or more persons
+      selector:
+        entity:
+          domain: person
+          multiple: true
+
+    zone_entities:
+      name: Zones
+      description: Select one or more zones to watch
+      selector:
+        entity:
+          domain: zone
+          multiple: true
+
+    trigger_on_enter:
+      name: Trigger on enter
+      default: true
+      selector:
+        boolean: {}
+
+    trigger_on_leave:
+      name: Trigger on leave
+      default: true
+      selector:
+        boolean: {}
+
+    enter_message:
+      name: Enter message
+      description: Use {person} and {zone}
+      default: "{person} has arrived at {zone}"
+
+    leave_message:
+      name: Leave message
+      description: Use {person} and {zone}
+      default: "{person} has left {zone}"
+
+    tts_devices:
+      name: TTS devices (HA Companion)
+      description: Phones/tablets that should SPEAK the message (Companion App TTS)
+      selector:
+        device:
+          integration: mobile_app
+          multiple: true
+
+    push_devices:
+      name: Push-only devices (HA Companion)
+      description: Devices that should receive a normal push notification
+      selector:
+        device:
+          integration: mobile_app
+          multiple: true
+
+# ---------- Automation ----------
+trigger:
+  - platform: state
+    entity_id: !input person_entities
+
+variables:
+  enter_tpl: !input enter_message
+  leave_tpl: !input leave_message
+  trig_enter_enabled: !input trigger_on_enter
+  trig_leave_enabled: !input trigger_on_leave
+
+  zone_ids: !input zone_entities
+  tts_devs: !input tts_devices
+  push_devs: !input push_devices
+
+condition: []
+
+action:
+  - variables:
+      # Person display name with robust fallbacks
+      person_name: >
+        {% if trigger is defined and trigger.to_state %}
+          {{ trigger.to_state.name or state_attr(trigger.entity_id,'friendly_name') or (trigger.entity_id | replace('person.','') | replace('_',' ') | title) }}
+        {% elif trigger is defined and trigger.from_state %}
+          {{ trigger.from_state.name or state_attr(trigger.entity_id,'friendly_name') or (trigger.entity_id | replace('person.','') | replace('_',' ') | title) }}
+        {% else %}{{ '' }}{% endif %}
+
+      # Selected zones -> friendly names
+      zone_ids_list: >
+        {% set z = zone_ids %}
+        {% if z is string %}{{ [z] }}
+        {% elif z is sequence %}{{ z | list }}
+        {% else %}{{ [] }}
+        {% endif %}
+
+      zone_names: >
+        {% set ns = namespace(names=[]) %}
+        {% for zid in zone_ids_list %}
+          {% set label = state_attr(zid, 'friendly_name') or zid %}
+          {% set ns.names = ns.names + [ label ] %}
+        {% endfor %}
+        {{ ns.names }}
+      zone_names_l: "{{ zone_names | map('lower') | list }}"
+
+      # Person state (raw + lowercase)
+      zone_to_raw: "{{ trigger.to_state.state if trigger is defined and trigger.to_state else '' }}"
+      zone_from_raw: "{{ trigger.from_state.state if trigger is defined and trigger.from_state else '' }}"
+      zone_to_l: "{{ (zone_to_raw or '') | lower }}"
+      zone_from_l: "{{ (zone_from_raw or '') | lower }}"
+
+      # Friendly-name matching
+      to_hit: "{{ zone_to_l in zone_names_l }}"
+      from_hit: "{{ zone_from_l in zone_names_l }}"
+
+      # Pretty labels
+      to_label: >
+        {% set i = zone_names_l.index(zone_to_l) if zone_to_l in zone_names_l else -1 %}
+        {{ zone_names[i] if i >= 0 else (zone_to_raw | title) }}
+      from_label: >
+        {% set i = zone_names_l.index(zone_from_l) if zone_from_l in zone_names_l else -1 %}
+        {{ zone_names[i] if i >= 0 else (zone_from_raw | title) }}
+
+      # Classification (A→B => ONLY enter B)
+      is_enter_raw: "{{ (not from_hit) and to_hit }}"
+      is_leave_raw: "{{ from_hit and (not to_hit) }}"
+      is_cross: "{{ from_hit and to_hit and (from_label != to_label) }}"
+      do_enter: "{{ trig_enter_enabled and (is_enter_raw or is_cross) }}"
+      do_leave: "{{ trig_leave_enabled and is_leave_raw }}"
+
+      # Final messages (simple {person}/{zone} replacement)
+      enter_msg: >
+        {% set tpl = enter_tpl | string %}
+        {{ tpl
+          | replace('{person}', person_name)
+          | replace('{zone}',   to_label)
+          | trim }}
+      leave_msg: >
+        {% set tpl = leave_tpl | string %}
+        {{ tpl
+          | replace('{person}', person_name)
+          | replace('{zone}',   from_label)
+          | trim }}
+
+      # Devices → explicit notify.mobile_app_* service names
+      tts_services_list: >
+        {% set ns = namespace(svcs=[]) %}
+        {% for dev in tts_devs %}
+          {% set svc = 'notify.mobile_app_' ~ (device_attr(dev, 'name') | slugify) %}
+          {% set ns.svcs = ns.svcs + [ svc ] %}
+        {% endfor %}
+        {{ ns.svcs }}
+
+      push_services_list: >
+        {% set ns = namespace(svcs=[]) %}
+        {% for dev in push_devs %}
+          {% set svc = 'notify.mobile_app_' ~ (device_attr(dev, 'name') | slugify) %}
+          {% set ns.svcs = ns.svcs + [ svc ] %}
+        {% endfor %}
+        {{ ns.svcs }}
+
+  - choose:
+      # ENTER (includes cross-zone A→B => enter B only)
+      - conditions: "{{ do_enter }}"
+        sequence:
+          - repeat:
+              for_each: "{{ tts_services_list }}"
+              sequence:
+                - service: "{{ repeat.item }}"
+                  data:
+                    message: "TTS"
+                    data:
+                      tts_text: "{{ enter_msg }}"
+                      priority: high
+                      ttl: 0
+          - repeat:
+              for_each: "{{ push_services_list }}"
+              sequence:
+                - service: "{{ repeat.item }}"
+                  data:
+                    message: "{{ enter_msg }}"
+                    data:
+                      priority: high
+                      ttl: 0
+
+      # LEAVE (to outside configured zones)
+      - conditions: "{{ do_leave }}"
+        sequence:
+          - repeat:
+              for_each: "{{ tts_services_list }}"
+              sequence:
+                - service: "{{ repeat.item }}"
+                  data:
+                    message: "TTS"
+                    data:
+                      tts_text: "{{ leave_msg }}"
+                      priority: high
+                      ttl: 0
+          - repeat:
+              for_each: "{{ push_services_list }}"
+              sequence:
+                - service: "{{ repeat.item }}"
+                  data:
+                    message: "{{ leave_msg }}"
+                    data:
+                      priority: high
+                      ttl: 0
+    default: []
+
+mode: parallel
+max: 10
