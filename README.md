@@ -373,13 +373,6 @@ In addition, there is the possibility of **exporting** the filters made to vario
   <br>
   <em>This is the summary screen</em>
 </div>
-<br>
-<br>
-<div align="center">
-  <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/filter-pdf-file.png" alt="HA Tracker .pdf file" style="width: 80%; max-width: 100%; height: auto;" />
-  <br>
-  <em>This is the .pdf file exported</em>
-</div>
 
 ---
 
