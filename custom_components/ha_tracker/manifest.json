@@ -1,13 +1,13 @@
 {
   "domain": "ha_tracker",
   "name": "HA Tracker",
-  "integration_type": "service",
-  "config_flow": true,
   "codeowners": ["@vgcouso"],
-  "documentation": "https://github.com/vgcouso/ha-tracker",
-  "issue_tracker": "https://github.com/vgcouso/ha-tracker/issues",
+  "config_flow": true,
   "dependencies": ["http", "lovelace", "recorder"],
+  "documentation": "https://github.com/vgcouso/ha-tracker",
+  "integration_type": "service",
   "iot_class": "local_push",
+  "issue_tracker": "https://github.com/vgcouso/ha-tracker/issues",
   "requirements": [],
   "version": "0.0.30"
 }
