@@ -88,7 +88,7 @@
   "filter_date_range": "Datumsbereich zum Filtern wählen",
   "long_zone": "Der Zonenname ist zu lang",
   "select_color": "Wählen Sie eine Farbe",
-  "error_creating_zone": "Die Zone konnte nicht erstellt werden"
+  "error_creating_zone": "Die Zone konnte nicht erstellt werden",
   "zone_name_exists": "Es gibt bereits eine Zone mit diesem Namen. Wähle einen anderen Namen.",
   "color": "Farbe",
   "export_file": "In Datei exportieren",
