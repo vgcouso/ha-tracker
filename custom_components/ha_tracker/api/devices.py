@@ -59,31 +59,35 @@ class DevicesEndpoint(HomeAssistantView):
             # ---- Datos adicionales opcionales ----
             name = device.attributes.get("friendly_name", "")
             friendly_name = name.lower().replace(" ", "_")
+            
+            #velocity en OwnTracks en vez de speed
+            attrs = dict(device.attributes)
+            if "velocity" in attrs and "speed" not in attrs:
+                try:
+                    # OwnTracks: km/h -> m/s
+                    attrs["speed"] = round(float(attrs.pop("velocity")) / 3.6, 2)
+                except (TypeError, ValueError):
+                    # Si no es numérico, no tocamos nada
+                    pass
 
-            sensor_id = f"sensor.{friendly_name}_geocoded_location"
-            sensor_state = hass.states.get(sensor_id)
-            location = (
-                sensor_state.state
-                if sensor_state and sensor_state.state.lower() != "unknown"
-                else ""
-            )
-
-            battery_sensor_id = f"sensor.{friendly_name}_battery_level"
-            battery_sensor_state = hass.states.get(battery_sensor_id)
-            battery_level = (
-                battery_sensor_state.state
-                if battery_sensor_state and battery_sensor_state.state.lower() != "unknown"
-                else ""
-            )
+            battery_level = ""
+            attr_batt = device.attributes.get("battery_level")
+            if attr_batt is not None and str(attr_batt).lower() != "unknown":
+                battery_level = attr_batt
+            else:
+                battery_sensor_id = f"sensor.{friendly_name}_battery_level"
+                batt_state = hass.states.get(battery_sensor_id)
+                if batt_state and str(batt_state.state).lower() != "unknown":
+                    battery_level = batt_state.state
+                    
 
             device_data.append(
                 {
                     "entity_id": device.entity_id,
                     "state": device.state,
-                    "attributes": device.attributes,
+                    "attributes": attrs,
                     "last_updated": device.last_updated,
                     "last_changed": device.last_changed,
-                    "geocoded_location": location,
                     "battery_level": battery_level,
                 }
             )

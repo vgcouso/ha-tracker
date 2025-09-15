@@ -1,7 +1,7 @@
 # Privacy Policy — HA‑Tracker GPT & Connect Proxy (Cloudflare Workers)
 
 **Last updated:** 2025-08-25  
-**Controller:** vgcouso (individual developer)
+**Controller:** Victor Gonzalez Couso (individual developer)
 
 This policy describes how data is processed when you use the “HA‑Tracker GPT” (a Custom GPT with Actions) together with the optional **Connect Proxy** hosted on **Cloudflare Workers**.
 

@@ -6,25 +6,61 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
-## [0.0.29] - 2025-06/30
+## [0.0.30] - 2025-09-15
+
+### Changes
+- Added a Custom Card #22
+- HA Tracker GPT for ChatGPT (beta version)
+- Added a blueprint for creating automations
+- Integration with OnwTracks and GPSLogger as device trackers
+- Integration with MacroDroid to resolve the issue of OwnTracks starting after rebooting the phone.
+- In options, the name used in the URL to download the properties of the OnwTracks and GPSLogger integrations to the mobile
+- Column with stops on the Positions tab of the Filter screen
+- Column with Auto Filter on the Positions tab of the Filter screen
+- The route with the filter positions on the map appears in green at the start and blue at the end.
+- Measure distance on the Summary tab of the Filter screen
+- Added a link in the user popup to show the position on Google Maps
+- On the map you can search for places
+- On the filter screen there are three buttons to filter positions for today, yesterday or custom between two dates and times
+- Changed the way to obtain the Home Assistant token for panels and cards
+- Minified Javascript in the dist/ha-tracker.js file
+- Automatic versioning in index.html, styles.css and ha-tracker.js 
+- Geocoding is now done on the server that caches the addresses
+- Changed the default Alert, Confirm and Prompt windows
+- Changed the date/time picker in the filter window 
+- Zones can be assigned a color that will be used when drawing them on the map and as a background on table lines
+- The name of the zones must be unique and its size must be less than 30 characters
+- Possibility of exporting filters to various file formats
+- Do not show users without device tracker #26
+- Updated README.md with all the changes in this version
+
+### Fixed
+- If HA Tracker is not active, it does not update to save resources.
+- Excessive page reloads in HA Tracker panel. Now not reload
+- Notifications with: "Login attempt or request with invalid authentication..."
+- Problems with some characters in zone names when creating and modifying zones
+- OpenStreetMaps not showing tiles anymore, only message: https://wiki.openstreetmap.org/wiki/Blocked_tiles #27
+
+
+## [0.0.29] - 2025-06-30
 
 ### Changes
 - Changed the README.md file to update the update from HACS
 
 
-## [0.0.28] - 2025-06/26
+## [0.0.28] - 2025-06-26
 
 ### Changes
 - version for HACS
 
 
-## [0.0.27] - 2025-06/26
+## [0.0.27] - 2025-06-26
 
 ### Changes
 - version for HACS
 
 
-## [0.0.26] - 2025-06/26
+## [0.0.26] - 2025-06-26
 
 ### Changes
 - version for HACS

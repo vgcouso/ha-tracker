@@ -1,34 +1,95 @@
 {
-    "config": {
-        "step": {
-            "user": {
-                "title": "إعداد HA Tracker",
-                "description": "قم بتكوين الخيارات الأساسية للتكامل.",
-                "data": {
-                    "update_interval": "فاصل التحديث (بالثواني)",
-                    "enable_debug": "تمكين التصحيح",
-                    "geocode_time": "وقت التكويد الجغرافي (بالثواني)",
-                    "geocode_distance": "المسافة الدنيا للتكويد الجغرافي (بالمتر)",
-					"only_admin": "المسؤول فقط",
-					"use_mph": "السرعة بالأميال في الساعة"
-                }
-            }
+  "config": {
+    "step": {
+      "user": {
+        "title": "إعداد HA Tracker",
+        "description": "اضبط الخيارات الأساسية للتكامل.",
+        "data": {
+          "update_interval": "فاصل التحديث (بالثواني)",
+          "enable_debug": "تمكين التصحيح",
+          "geocode_time": "وقت الترميز الجغرافي (ثوانٍ)",
+          "geocode_distance": "أدنى مسافة للترميز الجغرافي (متر)",
+          "only_admin": "للمشرفين فقط",
+          "use_imperial": "استخدام الوحدات الإمبريالية",
+          "owntracks": "معرّف OwnTracks (أحرف صغيرة وأرقام)",
+          "gpslogger": "معرّف GPSLogger (أحرف صغيرة وأرقام)",
+          "stop_radius": "نطاق التوقف (متر)",
+          "stop_time": "زمن التوقف (ثوانٍ)",
+          "anti_spike_radius": "نطاق مكافحة القفزات (متر)",
+          "anti_spike_time": "وقت مكافحة القفزات (ثوانٍ)"
+        },
+        "data_description": {
+          "owntracks": "سيُستخدم كنقطة نهاية/مسار (slug)؛ أحرف صغيرة وأرقام فقط.",
+          "gpslogger": "سيُستخدم كنقطة نهاية/مسار (slug)؛ أحرف صغيرة وأرقام فقط."
         }
+      }
     },
-    "options": {
-        "step": {
-            "init": {
-                "title": "خيارات HA Tracker",
-                "description": "قم بتكوين الخيارات المتقدمة للتكامل.",
-                "data": {
-                    "update_interval": "فاصل التحديث (بالثواني)",
-                    "enable_debug": "تمكين التصحيح",
-                    "geocode_time": "وقت التكويد الجغرافي (بالثواني)",
-                    "geocode_distance": "المسافة الدنيا للتكويد الجغرافي (بالمتر)",
-					"only_admin": "المسؤول فقط",
-					"use_mph": "السرعة بالأميال في الساعة"
-                }
-            }
-        }
+    "error": {
+      "invalid_identifier": "معرّف غير صالح (استخدم أحرفًا صغيرة وأرقامًا فقط).",
+      "identifiers_must_differ": "يجب أن تكون المعرّفات مختلفة."
+    },
+    "abort": {
+      "config_entry_not_found": "تعذّر العثور على مُدخل الإعداد."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "خيارات HA Tracker",
+        "description": "اضبط الخيارات المتقدمة للتكامل.",
+        "sections": {
+          "general": {
+            "name": "عام",
+            "description": "السلوك الأساسي والوحدات.",
+            "data": {
+              "update_interval": "فاصل التحديث (بالثواني)",
+              "only_admin": "للمشرفين فقط",
+              "enable_debug": "تمكين التصحيح",
+              "use_imperial": "استخدام الوحدات الإمبريالية"
+            }
+          },
+          "geocoding": {
+            "name": "الترميز الجغرافي",
+            "description": "معاملات الترميز الجغرافي العكسي.",
+            "data": {
+              "geocode_time": "وقت الترميز الجغرافي (ثوانٍ)",
+              "geocode_distance": "أدنى مسافة للترميز الجغرافي (متر)"
+            }
+          },
+          "stops": {
+            "name": "التوقفات",
+            "description": "عتبات كشف التوقف.",
+            "data": {
+              "stop_radius": "نطاق التوقف (متر)",
+              "stop_time": "زمن التوقف (ثوانٍ)"
+            }
+          },
+          "anti_spike": {
+            "name": "مكافحة القفزات",
+            "description": "مرشِّحات لارتدادات/قفزات الموقع العشوائية.",
+            "data": {
+              "anti_spike_radius": "نطاق مكافحة القفزات (متر)",
+              "anti_spike_time": "وقت مكافحة القفزات (ثوانٍ)"
+            }
+          },
+          "sources": {
+            "name": "المصادر",
+            "description": "المعرّفات لنقاط الإدخال.",
+            "data": {
+              "owntracks": "معرّف OwnTracks (أحرف صغيرة وأرقام)",
+              "gpslogger": "معرّف GPSLogger (أحرف صغيرة وأرقام)"
+            },
+            "data_description": {
+              "owntracks": "أحرف صغيرة وأرقام فقط. يجب أن يكون مختلفًا عن GPSLogger.",
+              "gpslogger": "أحرف صغيرة وأرقام فقط. يجب أن يكون مختلفًا عن OwnTracks."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_identifier": "معرّف غير صالح (استخدم أحرفًا صغيرة وأرقامًا فقط).",
+      "identifiers_must_differ": "يجب أن تكون المعرّفات مختلفة."
+    }
+  }
 }

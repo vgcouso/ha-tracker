@@ -1,34 +1,95 @@
 {
-    "config": {
-        "step": {
-            "user": {
-                "title": "Configuración de HA Tracker",
-                "description": "Configura las opciones básicas de la integración.",
-                "data": {
-                    "update_interval": "Intervalo de actualización (en segundos)",
-                    "enable_debug": "Habilitar depuración",
-                    "geocode_time": "Tiempo para geocodificación (en segundos)",
-                    "geocode_distance": "Distancia mínima para geocodificación (en metros)",
-					"only_admin": "Solo Administrador",
-					"use_mph": "Velocidad en millas por hora"
-                }	
-            }
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuración de HA Tracker",
+        "description": "Configura las opciones básicas de la integración.",
+        "data": {
+          "update_interval": "Intervalo de actualización (segundos)",
+          "enable_debug": "Habilitar depuración",
+          "geocode_time": "Tiempo de geocodificación (segundos)",
+          "geocode_distance": "Distancia mínima para geocodificar (metros)",
+          "only_admin": "Solo administradores",
+          "use_imperial": "Usar unidades imperiales",
+          "owntracks": "Identificador de OwnTracks (letras minúsculas y dígitos)",
+          "gpslogger": "Identificador de GPSLogger (letras minúsculas y dígitos)",
+          "stop_radius": "Radio de parada (metros)",
+          "stop_time": "Tiempo de parada (segundos)",
+          "anti_spike_radius": "Radio anti-spike (metros)",
+          "anti_spike_time": "Tiempo anti-spike (segundos)"
+        },
+        "data_description": {
+          "owntracks": "Se usará como endpoint/slug; solo letras minúsculas y dígitos.",
+          "gpslogger": "Se usará como endpoint/slug; solo letras minúsculas y dígitos."
         }
+      }
     },
-    "options": {
-        "step": {
-            "init": {
-                "title": "Opciones de HA Tracker",
-                "description": "Configura las opciones avanzadas de la integración.",
-                "data": {
-                    "update_interval": "Intervalo de actualización (en segundos)",
-                    "enable_debug": "Habilitar depuración",
-                    "geocode_time": "Tiempo para geocodificación (en segundos)",
-                    "geocode_distance": "Distancia mínima para geocodificación (en metros)",
-					"only_admin": "Solo Administrador",
-					"use_mph": "Velocidad en millas por hora"
-                }			
-            }
-        }
+    "error": {
+      "invalid_identifier": "Identificador no válido (usa solo letras minúsculas y dígitos).",
+      "identifiers_must_differ": "Los identificadores deben ser diferentes."
+    },
+    "abort": {
+      "config_entry_not_found": "No se encontró la entrada de configuración."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de HA Tracker",
+        "description": "Configura las opciones avanzadas de la integración.",
+        "sections": {
+          "general": {
+            "name": "General",
+            "description": "Comportamiento principal y unidades.",
+            "data": {
+              "update_interval": "Intervalo de actualización (segundos)",
+              "only_admin": "Solo administradores",
+              "enable_debug": "Habilitar depuración",
+              "use_imperial": "Usar unidades imperiales"
+            }
+          },
+          "geocoding": {
+            "name": "Geocodificación",
+            "description": "Parámetros de geocodificación inversa.",
+            "data": {
+              "geocode_time": "Tiempo de geocodificación (segundos)",
+              "geocode_distance": "Distancia mínima para geocodificar (metros)"
+            }
+          },
+          "stops": {
+            "name": "Paradas",
+            "description": "Umbrales de detección de paradas.",
+            "data": {
+              "stop_radius": "Radio de parada (metros)",
+              "stop_time": "Tiempo de parada (segundos)"
+            }
+          },
+          "anti_spike": {
+            "name": "Anti-spike",
+            "description": "Filtros para saltos esporádicos de posición.",
+            "data": {
+              "anti_spike_radius": "Radio anti-spike (metros)",
+              "anti_spike_time": "Tiempo anti-spike (segundos)"
+            }
+          },
+          "sources": {
+            "name": "Fuentes",
+            "description": "Identificadores para los endpoints de entrada.",
+            "data": {
+              "owntracks": "Identificador de OwnTracks (letras minúsculas y dígitos)",
+              "gpslogger": "Identificador de GPSLogger (letras minúsculas y dígitos)"
+            },
+            "data_description": {
+              "owntracks": "Solo letras minúsculas y dígitos. Debe ser distinto de GPSLogger.",
+              "gpslogger": "Solo letras minúsculas y dígitos. Debe ser distinto de OwnTracks."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_identifier": "Identificador no válido (usa solo letras minúsculas y dígitos).",
+      "identifiers_must_differ": "Los identificadores deben ser diferentes."
+    }
+  }
 }

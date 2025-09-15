@@ -1,8 +1,11 @@
-"""Manejo de la configuración de HA Tracker."""
+"""Manejo de la configuración de HA Tracker (con secciones en un solo paso)."""
 
+import re
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.data_entry_flow import section  # 👈 NUEVO
 
 from .const import DOMAIN
 
@@ -10,89 +13,148 @@ DEFAULTS = {
     "update_interval": 10,
     "geocode_time": 30,
     "geocode_distance": 20,
-    "only_admin": False,          
-    "enable_debug": False,    
-    "use_mph": False,
+    "stop_radius": 25,
+    "stop_time": 300,
+    "anti_spike_radius": 20,
+    "anti_spike_time": 250,
+    "only_admin": False,
+    "enable_debug": False,
+    "use_imperial": False,
+    "owntracks": "owntracks",
+    "gpslogger": "gpslogger",
 }
 
-class HATrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Define el flujo de configuración para la integración HA Tracker."""
+_IDENT_REGEX = re.compile(r"^[a-z0-9]+$")
 
+def _clean_str(v: str) -> str:
+    return (v or "").strip()
+
+def _validate_identifiers(data: dict) -> dict:
+    errors: dict[str, str] = {}
+    gps = _clean_str(data.get("gpslogger"))
+    own = _clean_str(data.get("owntracks"))
+    if not _IDENT_REGEX.fullmatch(gps):
+        errors["gpslogger"] = "invalid_identifier"
+    if not _IDENT_REGEX.fullmatch(own):
+        errors["owntracks"] = "invalid_identifier"
+    if not errors and gps == own:
+        errors["base"] = "identifiers_must_differ"
+    data["gpslogger"] = gps
+    data["owntracks"] = own
+    return errors
+
+
+class HATrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
     async def async_step_user(self, user_input=None):
-        """Paso inicial para la configuración de la integración."""
         errors = {}
-
-        if user_input is not None:
-            return self.async_create_entry(title="HA Tracker", data=user_input)
-
         data_schema = vol.Schema(
             {
                 vol.Required("update_interval", default=DEFAULTS["update_interval"]):
                     vol.All(vol.Coerce(int), vol.Range(min=10)),
-                vol.Required("geocode_time",    default=DEFAULTS["geocode_time"]):
-                    vol.All(vol.Coerce(int), vol.Range(min=30)),
+                vol.Required("geocode_time", default=DEFAULTS["geocode_time"]):
+                    vol.All(vol.Coerce(int), vol.Range(min=10)),
                 vol.Required("geocode_distance", default=DEFAULTS["geocode_distance"]):
                     vol.All(vol.Coerce(int), vol.Range(min=20)),
-                vol.Required("only_admin",    default=DEFAULTS["only_admin"]): bool,
-                vol.Required("enable_debug",  default=DEFAULTS["enable_debug"]): bool,
-                vol.Required("use_mph",       default=DEFAULTS["use_mph"]): bool,
+                vol.Required("stop_radius", default=DEFAULTS["stop_radius"]):
+                    vol.All(vol.Coerce(int), vol.Range(min=0)),
+                vol.Required("stop_time", default=DEFAULTS["stop_time"]):
+                    vol.All(vol.Coerce(int), vol.Range(min=0)),
+                vol.Required("anti_spike_radius", default=DEFAULTS["anti_spike_radius"]):
+                    vol.All(vol.Coerce(int), vol.Range(min=0)),
+                vol.Required("anti_spike_time", default=DEFAULTS["anti_spike_time"]):
+                    vol.All(vol.Coerce(int), vol.Range(min=0)),
+                vol.Required("only_admin", default=DEFAULTS["only_admin"]): bool,
+                vol.Required("enable_debug", default=DEFAULTS["enable_debug"]): bool,
+                vol.Required("use_imperial", default=DEFAULTS["use_imperial"]): bool,
+                vol.Required("owntracks", default=DEFAULTS["owntracks"]): str,
+                vol.Required("gpslogger", default=DEFAULTS["gpslogger"]): str,
             }
         )
-
-        return self.async_show_form(
-            step_id="user", data_schema=data_schema, errors=errors
-        )
+        if user_input is not None:
+            errors = _validate_identifiers(user_input)
+            if not errors:
+                return self.async_create_entry(title="HA Tracker", data=user_input)
+        return self.async_show_form(step_id="user", data_schema=data_schema, errors=errors)
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
-        """Retorna el flujo de configuración de opciones."""
-        return HATrackerOptionsFlowHandler(config_entry.entry_id)
-
-    def is_matching(self, _match_dict: dict) -> bool:
-        """Método requerido por ConfigFlow"""
-        return False
+    def async_get_options_flow(config_entry: ConfigEntry):
+        return HATrackerOptionsFlowHandler(config_entry)
 
 
 class HATrackerOptionsFlowHandler(config_entries.OptionsFlow):
-    """Manejo del flujo de opciones para HA Tracker."""
+    """Opciones agrupadas en secciones en un único formulario."""
 
-    def __init__(self, entry_id):
-        self.entry_id = entry_id
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        self.config_entry = config_entry
+        self._opts = {**DEFAULTS, **(config_entry.data or {}), **(config_entry.options or {})}
 
     async def async_step_init(self, user_input=None):
-        """Pantalla de configuración de opciones."""
-        config_entry = self.hass.config_entries.async_get_entry(self.entry_id)
-        if config_entry is None:
-            return self.async_abort(reason="config_entry_not_found")
-
-        options = config_entry.options or config_entry.data
-
+        # Si envían el formulario, aplanamos y guardamos
         if user_input is not None:
-            self.hass.config_entries.async_update_entry(
-                config_entry, options=user_input
-            )
-            return self.async_create_entry(title="", data=user_input)
+            flat: dict = {}
+            for sec in ("general", "geocoding", "stops", "anti_spike", "sources"):
+                flat.update(user_input.get(sec, {}))
+            errors = _validate_identifiers(flat)
+            if errors:
+                # Volvemos a pintar el formulario con los errores
+                return self.async_show_form(
+                    step_id="init",
+                    data_schema=self._build_schema(),
+                    errors=errors,
+                )
+            return self.async_create_entry(title="", data=flat)
 
-        options_schema = vol.Schema(
-            {
-                vol.Required("update_interval",  default=options.get("update_interval", 10)):
-                    vol.All(vol.Coerce(int), vol.Range(min=10)),
-                vol.Required("geocode_time",     default=options.get("geocode_time", 30)):
-                    vol.All(vol.Coerce(int), vol.Range(min=30)),
-                vol.Required("geocode_distance", default=options.get("geocode_distance", 20)):
-                    vol.All(vol.Coerce(int), vol.Range(min=20)),
-                vol.Required("only_admin",       default=options.get("only_admin", False)): bool,  
-                vol.Required("enable_debug",     default=options.get("enable_debug", False)): bool,
-                vol.Required("use_mph",          default=options.get("use_mph", False)): bool,
-            }
-        )
-
+        # Primera carga del formulario
         return self.async_show_form(
             step_id="init",
-            data_schema=options_schema,
+            data_schema=self._build_schema(),
             errors={},
-            description_placeholders={},  # Forzar carga de traducciones
         )
+
+    def _build_schema(self) -> vol.Schema:
+        """Construye el esquema con secciones y defaults desde self._opts."""
+        general = vol.Schema({
+            vol.Required("update_interval", default=self._opts["update_interval"]):
+                vol.All(vol.Coerce(int), vol.Range(min=10)),
+            vol.Required("only_admin", default=self._opts["only_admin"]): bool,
+            vol.Required("enable_debug", default=self._opts["enable_debug"]): bool,
+            vol.Required("use_imperial", default=self._opts["use_imperial"]): bool,
+        })
+
+        geocoding = vol.Schema({
+            vol.Required("geocode_time", default=self._opts["geocode_time"]):
+                vol.All(vol.Coerce(int), vol.Range(min=10)),
+            vol.Required("geocode_distance", default=self._opts["geocode_distance"]):
+                vol.All(vol.Coerce(int), vol.Range(min=20)),
+        })
+
+        stops = vol.Schema({
+            vol.Required("stop_radius", default=self._opts["stop_radius"]):
+                vol.All(vol.Coerce(int), vol.Range(min=0)),
+            vol.Required("stop_time", default=self._opts["stop_time"]):
+                vol.All(vol.Coerce(int), vol.Range(min=0)),
+        })
+
+        anti_spike = vol.Schema({
+            vol.Required("anti_spike_radius", default=self._opts["anti_spike_radius"]):
+                vol.All(vol.Coerce(int), vol.Range(min=0)),
+            vol.Required("anti_spike_time", default=self._opts["anti_spike_time"]):
+                vol.All(vol.Coerce(int), vol.Range(min=0)),
+        })
+
+        sources = vol.Schema({
+            vol.Required("owntracks", default=self._opts["owntracks"]): str,
+            vol.Required("gpslogger", default=self._opts["gpslogger"]): str,
+        })
+
+        data_schema = {
+            vol.Required("general"): section(general, {"collapsed": True}),
+            vol.Required("geocoding"): section(geocoding, {"collapsed": True}),
+            vol.Required("stops"): section(stops, {"collapsed": True}),
+            vol.Required("anti_spike"): section(anti_spike, {"collapsed": True}),
+            vol.Required("sources"): section(sources, {"collapsed": True}),
+        }
+        return vol.Schema(data_schema)

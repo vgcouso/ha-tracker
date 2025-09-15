@@ -1,34 +1,95 @@
 {
-    "config": {
-        "step": {
-            "user": {
-                "title": "HA Tracker 配置",
-                "description": "配置集成的基本选项。",
-                "data": {
-                    "update_interval": "更新间隔（秒）",
-                    "enable_debug": "启用调试",
-                    "geocode_time": "地理编码时间（秒）",
-                    "geocode_distance": "地理编码最小距离（米）",
-					"only_admin": "仅管理员",
-					"use_mph": "以英里每小时计的速度"
-                }
-            }
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Tracker 配置",
+        "description": "配置集成的基本选项。",
+        "data": {
+          "update_interval": "更新间隔（秒）",
+          "enable_debug": "启用调试",
+          "geocode_time": "地理编码时间（秒）",
+          "geocode_distance": "进行地理编码的最小距离（米）",
+          "only_admin": "仅管理员",
+          "use_imperial": "使用英制单位",
+          "owntracks": "OwnTracks 标识符（仅小写字母和数字）",
+          "gpslogger": "GPSLogger 标识符（仅小写字母和数字）",
+          "stop_radius": "停留半径（米）",
+          "stop_time": "停留时间（秒）",
+          "anti_spike_radius": "防跳变半径（米）",
+          "anti_spike_time": "防跳变时间（秒）"
+        },
+        "data_description": {
+          "owntracks": "将用作端点/slug；仅限小写字母和数字。",
+          "gpslogger": "将用作端点/slug；仅限小写字母和数字。"
         }
+      }
     },
-    "options": {
-        "step": {
-            "init": {
-                "title": "HA Tracker 选项",
-                "description": "配置集成的高级选项。",
-                "data": {
-                    "update_interval": "更新间隔（秒）",
-                    "enable_debug": "启用调试",
-                    "geocode_time": "地理编码时间（秒）",
-                    "geocode_distance": "地理编码最小距离（米）",
-					"only_admin": "仅管理员",
-					"use_mph": "以英里每小时计的速度"
-                }
-            }
-        }
+    "error": {
+      "invalid_identifier": "无效的标识符（仅使用小写字母和数字）。",
+      "identifiers_must_differ": "标识符必须彼此不同。"
+    },
+    "abort": {
+      "config_entry_not_found": "找不到配置条目。"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HA Tracker 选项",
+        "description": "配置集成的高级选项。",
+        "sections": {
+          "general": {
+            "name": "通用",
+            "description": "核心行为与单位。",
+            "data": {
+              "update_interval": "更新间隔（秒）",
+              "only_admin": "仅管理员",
+              "enable_debug": "启用调试",
+              "use_imperial": "使用英制单位"
+            }
+          },
+          "geocoding": {
+            "name": "地理编码",
+            "description": "反向地理编码参数。",
+            "data": {
+              "geocode_time": "地理编码时间（秒）",
+              "geocode_distance": "进行地理编码的最小距离（米）"
+            }
+          },
+          "stops": {
+            "name": "停留",
+            "description": "停留检测阈值。",
+            "data": {
+              "stop_radius": "停留半径（米）",
+              "stop_time": "停留时间（秒）"
+            }
+          },
+          "anti_spike": {
+            "name": "防跳变",
+            "description": "过滤位置的偶发跳跃。",
+            "data": {
+              "anti_spike_radius": "防跳变半径（米）",
+              "anti_spike_time": "防跳变时间（秒）"
+            }
+          },
+          "sources": {
+            "name": "来源",
+            "description": "入站端点的标识符。",
+            "data": {
+              "owntracks": "OwnTracks 标识符（仅小写字母和数字）",
+              "gpslogger": "GPSLogger 标识符（仅小写字母和数字）"
+            },
+            "data_description": {
+              "owntracks": "仅小写字母和数字。须与 GPSLogger 不同。",
+              "gpslogger": "仅小写字母和数字。须与 OwnTracks 不同。"
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_identifier": "无效的标识符（仅使用小写字母和数字）。",
+      "identifiers_must_differ": "标识符必须彼此不同。"
+    }
+  }
 }

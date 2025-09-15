@@ -1,34 +1,95 @@
 {
-    "config": {
-        "step": {
-            "user": {
-                "title": "HA Tracker Konfiguration",
-                "description": "Konfigurieren Sie die grundlegenden Optionen der Integration.",
-                "data": {
-                    "update_interval": "Aktualisierungsintervall (in Sekunden)",
-                    "enable_debug": "Debugging aktivieren",
-                    "geocode_time": "Geokodierungszeit (in Sekunden)",
-                    "geocode_distance": "Mindestentfernung für Geokodierung (in Metern)",
-					"only_admin": "Nur Administrator",
-					"use_mph": "Geschwindigkeit in Meilen pro Stunde"
-                }
-            }
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Tracker – Konfiguration",
+        "description": "Konfigurieren Sie die grundlegenden Optionen der Integration.",
+        "data": {
+          "update_interval": "Aktualisierungsintervall (Sekunden)",
+          "enable_debug": "Debugging aktivieren",
+          "geocode_time": "Geokodierungszeit (Sekunden)",
+          "geocode_distance": "Mindestentfernung für Geokodierung (Meter)",
+          "only_admin": "Nur Administratoren",
+          "use_imperial": "Imperiale Einheiten verwenden",
+          "owntracks": "OwnTracks-Kennung (Kleinbuchstaben und Ziffern)",
+          "gpslogger": "GPSLogger-Kennung (Kleinbuchstaben und Ziffern)",
+          "stop_radius": "Stopp-Radius (Meter)",
+          "stop_time": "Stopp-Zeit (Sekunden)",
+          "anti_spike_radius": "Anti-Spike-Radius (Meter)",
+          "anti_spike_time": "Anti-Spike-Zeit (Sekunden)"
+        },
+        "data_description": {
+          "owntracks": "Wird als Endpoint/Slug verwendet; nur Kleinbuchstaben und Ziffern.",
+          "gpslogger": "Wird als Endpoint/Slug verwendet; nur Kleinbuchstaben und Ziffern."
         }
+      }
     },
-    "options": {
-        "step": {
-            "init": {
-                "title": "HA Tracker Optionen",
-                "description": "Konfigurieren Sie die erweiterten Optionen der Integration.",
-                "data": {
-                    "update_interval": "Aktualisierungsintervall (in Sekunden)",
-                    "enable_debug": "Debugging aktivieren",
-                    "geocode_time": "Geokodierungszeit (in Sekunden)",
-                    "geocode_distance": "Mindestentfernung für Geokodierung (in Metern)",
-					"only_admin": "Nur Administrator",
-					"use_mph": "Geschwindigkeit in Meilen pro Stunde"
-                }
-            }
-        }
+    "error": {
+      "invalid_identifier": "Ungültige Kennung (verwenden Sie nur Kleinbuchstaben und Ziffern).",
+      "identifiers_must_differ": "Kennungen müssen unterschiedlich sein."
+    },
+    "abort": {
+      "config_entry_not_found": "Konfigurationseintrag nicht gefunden."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HA Tracker – Optionen",
+        "description": "Konfigurieren Sie die erweiterten Optionen der Integration.",
+        "sections": {
+          "general": {
+            "name": "Allgemein",
+            "description": "Grundverhalten und Einheiten.",
+            "data": {
+              "update_interval": "Aktualisierungsintervall (Sekunden)",
+              "only_admin": "Nur Administratoren",
+              "enable_debug": "Debugging aktivieren",
+              "use_imperial": "Imperiale Einheiten verwenden"
+            }
+          },
+          "geocoding": {
+            "name": "Geokodierung",
+            "description": "Parameter für die Reverse-Geokodierung.",
+            "data": {
+              "geocode_time": "Geokodierungszeit (Sekunden)",
+              "geocode_distance": "Mindestentfernung für Geokodierung (Meter)"
+            }
+          },
+          "stops": {
+            "name": "Stopps",
+            "description": "Schwellenwerte zur Stopp-Erkennung.",
+            "data": {
+              "stop_radius": "Stopp-Radius (Meter)",
+              "stop_time": "Stopp-Zeit (Sekunden)"
+            }
+          },
+          "anti_spike": {
+            "name": "Anti-Spike",
+            "description": "Filter für sporadische Positionssprünge.",
+            "data": {
+              "anti_spike_radius": "Anti-Spike-Radius (Meter)",
+              "anti_spike_time": "Anti-Spike-Zeit (Sekunden)"
+            }
+          },
+          "sources": {
+            "name": "Quellen",
+            "description": "Kennungen für eingehende Endpunkte.",
+            "data": {
+              "owntracks": "OwnTracks-Kennung (Kleinbuchstaben und Ziffern)",
+              "gpslogger": "GPSLogger-Kennung (Kleinbuchstaben und Ziffern)"
+            },
+            "data_description": {
+              "owntracks": "Nur Kleinbuchstaben und Ziffern. Muss sich von GPSLogger unterscheiden.",
+              "gpslogger": "Nur Kleinbuchstaben und Ziffern. Muss sich von OwnTracks unterscheiden."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_identifier": "Ungültige Kennung (verwenden Sie nur Kleinbuchstaben und Ziffern).",
+      "identifiers_must_differ": "Kennungen müssen unterschiedlich sein."
+    }
+  }
 }

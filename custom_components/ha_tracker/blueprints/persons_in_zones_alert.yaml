@@ -1,11 +1,9 @@
 blueprint:
   name: Persons in Zones Alert (HA Tracker)
   description: "
-    Sends TTS/Push via the HA Companion app when any selected person enters or leaves any selected zone.
-    On a cross-zone jump A→B (both configured), ONLY enter B is sent.
-    Messages use {person} and {zone} placeholders.
+    Send voice or text notifications via the Home Assistant Companion app when a selected person enters or leaves a selected zone.
     
-    version: 0.0.1
+    Version 0.0.1 
     "
   domain: automation
   homeassistant:
@@ -22,7 +20,7 @@ blueprint:
 
     zone_entities:
       name: Zones
-      description: Select one or more zones to watch
+      description: Select one or more zones to watch (include Casa → zone.home)
       selector:
         entity:
           domain: zone
@@ -43,7 +41,7 @@ blueprint:
     enter_message:
       name: Enter message
       description: Use {person} and {zone}
-      default: "{person} has arrived at {zone}"
+      default: "{person} is in {zone}"
 
     leave_message:
       name: Leave message
@@ -70,6 +68,7 @@ blueprint:
 trigger:
   - platform: state
     entity_id: !input person_entities
+    # Sin "for": avisamos en cada cambio
 
 variables:
   enter_tpl: !input enter_message
@@ -85,7 +84,7 @@ condition: []
 
 action:
   - variables:
-      # Person display name with robust fallbacks
+      # Person display name con fallback robusto
       person_name: >
         {% if trigger is defined and trigger.to_state %}
           {{ trigger.to_state.name or state_attr(trigger.entity_id,'friendly_name') or (trigger.entity_id | replace('person.','') | replace('_',' ') | title) }}
@@ -93,7 +92,7 @@ action:
           {{ trigger.from_state.name or state_attr(trigger.entity_id,'friendly_name') or (trigger.entity_id | replace('person.','') | replace('_',' ') | title) }}
         {% else %}{{ '' }}{% endif %}
 
-      # Selected zones -> friendly names
+      # Selected zones -> ids list
       zone_ids_list: >
         {% set z = zone_ids %}
         {% if z is string %}{{ [z] }}
@@ -101,6 +100,7 @@ action:
         {% else %}{{ [] }}
         {% endif %}
 
+      # Friendly names (pretty labels)
       zone_names: >
         {% set ns = namespace(names=[]) %}
         {% for zid in zone_ids_list %}
@@ -108,7 +108,16 @@ action:
           {% set ns.names = ns.names + [ label ] %}
         {% endfor %}
         {{ ns.names }}
-      zone_names_l: "{{ zone_names | map('lower') | list }}"
+
+      # Keys para matching; special-case zone.home -> 'home'
+      zone_names_l: >
+        {% set ns = namespace(lst=[]) %}
+        {% for zid in zone_ids_list %}
+          {% set label = state_attr(zid, 'friendly_name') or zid %}
+          {% set key = 'home' if zid == 'zone.home' else (label | lower) %}
+          {% set ns.lst = ns.lst + [ key ] %}
+        {% endfor %}
+        {{ ns.lst }}
 
       # Person state (raw + lowercase)
       zone_to_raw: "{{ trigger.to_state.state if trigger is defined and trigger.to_state else '' }}"
@@ -116,11 +125,16 @@ action:
       zone_to_l: "{{ (zone_to_raw or '') | lower }}"
       zone_from_l: "{{ (zone_from_raw or '') | lower }}"
 
-      # Friendly-name matching
+      # Noise filter — SIEMPRE activo
+      is_noise: >
+        {% set bad = ['unknown','unavailable','none',''] %}
+        {{ zone_to_l in bad or zone_from_l in bad }}
+
+      # Matching contra zonas configuradas
       to_hit: "{{ zone_to_l in zone_names_l }}"
       from_hit: "{{ zone_from_l in zone_names_l }}"
 
-      # Pretty labels
+      # Etiquetas bonitas por índice alineado
       to_label: >
         {% set i = zone_names_l.index(zone_to_l) if zone_to_l in zone_names_l else -1 %}
         {{ zone_names[i] if i >= 0 else (zone_to_raw | title) }}
@@ -128,35 +142,29 @@ action:
         {% set i = zone_names_l.index(zone_from_l) if zone_from_l in zone_names_l else -1 %}
         {{ zone_names[i] if i >= 0 else (zone_from_raw | title) }}
 
-      # Classification (A→B => ONLY enter B)
+      # Clasificación (A→B => ONLY enter B)
       is_enter_raw: "{{ (not from_hit) and to_hit }}"
       is_leave_raw: "{{ from_hit and (not to_hit) }}"
       is_cross: "{{ from_hit and to_hit and (from_label != to_label) }}"
       do_enter: "{{ trig_enter_enabled and (is_enter_raw or is_cross) }}"
       do_leave: "{{ trig_leave_enabled and is_leave_raw }}"
 
-      # Final messages (simple {person}/{zone} replacement)
+      # Mensajes
       enter_msg: >
         {% set tpl = enter_tpl | string %}
-        {{ tpl
-          | replace('{person}', person_name)
-          | replace('{zone}',   to_label)
-          | trim }}
+        {{ tpl | replace('{person}', person_name) | replace('{zone}', to_label) | trim }}
       leave_msg: >
         {% set tpl = leave_tpl | string %}
-        {{ tpl
-          | replace('{person}', person_name)
-          | replace('{zone}',   from_label)
-          | trim }}
+        {{ tpl | replace('{person}', person_name) | replace('{zone}', from_label) | trim }}
 
-      # Devices → explicit notify.mobile_app_* service names
+      # Devices → servicios notify.mobile_app_*
       tts_services_list: >
         {% set ns = namespace(svcs=[]) %}
         {% for dev in tts_devs %}
           {% set svc = 'notify.mobile_app_' ~ (device_attr(dev, 'name') | slugify) %}
           {% set ns.svcs = ns.svcs + [ svc ] %}
         {% endfor %}
-        {{ ns.svcs }}
+        {{ ns.svcs | unique | list }}
 
       push_services_list: >
         {% set ns = namespace(svcs=[]) %}
@@ -164,10 +172,14 @@ action:
           {% set svc = 'notify.mobile_app_' ~ (device_attr(dev, 'name') | slugify) %}
           {% set ns.svcs = ns.svcs + [ svc ] %}
         {% endfor %}
-        {{ ns.svcs }}
+        {{ ns.svcs | unique | list }}
+
+  # Guard inicial: ruido (obligatorio)
+  - condition: template
+    value_template: "{{ not is_noise }}"
 
   - choose:
-      # ENTER (includes cross-zone A→B => enter B only)
+      # ENTER (incluye cross-zone A→B => enter B solo)
       - conditions: "{{ do_enter }}"
         sequence:
           - repeat:
@@ -190,7 +202,7 @@ action:
                       priority: high
                       ttl: 0
 
-      # LEAVE (to outside configured zones)
+      # LEAVE (a fuera de zonas configuradas)
       - conditions: "{{ do_leave }}"
         sequence:
           - repeat:

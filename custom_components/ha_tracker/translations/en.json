@@ -1,34 +1,95 @@
 {
-    "config": {
-        "step": {
-            "user": {
-                "title": "HA Tracker Configuration",
-                "description": "Configure the basic options of the integration.",
-                "data": {
-                    "update_interval": "Update interval (in seconds)",
-                    "enable_debug": "Enable debugging",
-                    "geocode_time": "Geocoding time (in seconds)",
-                    "geocode_distance": "Minimum distance for geocoding (in meters)",
-					"only_admin": "Admin only",
-					"use_mph": "Speed in miles per hour"
-                }
-            }
+  "config": {
+    "step": {
+      "user": {
+        "title": "HA Tracker configuration",
+        "description": "Configure the integration's basic options.",
+        "data": {
+          "update_interval": "Update interval (seconds)",
+          "enable_debug": "Enable debugging",
+          "geocode_time": "Geocoding time (seconds)",
+          "geocode_distance": "Minimum geocoding distance (meters)",
+          "only_admin": "Admin only",
+          "use_imperial": "Use imperial units",
+          "owntracks": "OwnTracks identifier (lowercase letters and digits)",
+          "gpslogger": "GPSLogger identifier (lowercase letters and digits)",
+          "stop_radius": "Stop radius (meters)",
+          "stop_time": "Stop time (seconds)",
+          "anti_spike_radius": "Anti-spike radius (meters)",
+          "anti_spike_time": "Anti-spike time (seconds)"
+        },
+        "data_description": {
+          "owntracks": "This will be used as an endpoint/slug; only lowercase letters and digits.",
+          "gpslogger": "This will be used as an endpoint/slug; only lowercase letters and digits."
         }
+      }
     },
-    "options": {
-        "step": {
-            "init": {
-                "title": "HA Tracker Options",
-                "description": "Configure the advanced options of the integration.",
-                "data": {
-                    "update_interval": "Update interval (in seconds)",
-                    "enable_debug": "Enable debugging",
-                    "geocode_time": "Geocoding time (in seconds)",
-                    "geocode_distance": "Minimum distance for geocoding (in meters)",
-					"only_admin": "Admin only",
-					"use_mph": "Speed in miles per hour"
-                }
-            }
-        }
+    "error": {
+      "invalid_identifier": "Invalid identifier (use lowercase letters and digits only).",
+      "identifiers_must_differ": "Identifiers must be different."
+    },
+    "abort": {
+      "config_entry_not_found": "Configuration entry not found."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "HA Tracker options",
+        "description": "Configure the integration's advanced options.",
+        "sections": {
+          "general": {
+            "name": "General",
+            "description": "Core behavior and units.",
+            "data": {
+              "update_interval": "Update interval (seconds)",
+              "only_admin": "Admin only",
+              "enable_debug": "Enable debugging",
+              "use_imperial": "Use imperial units"
+            }
+          },
+          "geocoding": {
+            "name": "Geocoding",
+            "description": "Reverse geocoding parameters.",
+            "data": {
+              "geocode_time": "Geocoding time (seconds)",
+              "geocode_distance": "Minimum geocoding distance (meters)"
+            }
+          },
+          "stops": {
+            "name": "Stops",
+            "description": "Stop detection thresholds.",
+            "data": {
+              "stop_radius": "Stop radius (meters)",
+              "stop_time": "Stop time (seconds)"
+            }
+          },
+          "anti_spike": {
+            "name": "Anti-spike",
+            "description": "Filters sporadic position jumps.",
+            "data": {
+              "anti_spike_radius": "Anti-spike radius (meters)",
+              "anti_spike_time": "Anti-spike time (seconds)"
+            }
+          },
+          "sources": {
+            "name": "Sources",
+            "description": "Identifiers for incoming endpoints.",
+            "data": {
+              "owntracks": "OwnTracks identifier (lowercase letters and digits)",
+              "gpslogger": "GPSLogger identifier (lowercase letters and digits)"
+            },
+            "data_description": {
+              "owntracks": "Only lowercase letters and digits. Must be different from GPSLogger.",
+              "gpslogger": "Only lowercase letters and digits. Must be different from OwnTracks."
+            }
+          }
+        }
+      }
+    },
+    "error": {
+      "invalid_identifier": "Invalid identifier (use lowercase letters and digits only).",
+      "identifiers_must_differ": "Identifiers must be different."
+    }
+  }
 }

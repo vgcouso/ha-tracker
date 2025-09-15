@@ -2,15 +2,16 @@
 // MAIN
 //
 
-import {isActive, updateAdmin, updateConfig, updateInterval} from './globals.js';
-import {initMap} from './map.js';
-import {load, showWindowOverlay, hideWindowOverlay} from './utils.js';
-import {authCallback} from './auth.js';
-import {updatePersons, fitMapToAllPersons, processQueue} from './persons.js';
-import {updateZones} from './zones.js';
-import {initializeI18n, t} from './i18n.js';
+import {version, isActive, updateAdmin, updateConfig, updateInterval} from './globals.js';
+import {initMap} from './utils/map.js';
+import {loadUI, updateUI} from './utils/ui.js';
+import {authCallback} from './ha/auth.js';
+import {updatePersons, fitMapToAllPersons} from './screens/persons.js';
+import {initZones, updateZones} from './screens/zones.js';
+import {initFilter} from './screens/filter.js';
+import {initializeI18n, t} from './utils/i18n.js';
+import {showWindowOverlay, hideWindowOverlay} from './utils/dialogs.js';
 
-let isTabVisible = document.visibilityState === 'visible';
 
 document.addEventListener("DOMContentLoaded", async() => {
     try {
@@ -27,61 +28,58 @@ document.addEventListener("DOMContentLoaded", async() => {
 async function init() {
     try {
 		await initializeI18n(); 
+		await initFilter();
+		await initZones();
         await initMap();
         await update();
-        await load();
-		
-        // Zoom al conjunto de dispositivos
-        await fitMapToAllPersons();
+        await fitMapToAllPersons(); // Zoom al conjunto de dispositivos
+		await loadUI();		        
 
-        // Inicia el ciclo de actualización
-        startUpdateLoop();
-		startGeocodeLoop();
+		// Ejecutar en segundo plano con manejo de errores iniciales
+		startUpdateLoop();       // sin .catch: ya gestionan sus propios errores
 		
     } catch (error) {
         console.error("Error during init:", error);
     }
 }
 
-async function startUpdateLoop() {
-    while (true) {
-        try {
-			if (isTabVisible) {
-				await update();
-			}
-        } catch (error) {
-            console.error("Error during update, loop will continue:", error);
-        }
-        await delay(updateInterval*1000);
+
+//
+// ------ UPDATE LOOP sincronizado con rAF ------
+// Ejecuta update() cada updateInterval segundos,
+// solo mientras el documento esté visible
+//
+function startUpdateLoop() {
+  let lastRun = performance.now();
+
+  async function frame(now) {
+    const PERIOD = (updateInterval ?? 10) * 1000;      // ms
+    if (now - lastRun >= PERIOD) {
+      lastRun = now;
+      try {
+        await update();
+      } catch (err) {
+        console.error("update() failed:", err);
+      }
     }
+    requestAnimationFrame(frame);                     // siguiente frame
+  }
+
+  requestAnimationFrame(frame);                       // arranque
 }
 
-async function startGeocodeLoop() {
-    while (true) {
-        try {
-			if (isTabVisible) {
-				await processQueue();
-			}
-        } catch (error) {
-            console.error("Error processing queue, loop will continue:", error);
-        }
-        await delay(1000);
-    }
-}
-
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 async function update() {
-    try {
-        // Ejecutar funciones en orden y detenerse si ocurre un error
+    try {	
+		// Ejecutar funciones en orden y detenerse si ocurre un error
 		const active = await isActive();
 		if (active){
 			await updateConfig();			
+			await updateVersion();
 			await updateAdmin();
 			await updatePersons();
 			await updateZones();
+			await updateUI();
 			hideWindowOverlay();
 		} else {
 			showWindowOverlay(t('disconnected'), "rgba(255, 0, 0, 0.5)", "white", "rgba(200, 0, 0, 0.8)");
@@ -91,7 +89,21 @@ async function update() {
     }
 }
 
-// Escuchar cambios de visibilidad
-document.addEventListener('visibilitychange', () => {
-	isTabVisible = document.visibilityState === 'visible';
-});
+async function updateVersion() {
+    try {
+        const inIframe = window.self !== window.top;
+        if (!inIframe && version) {
+            const url = new URL(window.location.href);
+            const currV = url.searchParams.get("v");
+            if (currV !== version) {
+                url.searchParams.set("v", version);
+                const next = url.toString();
+                if (next !== window.location.href) {
+                    window.location.replace(next);
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error during updateVersion:", error);
+    }
+}

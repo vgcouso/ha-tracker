@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>HA Tracker</title>
   
   <link rel="icon" href="favicon.png" type="image/png">
@@ -13,22 +14,23 @@
   <meta http-equiv="Cache-Control" content="no-cache, mustrevalidate">
   <meta http-equiv="Pragma" content="no-cache">
   
+  
   <!-- Estilos -->
-  <link rel="stylesheet" href="css/styles.css?v=0.0.29">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" onload="document.body.style.visibility='visible';">
+
+  
 </head>
-<body>
+<body hidden>
   <div id="container">
     <div id="map">
     </div>
     <div id="forms-container">
-      <div id="combo-container">
-        <select id="combo-select">
-		  <option value="users" data-i18n="users">Users</option>
-          <option value="zones" data-i18n="zones">Zones</option>		  
-          <option value="filter" data-i18n="filter">Filter</option>
-        </select>
-      </div>
+		<div id="combo-container">
+		  <select id="combo-select">
+			<option value="users"  data-i18n="users"  data-icon="users">Users</option>
+			<option value="zones"  data-i18n="zones"  data-icon="zones">Zones</option>
+			<option value="filter" data-i18n="filter" data-icon="filter">Filter</option>
+		  </select>
+		</div>
       <div id="persons-container" style="display: block;"> <!-- Visible por defecto -->
         <div id="persons-table" class="table-container">
           <table class="fixed-table">
@@ -36,9 +38,9 @@
               <tr>
                 <th data-i18n="name">Name</th>
 				<th style="width: 45px;" data-i18n="date">Date</th>
+				<th data-i18n="zone">Zone</th>				
 				<th style="width: 25px;" data-i18n="speed">Speed</th>
 				<th style="width: 15px;" data-i18n="percentage">%</th>
-				<th data-i18n="zone">Zone</th>
               </tr>				  
             </thead>
             <tbody id="persons-table-body">
@@ -49,16 +51,17 @@
       </div> 	
       <div id="zones-container" style="display: none;"> <!-- Oculto por defecto -->
         <div class="zone-actions" id="zone-actions" style="display: none;">
-          <button id="add-zone-button" class="action-button hidden" data-i18n="add">Add</button>
-          <button id="delete-zone-button" class="action-button hidden" data-i18n="delete">Delete</button>
-          <button id="edit-zone-button" class="action-button hidden" data-i18n="edit">Edit</button>
+          <button id="add-zone-button" class="action-button btn-add" data-i18n="add">Add</button>
+          <button id="edit-zone-button" class="action-button btn-edit" data-i18n="edit">Edit</button>		  
+          <button id="delete-zone-button" class="action-button btn-delete" data-i18n="delete">Delete</button>
         </div>
         <div class="table-container">
           <table  id="zones-table" class="fixed-table">
             <thead>
               <tr>
-                <th style="width: 50px;" data-i18n="type">Type</th>
+                <th style="width: 30px;" ></th>
                 <th data-i18n="name">Name</th>
+				<th style="width: 50px;" data-i18n="radius">Radius</th>
               </tr>
             </thead>
             <tbody id="zones-table-body">
@@ -71,15 +74,18 @@
         <div class="group">
           <select id="person-select"></select>
         </div>
-        <div class="group">
-          <label for="start-date" data-i18n="start">Start</label>
-          <input type="datetime-local" id="start-date" />
+	    <div class="group">
+		  <input id="daterange" type="text" data-i18n-placeholder="filter_date_range"  placeholder="" readonly>
+	    </div>	
+		<div class="group">
+          <select id="export-filter">
+		    <option value="export-file" data-i18n="export_file" selected>Exportar a un fichero</option>
+		    <option value="export-pdf">.pdf</option>		
+			<option value="export-xlsx">.xlsx</option>		  
+			<option value="export-csv">.csv</option>		  			
+		    <option value="export-kml">.kml</option>		  
+		  </select>
         </div>
-        <div class="group">
-          <label for="end-date" data-i18n="end">End</label>
-          <input type="datetime-local" id="end-date" />
-        </div>
-        <button id="filter-button" class="action-button" data-i18n="apply_filter">Apply Filter</button>
         <div>
           <div class="tabs">
             <button class="tab-button active" data-tab="positions" data-i18n="positions">Positions</button>
@@ -91,10 +97,12 @@
                 <table id="positions-table" class="fixed-table">
                   <thead>
                     <tr>
-                      <th style="width: 5px;"></th>
+                      <th style="width: 5px;"></th>					  
+					  <th style="width: 5px;"></th>
                       <th style="width: 45px;" data-i18n="date">Date</th>
-                      <th style="width: 25px;" data-i18n="speed">Speed</th>
                       <th data-i18n="zone">Zone</th>
+                      <th style="width: 25px;" data-i18n="speed">Speed</th>					  
+					  <th style="width: 5px;"></th>
                     </tr>
                   </thead>
                   <tbody id="filter-table-body">
@@ -122,6 +130,10 @@
                       <td id="total-time">--</td>
                     </tr>
                     <tr>
+                      <td data-i18n="distance">Distance</td>
+                      <td id="distance">--</td>
+                    </tr>
+                    <tr>
                       <td data-i18n="max_speed">Max Speed</td>
                       <td id="max-speed">--</td>
                     </tr>
@@ -129,14 +141,22 @@
                       <td data-i18n="avg_speed">Average Speed</td>
                       <td id="average-speed">--</td>
                     </tr>
+                      <td data-i18n="stops_count">Stops</td>
+                      <td id="stops-count">--</td>
+                    </tr>
+                      <td data-i18n="stopped_time">Stopped time</td>
+                      <td id="stopped-time">--</td>
+                    </tr>					
                   </tbody>
                 </table>
                 <table id="summary-zones-table">
                   <thead>
                     <tr>
                       <th data-i18n="zone">Zone</th>
-                      <th style="width: 50px;" data-i18n="time">Time</th>
-                      <th style="width: 50px;" data-i18n="visits">Visits</th>
+                      <th style="width: 40px;" data-i18n="time">Time</th>
+                      <th style="width: 40px;" data-i18n="visits">Visits</th>
+					  <th style="width: 40px;" data-i18n="stops">Stops</th>
+					  <th style="width: 40px;" data-i18n="distance">Distance</th>
                     </tr>
                   </thead>
                   <tbody id="summary-zones-table-body">
@@ -153,14 +173,52 @@
     <button class="hamburger-button" id="hamburger-button">☰</button>
   </div>
 
-  <!-- Ventana de filtro -->
-  <div id="window-overlay">
-    <div id="window-message" data-i18n="loading">Loading</div>
-  </div> 
-
   <!-- Carga de scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-editable/1.3.0/Leaflet.Editable.min.js"></script>
-  <script src="js/main.js?v=0.0.29" type="module"></script>
+  
+  <!-- Carga CSS y JS de HA Tracker -->
+  <script type="module">
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const v = urlParams.get("v"); 
+
+	function loadCSS(href) {
+	  return new Promise((resolve, reject) => {
+		const link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.href = href + (href.includes('?') ? '&' : '?') + 'v=' + v;
+		link.onload = () => resolve();
+		link.onerror = () => reject(new Error('CSS not loaded: ' + link.href));
+		document.head.appendChild(link);
+	  });
+	}
+
+	(async () => {
+	  try {
+		// 1) Carga CSS de la app (evita FOUC)
+		await loadCSS('css/styles.css');
+
+		// 2) Muestra el body y deja que asiente el layout
+		
+		await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+		// 3) Importa el bundle (resolviendo ruta correctamente)
+		const url = new URL(`./dist/ha-tracker.js?v=${v}`, import.meta.url).href;
+		await import(url);
+		document.body.removeAttribute('hidden');
+		
+		// 4) Dispara eventos sintéticos SOLO si ya pasaron
+		const domReady = document.readyState !== 'loading';
+		const winLoaded = document.readyState === 'complete';
+		if (domReady) document.dispatchEvent(new Event('DOMContentLoaded'));
+		if (winLoaded) window.dispatchEvent(new Event('load'));
+	  } catch (e) {
+		console.error('[loader] error', e);
+		// Fallback: no quedarse en blanco si falla el CSS o el import
+		document.body.removeAttribute('hidden');
+		document.body.style.visibility = 'visible';
+		document.body.style.opacity = '1';
+	  }
+	})();
+  </script>
 </body>
 </html>
