@@ -15,6 +15,8 @@
           "gpslogger": "GPSLogger 标识符（仅小写字母和数字）",
           "stop_radius": "停留半径（米）",
           "stop_time": "停留时间（秒）",
+		  "reentry_gap": "重入间隔（秒）",
+		  "outside_gap": "外部间隔（秒）",		  
           "anti_spike_radius": "防跳变半径（米）",
           "anti_spike_time": "防跳变时间（秒）"
         },
@@ -61,7 +63,9 @@
             "description": "停留检测阈值。",
             "data": {
               "stop_radius": "停留半径（米）",
-              "stop_time": "停留时间（秒）"
+              "stop_time": "停留时间（秒）",
+			  "reentry_gap": "重入间隔（秒）",
+			  "outside_gap": "外部间隔（秒）"			  
             }
           },
           "anti_spike": {

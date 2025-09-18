@@ -7,6 +7,7 @@ from datetime import timedelta, datetime
 from functools import partial
 
 from homeassistant.components.http import HomeAssistantView
+from homeassistant.components.recorder import get_instance as get_recorder_instance
 from homeassistant.components.recorder.history import get_significant_states
 from homeassistant.util import dt as dt_util
 
@@ -20,16 +21,19 @@ _LOGGER = logging.getLogger(__name__)
 # ----------------------------
 MAX_GPS_ACCURACY_M = 20.0   # descartar puntos con precisión peor que esto (m)
 MAX_SPEED_KMH = 250.0       # descartar puntos con salto a > 250 km/h (filtro base)
-MIN_DISTANCE = 0.0          # distancia mínima entre puntos aceptados (m)
+MIN_DISTANCE = 0.0          # distancia mínima entre puntos aceptados (m) 0.0 => desactivado
+MIN_TIME = 0                # tiempo mínimo entre puntos aceptados (segundos). 0 => desactivado
 
 # ----------------------------
 # PARADAS/JITTER por radio + “gap” al primer punto fuera
 # (Estos valores sirven como *fallback*. En runtime se leen de la config:
 #  stop_radius (m) y stop_time (s). Si stop_radius=0 no se agrupa; si stop_time=0 no se marcan paradas.)
 # ----------------------------
-STOP_RADIUS_M_FALLBACK = 20.0       # m (float)
-STOP_OUTSIDE_GAP_S_FALLBACK = 300   # s (int)
 REQUIRE_GOOD_ACC = True             # si True, exige precisión <= MAX_GPS_ACCURACY_M dentro del grupo
+STOP_RADIUS_M_FALLBACK = 25.0       # m (float)
+STOP_TIME_S_FALLBACK = 300          # s (int)
+REENTRY_GAP_S_FALLBACK = 60         # s (int) si se sale un momento y se regresa al mismo sitio enseguida cuenta como la misma parada
+OUTSIDE_GAP_S_FALLBACK = 300        # s (int) no se cierra la parada por una salida inferior a este tiempo
 
 # fallbacks para el “anti-spike” por retorno corto
 ANTI_SPIKE_RADIUS_FALLBACK = 20.0   # m (float)
@@ -155,12 +159,25 @@ def validate_dates(start_date, end_date):
 # ----------------------------
 # Filtro base (precisión, velocidad, distancia/tiempo)
 # ----------------------------
-def filter_positions(history, max_gps_accuracy=MAX_GPS_ACCURACY_M, max_speed_kmh=MAX_SPEED_KMH, min_distance=MIN_DISTANCE):
+def filter_positions(
+    history,
+    max_gps_accuracy=MAX_GPS_ACCURACY_M,
+    max_speed_kmh=MAX_SPEED_KMH,
+    min_distance=MIN_DISTANCE,
+    min_time_s=MIN_TIME,   
+):
+    """
+    Filtra estados de device_tracker aplicando:
+      1) Precisión GPS máxima
+      2) Tope de velocidad respecto al último punto aceptado
+      3) Distancia mínima entre puntos aceptados
+      4) Tiempo mínimo entre puntos aceptados (+ deduplicación por segundo)
+    """
     positions = []
     last_lat, last_lon = None, None
-    last_seen_dt_rounded = None
-    last_seen_dt_real = None
-    last_position = None
+    last_seen_dt_rounded = None  # último aceptado, redondeado a segundo
+    last_seen_dt_real = None     # último aceptado, datetime real
+    last_position = None         # último candidato, para 'asegurar última posición'
 
     for state in history:
         latitude = state.attributes.get("latitude")
@@ -176,7 +193,7 @@ def filter_positions(history, max_gps_accuracy=MAX_GPS_ACCURACY_M, max_speed_kmh
 
         attrs = dict(state.attributes)
 
-        # OwnTracks: 'velocity' (km/h) -> 'speed' (m/s)
+        # OwnTracks: 'velocity' (km/h) -> 'speed' (m/s) si falta 'speed'
         if "velocity" in attrs and "speed" not in attrs:
             try:
                 attrs["speed"] = round(float(attrs.pop("velocity")) / 3.6, 2)
@@ -206,7 +223,7 @@ def filter_positions(history, max_gps_accuracy=MAX_GPS_ACCURACY_M, max_speed_kmh
         if accuracy_m is not None and accuracy_m > max_gps_accuracy:
             continue
 
-        # 2) Velocidad respecto al último aceptado (usa dt REAL para el cálculo)
+        # 2) Velocidad respecto al último aceptado
         if last_lat is not None and last_lon is not None and last_seen_dt_real is not None:
             dt_real_s = (current_datetime - last_seen_dt_real).total_seconds()
             if dt_real_s > 0:
@@ -215,7 +232,7 @@ def filter_positions(history, max_gps_accuracy=MAX_GPS_ACCURACY_M, max_speed_kmh
                 if speed_kmh > max_speed_kmh:
                     continue
 
-        # 3) Distancia mínima
+        # 3) Distancia mínima entre aceptados
         if last_lat is not None and last_lon is not None:
             dist_m_for_min = haversine(last_lat, last_lon, latitude, longitude)
         else:
@@ -227,8 +244,21 @@ def filter_positions(history, max_gps_accuracy=MAX_GPS_ACCURACY_M, max_speed_kmh
             or (dist_m_for_min is not None and dist_m_for_min > min_distance)
         )
 
-        # 4) Deduplicación temporal a segundo
-        is_time_ok = (last_seen_dt_rounded is None) or (current_datetime_rounded != last_seen_dt_rounded)
+        # 4) Tiempo mínimo + deduplicación por segundo
+        if last_seen_dt_real is not None:
+            dt_since_last = (current_datetime - last_seen_dt_real).total_seconds()
+        else:
+            dt_since_last = None
+
+        is_time_ok = (
+            last_seen_dt_real is None
+            or (
+                # respeta el umbral de tiempo mínimo si está activo
+                (min_time_s <= 0 or (dt_since_last is not None and dt_since_last >= float(min_time_s)))
+                # y evita duplicados exactamente en el mismo segundo
+                and (current_datetime_rounded != last_seen_dt_rounded)
+            )
+        )
 
         if is_distance_ok and is_time_ok:
             positions.append(candidate)
@@ -242,7 +272,7 @@ def filter_positions(history, max_gps_accuracy=MAX_GPS_ACCURACY_M, max_speed_kmh
         accuracy_raw = attrs_last.get("gps_accuracy", attrs_last.get("accuracy"))
         try:
             accuracy_m = float(accuracy_raw) if accuracy_raw is not None else None
-        except (TypeError, ValueError):
+        except Exception:
             accuracy_m = None
 
         # Requiere lat/lon válidos
@@ -254,22 +284,119 @@ def filter_positions(history, max_gps_accuracy=MAX_GPS_ACCURACY_M, max_speed_kmh
             latlon_ok = False
 
         ok_by_speed = True
-        if latlon_ok and last_lat is not None and last_lon is not None and last_seen_dt_real is not None:
+        ok_by_time = True
+
+        if last_seen_dt_real is not None:
             try:
                 t2 = isoparse(last_position["last_updated"])
                 dt_s = (t2 - last_seen_dt_real).total_seconds()
-                if dt_s > 0:
+
+                # tiempo mínimo entre aceptados
+                if min_time_s > 0 and dt_s is not None and dt_s < float(min_time_s):
+                    ok_by_time = False
+
+                # deduplicación exacta por segundo
+                if ok_by_time and t2.replace(microsecond=0) == last_seen_dt_rounded:
+                    ok_by_time = False
+
+                # velocidad respecto al último aceptado
+                if dt_s > 0 and latlon_ok and last_lat is not None and last_lon is not None:
                     dist_m = haversine(last_lat, last_lon, lat2, lon2)
                     speed_kmh = (dist_m / dt_s) * 3.6
                     if speed_kmh > max_speed_kmh:
                         ok_by_speed = False
             except Exception:
                 ok_by_speed = True
+                ok_by_time = True
 
-        if latlon_ok and ok_by_speed and not (accuracy_m is not None and accuracy_m > max_gps_accuracy):
+        if (
+            latlon_ok
+            and ok_by_speed
+            and ok_by_time
+            and not (accuracy_m is not None and accuracy_m > max_gps_accuracy)
+        ):
             positions.append(last_position)
 
     return positions
+
+
+#------------------------------
+# Anti-spike 5 puntos por velocidad relativa (A→B, B→C→D, D→E)
+#------------------------------
+def drop_c_spikes_relative_5pt(
+    positions: List[dict],
+    factor_k: float = 3.0,          # v_detour debe superar k·v1 y k·v2
+    min_detour_ratio: float = 1.7,   # (dBC + dCD) / dBD > R => hay ida-vuelta clara
+    max_bd_dt_s: int = 180,          # B→D debe suceder “rápido”
+    min_leg_m: float = 15.0,         # cada pierna (BC y CD) al menos X m
+    require_good_acc: bool = REQUIRE_GOOD_ACC,
+    max_acc_m: float = MAX_GPS_ACCURACY_M,
+) -> List[dict]:
+    """
+    Elimina el punto central C cuando el tramo B→C→D es anormalmente rápido
+    frente a las velocidades de contexto A→B y D→E, y además forma un desvío
+    (ida-vuelta) claro en un tiempo corto.
+    """
+    n = len(positions)
+    if n < 5:
+        return positions
+
+    def _t(i): return _dt_from_pos(positions[i])
+    def _ll(i): return _latlon_from_pos(positions[i])
+
+    drop_idx = set()
+    eps_v = 1e-6
+    eps_d = 1e-6
+
+    for i in range(2, n - 2):
+        A, B, C, D, E = positions[i-2], positions[i-1], positions[i], positions[i+1], positions[i+2]
+
+        # Precisión opcional (al menos en C; puedes ampliar a B y D si quieres)
+        if require_good_acc:
+            accC = _acc_from_pos(C)
+            if accC is not None and accC > max_acc_m:
+                continue
+
+        tA, tB, tC, tD, tE = _t(i-2), _t(i-1), _t(i), _t(i+1), _t(i+2)
+        llA, llB, llC, llD, llE = _ll(i-2), _ll(i-1), _ll(i), _ll(i+1), _ll(i+2)
+        if not all([tA, tB, tC, tD, tE, llA, llB, llC, llD, llE]):
+            continue
+
+        dtAB = (tB - tA).total_seconds()
+        dtDE = (tE - tD).total_seconds()
+        dtBD = (tD - tB).total_seconds()
+        if dtAB <= 0 or dtDE <= 0 or dtBD <= 0 or dtBD > max_bd_dt_s:
+            continue
+
+        dAB = haversine(llA[0], llA[1], llB[0], llB[1])
+        dBC = haversine(llB[0], llB[1], llC[0], llC[1])
+        dCD = haversine(llC[0], llC[1], llD[0], llD[1])
+        dDE = haversine(llD[0], llD[1], llE[0], llE[1])
+        dBD = haversine(llB[0], llB[1], llD[0], llD[1])
+
+        # Evitar borrar microvariaciones por debajo de la precisión/ruido
+        if dBC < min_leg_m or dCD < min_leg_m:
+            continue
+
+        v1 = dAB / max(dtAB, eps_v)
+        v2 = dDE / max(dtDE, eps_v)
+        v_detour = (dBC + dCD) / max(dtBD, eps_v)
+
+        detour_ratio = (dBC + dCD) / max(dBD, eps_d)
+
+        # Condición principal: v_detour mucho mayor que velocidades “de contexto”
+        # y además desvío geométrico claro.
+        if (v_detour > factor_k * max(v1, v2, eps_v)) and (detour_ratio > min_detour_ratio):
+            # Marca C para borrado
+            # _LOGGER.debug("drop_c_spikes_relative_5pt: drop C idx=%d v_detour=%.2f v1=%.2f v2=%.2f ratio=%.2f", i, v_detour, v1, v2, detour_ratio)
+            drop_idx.add(i)
+
+    if not drop_idx:
+        return positions
+
+    out = [p for j, p in enumerate(positions) if j not in drop_idx]
+    return out
+
 
 # ----------------------------
 # Anti-spike de 3 puntos (A-B-C)
@@ -368,36 +495,54 @@ def squash_return_jitter(
 def keep_first_stop_in_same_radius(
     positions: List[dict],
     same_radius_m: float,
+    reentry_gap_s: int = 0,
 ) -> List[dict]:
-    """
-    Mantiene solo la PRIMERA parada si la siguiente parada cae en el mismo radio.
-    Importante: no se reinicia al ver puntos de movimiento entre medias; se compara
-    con la última parada conservada (más robusto frente a jitter).
-    """
     out = []
-    prev_stop = None  # última parada conservada
+    prev_stop = None
 
     for pos in positions:
         if not pos.get("stop"):
             out.append(pos)
-            # OJO: NO reseteamos prev_stop aquí; así colapsamos secuencias stop-mov-stop.
             continue
 
-        # pos es una parada
+        keep = True
         if prev_stop is not None:
             ll_prev = _stop_center_latlon(prev_stop)
             ll_cur  = _stop_center_latlon(pos)
             if ll_prev and ll_cur:
                 d = haversine(ll_prev[0], ll_prev[1], ll_cur[0], ll_cur[1])
                 if d <= same_radius_m:
-                    # Misma área de parada -> descarta esta (nos quedamos con la primera)
-                    continue
+                    t_leave_prev = _as_dt(prev_stop.get("stop_leave") or prev_stop.get("stop_end") or prev_stop.get("last_updated"))
+                    t_start_cur  = _as_dt(pos.get("stop_start")  or pos.get("last_updated"))
+                    gap_s = (t_start_cur - t_leave_prev).total_seconds() if (t_leave_prev and t_start_cur) else None
 
-        # No hay parada previa conservada o está fuera del radio -> conserva
-        out.append(pos)
-        prev_stop = pos
+                    if gap_s is None or gap_s < float(reentry_gap_s):
+                        # --- FUSIÓN: extender la parada anterior con los tiempos de la actual ---
+                        # stop_end: máximo de ambos
+                        t_end_prev = _as_dt(prev_stop.get("stop_end") or prev_stop.get("last_updated"))
+                        t_end_cur  = _as_dt(pos.get("stop_end") or pos.get("last_updated"))
+                        if t_end_prev and t_end_cur and t_end_cur > t_end_prev:
+                            prev_stop["stop_end"] = t_end_cur.isoformat()
+
+                        # stop_leave: máximo de ambos
+                        t_leave_cur = _as_dt(pos.get("stop_leave") or pos.get("stop_end") or pos.get("last_updated"))
+                        if t_leave_prev and t_leave_cur and t_leave_cur > t_leave_prev:
+                            prev_stop["stop_leave"] = t_leave_cur.isoformat()
+
+                        # Recalcular duración desde su stop_start original
+                        t_start_prev = _as_dt(prev_stop.get("stop_start") or prev_stop.get("last_updated"))
+                        t_leave_new  = _as_dt(prev_stop.get("stop_leave") or prev_stop.get("stop_end") or prev_stop.get("last_updated"))
+                        if t_start_prev and t_leave_new and t_leave_new >= t_start_prev:
+                            prev_stop["stop_duration_s"] = int((t_leave_new - t_start_prev).total_seconds())
+
+                        keep = False  # descartamos 'pos' porque ya fue fusionada
+
+        if keep:
+            out.append(pos)
+            prev_stop = pos
 
     return out
+
 
 def _stop_center_latlon(pos) -> Optional[Tuple[float, float]]:
     lat = pos.get("stop_center_lat")
@@ -413,6 +558,8 @@ def annotate_stops_and_collapse(
     positions: List[dict],
     stop_radius_m: float,
     stop_time_s: int,
+    reentry_gap_s: int,
+    outside_gap_s: int,   
     require_good_acc: bool = REQUIRE_GOOD_ACC,
     max_acc_m: float = MAX_GPS_ACCURACY_M,
 ) -> List[dict]:
@@ -502,11 +649,10 @@ def annotate_stops_and_collapse(
             t_next = t(j + 1)
             nxt_ll = latlon(j + 1)
 
-            # Siguiente inválido o mala precisión -> cerrar usando t_next
+            # Siguiente inválido o mala precisión -> ignorar y seguir
             if (nxt_ll is None) or (not acc_ok(j + 1)):
-                close_group(t_next)
-                i = j + 1
-                break
+                j += 1
+                continue
 
             # Distancia al centroide
             dist_to_center = haversine(c_lat, c_lon, nxt_ll[0], nxt_ll[1])
@@ -520,16 +666,46 @@ def annotate_stops_and_collapse(
                 c_lon = (c_lon * (count - 1) + nxt_ll[1]) / count
                 continue
 
-            # Siguiente está FUERA del radio -> cerrar usando t_next
+            # Siguiente está FUERA del radio -> comprobar si la salida persiste al menos outside_gap_s
+            persist_until = t_next + timedelta(seconds=int(outside_gap_s))
+            k = j + 1
+            returned_inside = False
+            ret_ll = None
+
+            while k < n:
+                tk = t(k)
+                if not tk or tk > persist_until:
+                    break
+                llk = latlon(k)
+                if llk and acc_ok(k):
+                    if haversine(c_lat, c_lon, llk[0], llk[1]) <= stop_radius_m:
+                        returned_inside = True
+                        ret_ll = llk
+                        break
+                k += 1
+
+            if returned_inside:
+                # Ignorar la mini-excursión: continúa el grupo desde el retorno
+                j = k
+                count += 1
+                last_in = j
+                # (opcional) actualiza centroide con el punto de retorno
+                if ret_ll:
+                    c_lat = (c_lat * (count - 1) + ret_ll[0]) / count
+                    c_lon = (c_lon * (count - 1) + ret_ll[1]) / count
+                continue
+
+            # Si no volvió dentro del margen, sí cerramos
             close_group(t_next)
             i = j + 1
             break
+
         else:
             # Fin de lista -> cerrar sin t_next (leave_dt = t_last_in)
             close_group(None)
             i = last_in + 1
 
-    return keep_first_stop_in_same_radius(out, same_radius_m=stop_radius_m)
+    return keep_first_stop_in_same_radius(out, same_radius_m=stop_radius_m, reentry_gap_s=reentry_gap_s)
 
 # --------------------------------------------
 # ESTADISTICAS
@@ -638,7 +814,36 @@ def _split_segment_by_zones(lat1, lon1, lat2, lon2, steps, zones):
     return segs
 
 # --- resumen global ---
-def _calc_summary(positions):
+def _calc_summary(positions, window_end_utc=None):
+    """
+    Resumen robusto:
+      - t0 = mínimo entre last_updated y stop_start (si hubiese).
+      - tn = máximo entre last_updated, stop_end, stop_leave.
+      - Si la última posición es una parada y window_end_utc > tn, extendemos tn a window_end_utc.
+      - stopped_time_s = suma de stop_duration_s; si la última es parada abierta, añadimos extra hasta window_end_utc.
+    """
+    def _collect_times_for_start(ps):
+        times = []
+        for p in ps:
+            t = _as_dt(p.get("last_updated"))
+            if t: times.append(t)
+            if p.get("stop"):
+                ts = _as_dt(p.get("stop_start"))
+                if ts: times.append(ts)
+        return times
+
+    def _collect_times_for_end(ps):
+        times = []
+        for p in ps:
+            t = _as_dt(p.get("last_updated"))
+            if t: times.append(t)
+            if p.get("stop"):
+                te = _as_dt(p.get("stop_end"))
+                tl = _as_dt(p.get("stop_leave"))
+                if te: times.append(te)
+                if tl: times.append(tl)
+        return times
+
     if not positions:
         return {
             "positions_count": 0,
@@ -652,11 +857,11 @@ def _calc_summary(positions):
             "stopped_time_s": 0
         }
 
-    # tiempos
-    t0 = _as_dt(positions[0].get("last_updated"))
-    tn = _as_dt(positions[-1].get("last_updated"))
-    if not t0 or not tn:
-        # si algo raro pasó con las fechas, devuelve vacío coherente
+    start_candidates = _collect_times_for_start(positions)
+    end_candidates   = _collect_times_for_end(positions)
+
+    if not start_candidates or not end_candidates:
+        # Fallback coherente si algo raro pasó con fechas
         return {
             "positions_count": len(positions),
             "start_utc": None,
@@ -668,9 +873,18 @@ def _calc_summary(positions):
             "stops_count": len([p for p in positions if p.get("stop")]),
             "stopped_time_s": 0
         }
-    total_time_s = max(0, (tn - t0).total_seconds())
 
-    # distancia
+    t0 = min(start_candidates)
+    tn = max(end_candidates)
+
+    # Si la última posición es una parada y tenemos fin de ventana, extiende el final
+    if window_end_utc is not None and positions and positions[-1].get("stop"):
+        if window_end_utc > tn:
+            tn = window_end_utc
+
+    total_time_s = max(0, int(round((tn - t0).total_seconds())))
+
+    # Distancia (sin cambios)
     distance_m = 0.0
     for i in range(1, len(positions)):
         a, b = positions[i-1], positions[i]
@@ -681,7 +895,7 @@ def _calc_summary(positions):
         except Exception:
             pass
 
-    # velocidades (m/s) desde atributos
+    # Velocidad máxima desde atributos (sin cambios)
     speeds = []
     for p in positions:
         v = p.get("attributes", {}).get("speed")
@@ -693,7 +907,7 @@ def _calc_summary(positions):
             pass
     max_speed_mps = max(speeds) if speeds else 0.0
 
-    # media ponderada por tiempo (usa v de A en el tramo A→B)
+    # Media ponderada por tiempo (ojo: usa v de A en A→B; dejamos igual para no contaminar con el tiempo parado extra)
     time_weighted_sum = 0.0
     time_total = 0.0
     for i in range(1, len(positions)):
@@ -709,39 +923,60 @@ def _calc_summary(positions):
             dt = (tB - tA).total_seconds()
             time_weighted_sum += vA * dt
             time_total += dt
-    avg_speed_mps = (time_weighted_sum / time_total) if time_total > 0 else 0.0
+    average_speed_mps = (time_weighted_sum / time_total) if time_total > 0 else 0.0
 
-    # paradas
+    # Paradas (sumar siempre stop_leave - stop_start si existen)
     stops = [p for p in positions if p.get("stop")]
-    stops_count = len(stops)
-    # tiempo parado: usa stop_duration_s si existe; si no, fallback al siguiente punto
     stopped_time_s = 0
-    got_durations = any("stop_duration_s" in p for p in stops)
-    if got_durations:
-        for p in stops:
+
+    for p in stops:
+        t_start = _as_dt(p.get("stop_start")) or _as_dt(p.get("last_updated"))
+        t_leave = _as_dt(p.get("stop_leave")) or _as_dt(p.get("stop_end"))
+        if t_start and t_leave and t_leave >= t_start:
+            stopped_time_s += int((t_leave - t_start).total_seconds())
+        elif "stop_duration_s" in p:
+            # Fallback por si faltan marcas explícitas
             try:
-                stopped_time_s += int(round(float(p.get("stop_duration_s") or 0)))
+                stopped_time_s += int(round(float(p["stop_duration_s"] or 0)))
             except Exception:
                 pass
-    else:
+
+    # Fallback adicional si no se sumó nada (p.ej. sin campos de parada)
+    if stopped_time_s == 0:
         for i, p in enumerate(positions[:-1]):
             if p.get("stop"):
                 tA = _as_dt(p.get("last_updated"))
                 tB = _as_dt(positions[i+1].get("last_updated"))
-                if tA and tB:
-                    stopped_time_s += max(0, int((tB - tA).total_seconds()))
+                if tA and tB and tB > tA:
+                    stopped_time_s += int((tB - tA).total_seconds())
+
+    # Si la última posición es una parada abierta, añade la cola hasta fin de ventana
+    if window_end_utc is not None and positions and positions[-1].get("stop"):
+        leave = (_as_dt(positions[-1].get("stop_leave"))
+                 or _as_dt(positions[-1].get("stop_end"))
+                 or _as_dt(positions[-1].get("last_updated")))
+        if leave and window_end_utc > leave:
+            stopped_time_s += int(round((window_end_utc - leave).total_seconds()))
+
+
+    # Si la última posición es una parada abierta, añade el tramo extra hasta fin de ventana
+    if window_end_utc is not None and positions and positions[-1].get("stop"):
+        leave = _as_dt(positions[-1].get("stop_leave")) or _as_dt(positions[-1].get("stop_end")) or _as_dt(positions[-1].get("last_updated"))
+        if leave and window_end_utc > leave:
+            stopped_time_s += int(round((window_end_utc - leave).total_seconds()))
 
     return {
         "positions_count": len(positions),
         "start_utc": t0.isoformat(),
         "end_utc": tn.isoformat(),
-        "total_time_s": int(round(total_time_s)),
+        "total_time_s": total_time_s,
         "distance_m": distance_m,
         "max_speed_mps": max_speed_mps,
-        "average_speed_mps": avg_speed_mps,
-        "stops_count": stops_count,
+        "average_speed_mps": average_speed_mps,
+        "stops_count": len(stops),
         "stopped_time_s": int(round(stopped_time_s))
     }
+
 
 def _count_zone_visits_by_runs(positions, zones):
     """
@@ -762,7 +997,7 @@ def _count_zone_visits_by_runs(positions, zones):
     return visits
 
 # --- estadísticas por zona ---
-def _calc_zone_stats(positions, zones):
+def _calc_zone_stats(positions, zones, window_end_utc=None, expected_total_s=None):
     out = {}
 
     def _ensure(name):
@@ -770,90 +1005,141 @@ def _calc_zone_stats(positions, zones):
             meta = next((z for z in zones if z["name"] == name), None)
             out[name] = {
                 "zone": name,
-                "time_s": 0.0,
-                "visits": 0,      # se fijará al final con runs
+                "time_s": 0.0,     # parado + movimiento
+                "visits": 0,
                 "stops": 0,
                 "distance_m": 0.0,
                 "meta": meta
             }
         return out[name]
 
+    def _eff_seg_times(A, B):
+        """Devuelve (tA_eff, tB_eff) excluyendo tiempo parado en los extremos."""
+        tA = _as_dt(A.get("last_updated"))
+        tB = _as_dt(B.get("last_updated"))
+        if A.get("stop"):
+            tA = _as_dt(A.get("stop_leave")) or _as_dt(A.get("stop_end")) or tA
+        if B.get("stop"):
+            tB = _as_dt(B.get("stop_start")) or tB
+        return tA, tB
+
     if not positions:
         return []
 
-    # 1) Paradas por zona
+    # 1) Paradas: sumar SOLO aquí el tiempo parado a su zona
     for p in positions:
-        if p.get("stop"):
-            ll = _latlon_from_pos(p)
-            if not ll:
-                continue
-            zn = _zone_of(float(ll[0]), float(ll[1]), zones)
-            _ensure(zn)["stops"] += 1
+        if not p.get("stop"):
+            continue
+        ll = _latlon_from_pos(p)
+        if not ll:
+            continue
+        zn = _zone_of(float(ll[0]), float(ll[1]), zones) or ''
+        row = _ensure(zn)
+        row["stops"] += 1
 
-    # 2) TIEMPO por zona (TODO el dt A→B se asigna a la zona de A, fallback a B si A no tiene)
+        dur = p.get("stop_duration_s")
+        try:
+            dur = float(dur) if dur is not None else 0.0
+        except Exception:
+            dur = 0.0
+        row["time_s"] += dur
+
+    # 1.b) Última parada abierta: añade la cola hasta fin de ventana
+    if window_end_utc is not None and positions and positions[-1].get("stop"):
+        leave = (_as_dt(positions[-1].get("stop_leave"))
+                 or _as_dt(positions[-1].get("stop_end"))
+                 or _as_dt(positions[-1].get("last_updated")))
+        if leave and window_end_utc > leave:
+            extra = (window_end_utc - leave).total_seconds()
+            ll = _latlon_from_pos(positions[-1])
+            if ll:
+                zn = _zone_of(float(ll[0]), float(ll[1]), zones) or ''
+                _ensure(zn)["time_s"] += extra
+
+    # 2) Movimiento: repartir SOLO el tiempo en movimiento por zonas
     for i in range(1, len(positions)):
-        A = positions[i - 1]
-        B = positions[i]
-        tA = _as_dt(A.get("last_updated"))
-        tB = _as_dt(B.get("last_updated"))
+        A, B = positions[i - 1], positions[i]
+        tA, tB = _eff_seg_times(A, B)
         if not tA or not tB:
             continue
-
-        dt = max(0.0, (tB - tA).total_seconds())
+        dt = (tB - tA).total_seconds()
         if dt <= 0:
             continue
 
-        llA = _latlon_from_pos(A)
-        llB = _latlon_from_pos(B)
-
-        zA = _zone_of(float(llA[0]), float(llA[1]), zones) if llA else None
-        zB = _zone_of(float(llB[0]), float(llB[1]), zones) if llB else None
-
-        # Asignación: preferimos la zona de A; si no hay, caemos a la de B; si tampoco, ''.
-        z_time = zA if (zA is not None) else (zB if (zB is not None) else '')
-        _ensure(z_time)["time_s"] += dt
-
-    # 3) DISTANCIA por zona (split por zonas para precisión)
-    for i in range(1, len(positions)):
-        A = positions[i - 1]
-        B = positions[i]
-
-        llA = _latlon_from_pos(A)
-        llB = _latlon_from_pos(B)
+        llA, llB = _latlon_from_pos(A), _latlon_from_pos(B)
         if not llA or not llB:
             continue
-
         lat1, lon1 = float(llA[0]), float(llA[1])
         lat2, lon2 = float(llB[0]), float(llB[1])
 
+        seg_len = haversine(lat1, lon1, lat2, lon2)
+
+        if seg_len < 0.5:
+            # tramo casi estático (pero NO parada): asignar todo el dt a la zona de A (o B)
+            zn = _zone_of(lat1, lon1, zones) or (_zone_of(lat2, lon2, zones) or '')
+            _ensure(zn)["time_s"] += dt
+            continue
+
         segs = _split_segment_by_zones(lat1, lon1, lat2, lon2, STEPS, zones)
+        total_assigned_dt = 0.0
+        total_assigned_len = 0.0
+
         for s in segs:
-            zn = s["zone"] or ''
             aLat, aLon = _interp_latlon(lat1, lon1, lat2, lon2, s["t0"])
             bLat, bLon = _interp_latlon(lat1, lon1, lat2, lon2, s["t1"])
-            _ensure(zn)["distance_m"] += haversine(aLat, aLon, bLat, bLon)
+            sub_len = max(0.0, haversine(aLat, aLon, bLat, bLon))
+            share = sub_len / seg_len if seg_len > 0 else 0.0
+            sub_dt = dt * share
 
-    # 4) Visitas por “runs”
+            zn = s["zone"] or ''
+            row = _ensure(zn)
+            row["time_s"] += sub_dt
+            row["distance_m"] += sub_len
+
+            total_assigned_dt += sub_dt
+            total_assigned_len += sub_len
+
+        # Corrección numérica mínima por redondeo dentro del tramo
+        resid_dt = dt - total_assigned_dt
+        if abs(resid_dt) > 1e-6:
+            # Ajusta al último segmento
+            zn_last = (segs[-1]["zone"] or '') if segs else (_zone_of(lat2, lon2, zones) or '')
+            _ensure(zn_last)["time_s"] += resid_dt
+
+    # 3) Visitas por “runs”
     visits_map = _count_zone_visits_by_runs(positions, zones)
-    for zname in visits_map.keys():
-        _ensure(zname)
+    for name, cnt in visits_map.items():
+        _ensure(name)["visits"] = int(cnt)
 
-    # 5) Construcción de filas
+    # 4) Cierre y ajuste global (cuadratura con summary)
     rows = []
     for name, agg in out.items():
         rows.append({
             "zone": name,
             "time_s": int(round(agg["time_s"])),
-            "visits": int(visits_map.get(name, 0)),
+            "visits": int(agg.get("visits", 0)),
             "stops": int(agg["stops"]),
             "distance_m": float(agg["distance_m"]),
             "meta": agg["meta"]
         })
+
+    if expected_total_s is not None and rows:
+        sum_s = sum(r["time_s"] for r in rows)
+        delta = int(expected_total_s) - int(sum_s)
+        if delta != 0:
+            # preferimos ajustar a la zona '' (fuera de zonas); si no existe, a la última
+            idx = next((i for i, r in enumerate(rows) if r["zone"] == ''), len(rows) - 1)
+            rows[idx]["time_s"] = max(0, rows[idx]["time_s"] + delta)
+            if abs(delta) > 2:
+                _LOGGER.warning("Zone time adjusted by %d s to match summary total (was %d, target %d)",
+                                delta, sum_s, expected_total_s)
+
     return rows
+
 
 # --- payload vacío coherente ---
 def _empty_payload():
-    return { "positions": [], "summary": _calc_summary([]), "zones": [] }
+    return { "positions": [], "summary": _calc_summary([], None), "zones": [] }
 
 # ----------------------------
 # Endpoint
@@ -875,9 +1161,12 @@ class FilteredPositionsEndpoint(HomeAssistantView):
 
         # valores por defecto (radios float, tiempos int)
         stop_radius_m: float = float(STOP_RADIUS_M_FALLBACK)
-        stop_time_s: int = int(STOP_OUTSIDE_GAP_S_FALLBACK)
+        stop_time_s: int = int(STOP_TIME_S_FALLBACK)
         anti_spike_radius: float = float(ANTI_SPIKE_RADIUS_FALLBACK)
         anti_spike_time: int = int(ANTI_SPIKE_TIME_S_FALLBACK)
+        reentry_gap_s: int = int(REENTRY_GAP_S_FALLBACK)
+        outside_gap_s: int = int(OUTSIDE_GAP_S_FALLBACK)
+        
 
         entries = hass.config_entries.async_entries(DOMAIN)
         if entries:
@@ -899,6 +1188,22 @@ class FilteredPositionsEndpoint(HomeAssistantView):
                     stop_time_s = 0
             except (TypeError, ValueError):
                 pass
+
+            # reentry_gap (int >= 0)
+            try:
+                reentry_gap_s = int(entry.options.get("reentry_gap", entry.data.get("reentry_gap", reentry_gap_s)))
+                if reentry_gap_s < 0:
+                    reentry_gap_s = 0
+            except (TypeError, ValueError):
+                pass
+                
+            # outside_gap (int >= 0)
+            try:
+                outside_gap_s = int(entry.options.get("outside_gap", entry.data.get("outside_gap", outside_gap_s)))
+                if outside_gap_s < 0:
+                    outside_gap_s = 0
+            except (TypeError, ValueError):
+                pass                
 
             # anti_spike_radius (float >= 0)
             try:
@@ -935,10 +1240,14 @@ class FilteredPositionsEndpoint(HomeAssistantView):
             return self.json(error, status_code=error["status_code"])
 
         try:
-            history = await hass.async_add_executor_job(
+            rec = get_recorder_instance(hass)
+            history = await rec.async_add_executor_job(
                 partial(
-                    get_significant_states, hass,
-                    start_datetime_utc, end_datetime_utc, [source_device_id],
+                    get_significant_states,
+                    hass,
+                    start_datetime_utc,
+                    end_datetime_utc,
+                    [source_device_id],
                     include_start_time_state=False,
                     significant_changes_only=False,
                     minimal_response=False,
@@ -959,35 +1268,49 @@ class FilteredPositionsEndpoint(HomeAssistantView):
 
         # Filtra posiciones
         positions = filter_positions(
-            states, max_gps_accuracy=MAX_GPS_ACCURACY_M,
-            max_speed_kmh=MAX_SPEED_KMH, min_distance=MIN_DISTANCE
+            states, 
+            max_gps_accuracy=MAX_GPS_ACCURACY_M,
+            max_speed_kmh=MAX_SPEED_KMH, 
+            min_distance=MIN_DISTANCE
         )
 
         # aplasta excursiones cortas que salen y vuelven (jitter típico)
-        if anti_spike_radius > 0 and anti_spike_time > 0:
-            positions = squash_return_jitter(
-                positions,
-                center_radius_m=float(anti_spike_radius),
-                max_loop_time_s=int(anti_spike_time),
-                min_excursion_m=None,  # usa 1.2*radio/15m por defecto
-                require_good_acc=REQUIRE_GOOD_ACC,
-                max_acc_m=MAX_GPS_ACCURACY_M,
-            )
+        #if anti_spike_radius > 0 and anti_spike_time > 0:
+        #    positions = squash_return_jitter(
+        #        positions,
+        #        center_radius_m=float(anti_spike_radius),
+        #        max_loop_time_s=int(anti_spike_time),
+        #        min_excursion_m=None,  # usa 1.2*radio/15m por defecto
+        #        require_good_acc=REQUIRE_GOOD_ACC,
+        #        max_acc_m=MAX_GPS_ACCURACY_M,
+        #    )               
+
+        # Anti-spike 5 puntos por velocidad relativa (A→B, B→C→D, D→E)
+        #positions = drop_c_spikes_relative_5pt(
+        #    positions,
+        #    factor_k=3.0,
+        #    min_detour_ratio=1.7,
+        #    max_bd_dt_s=int(anti_spike_time),      # puedes reutilizar tu opción existente
+        #    min_leg_m=max(10.0, anti_spike_radius) # coherente con tu escala espacial
+        #)   
 
         # Paradas
-        if stop_radius_m > 0:
+        if stop_radius_m > 0 and stop_time_s > 0:
             positions = annotate_stops_and_collapse(
                 positions,
                 stop_radius_m=float(stop_radius_m),
                 stop_time_s=int(stop_time_s),
+                reentry_gap_s=int(reentry_gap_s),
+                outside_gap_s=int(outside_gap_s),
                 require_good_acc=REQUIRE_GOOD_ACC,
-                max_acc_m=MAX_GPS_ACCURACY_M
+                max_acc_m=MAX_GPS_ACCURACY_M,
             )
 
         # --- calcular resumen y zonas en servidor ---
         zones = _all_zones(hass)
-        summary = _calc_summary(positions)
-        zones_rows = _calc_zone_stats(positions, zones)
+        summary = _calc_summary(positions, window_end_utc=end_datetime_utc)
+        zones_rows = _calc_zone_stats(positions, zones, window_end_utc=end_datetime_utc, expected_total_s=summary["total_time_s"])
+
 
         payload = {
             "positions": positions,

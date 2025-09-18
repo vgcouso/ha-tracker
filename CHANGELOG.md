@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.31] - 2025-09-18
+
+### Changes
+- Removed the antispike 
+- Modified the way stops are calculated
+- Added "Open Location" to the Pop-Ups on the Zone and Filter screens
+
+### Fixed
+- DB accessed without Recorder executor when querying past location history #28
+- Refresh the radius in zones when moving it
+- Calculating "Total Time" and "Time per Zone" in the Zones screen summary
+
+
 ## [0.0.30] - 2025-09-15
 
 ### Changes

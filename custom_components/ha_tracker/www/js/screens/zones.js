@@ -113,7 +113,9 @@ async function updateZoneMarkers() {
         if (editingZones[zone.id]) {
             return;
         }
-
+		
+		const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+		
         // Verificar si ya existe un marcador y si los valores han cambiado
         const existingCircle = zoneMarkers[zone.id];
         const hasChanged = !existingCircle ||
@@ -128,8 +130,9 @@ async function updateZoneMarkers() {
         if (existingCircle) {
             // Actualizar el popup si el nombre ha cambiado
             const popupContent = `
-			<strong>${name || t("zone_without_name")}</strong><br>
-			 ${t('radius')}: ${use_imperial ? fmt0(radius * 3.28084) : fmt0(radius)} ${use_imperial ? t('feets') : t('meters')}
+			  <strong>${name || t("zone_without_name")}</strong><br>
+			  ${t('radius')}: ${use_imperial ? fmt0(radius * 3.28084) : fmt0(radius)} ${use_imperial ? t('feets') : t('meters')}
+			  <br><br><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"><strong>${t('open_location')}</strong></a>
 		    `;
 
             if (existingCircle.getPopup().getContent() !== popupContent) {
@@ -175,8 +178,9 @@ async function updateZoneMarkers() {
 
         // Añadir el popup y personalizar su comportamiento
         const newPopupContent = `
-		 <strong>${name || t("zone_without_name")}</strong><br>
-		 ${t('radius')}: ${use_imperial ? fmt0(radius * 3.28084) : fmt0(radius)} ${use_imperial ? t('feets') : t('meters')}
+		  <strong>${name || t("zone_without_name")}</strong><br>
+		  ${t('radius')}: ${use_imperial ? fmt0(radius * 3.28084) : fmt0(radius)} ${use_imperial ? t('feets') : t('meters')}
+		  <br><br><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"><strong>${t('open_location')}</strong></a>
 		`;
 
         circle.bindPopup(newPopupContent, {
@@ -210,44 +214,54 @@ async function updateZoneMarkers() {
             map.closePopup(); // Cierra cualquier popup abierto en el mapa
         });
 
-        circle.on('editable:vertex:dragend', async() => { // Asegúrate de que esta función sea async
-            editingZones[zone.id] = false; // Marcar como no en edición
+		circle.on('editable:vertex:dragend', async () => { // Asegúrate de que esta función sea async
+			editingZones[zone.id] = false; // Marcar como no en edición
 
-            const updatedLatLng = circle.getLatLng(); // Obtén la nueva posición
-            const updatedRadius = circle.getRadius(); // Obtén el nuevo radio
+			const updatedLatLng = circle.getLatLng();   // Nueva posición del centro
+			const updatedRadius = circle.getRadius();   // Nuevo radio
 
-            const updatedPopupContent = `
-			<strong>${zone.name || ''}</strong><br>
-			 ${t('radius')}: ${use_imperial ? fmt0(radius * 3.28084) : fmt0(radius)} ${use_imperial ? t('feets') : t('meters')}
-		    `;
+			// 1) Actualiza el modelo local para que la tabla y el popup reflejen el cambio al instante
+			zone.latitude  = updatedLatLng.lat;
+			zone.longitude = updatedLatLng.lng;
+			zone.radius    = updatedRadius;
 
-            circle.bindPopup(updatedPopupContent, {
-                autoPan: false
-            }); // Actualiza el popup
-            circle.openPopup(); // Muestra el popup actualizado
+			// 2) Refresca el popup con el radio actualizado (usando unidades correctas)
+			const updatedPopupContent = `
+				<strong>${zone.name || t("zone_without_name")}</strong><br>
+				${t('radius')}: ${use_imperial ? fmt0(updatedRadius * 3.28084) : fmt0(updatedRadius)} ${use_imperial ? t('feets') : t('meters')}
+			`;
+			circle.bindPopup(updatedPopupContent, { autoPan: false });
+			circle.openPopup();
 
-            // Llama a updateZone solo si es admin y es una zona personalizada
-            if (isAdmin && custom) {
-                try {
-                    const response = await updateZone(
-                            zone.id,
-                            zone.name, // Mantén el nombre
-                            updatedRadius,
-                            updatedLatLng.lat,
-                            updatedLatLng.lng);
-                    await fetchZones();
-                    await handleZoneRowSelection(zone.id);
+			// 3) Refresca la tabla inmediatamente (se mantiene la selección)
+			await updateZonesTable();
 
-                    if (response && response.success) {
-                        console.log(`Zone with ID ${zone.id} updated on server.`);
-                    } else {
-                        console.error(`Error updating zone with ID ${zone.id} on server.`);
-                    }
-                } catch (error) {
-                    console.error("Error in zone update request:", error);
-                }
-            }
-        });
+			// 4) Si procede, persiste el cambio en el servidor y vuelve a sincronizar
+			if (isAdmin && custom) {
+				try {
+					const response = await updateZone(
+						zone.id,
+						zone.name,           // nombre sin cambios
+						updatedRadius,
+						updatedLatLng.lat,
+						updatedLatLng.lng,
+						zone.color
+					);
+
+					if (response && response.success) {
+						await fetchZones();        // sincroniza 'zones' con el servidor
+						await updateZonesTable();  // asegura que la tabla queda 100% alineada
+						await updateZoneMarkers(); // (opcional) revalida estilos/markers
+						await handleZoneRowSelection(zone.id);
+						console.log(`Zone with ID ${zone.id} updated on server.`);
+					} else {
+						console.error(`Error updating zone with ID ${zone.id} on server.`);
+					}
+				} catch (error) {
+					console.error("Error in zone update request:", error);
+				}
+			}
+		});
 
         // Guardar el círculo en los marcadores
         zoneMarkers[zone.id] = circle;
@@ -673,7 +687,7 @@ async function updateZonesTable() {
             valueA = a.custom ? 1 : 0; // `true` → 1, `false` → 0
             valueB = b.custom ? 1 : 0;
             return zonesSortAscending ? valueA - valueB : valueB - valueA; // Orden numérico
-        case "radius": // NUEVO
+        case "radius": 
             valueA = Number(a.radius) || 0;
             valueB = Number(b.radius) || 0;
             return zonesSortAscending ? valueA - valueB : valueB - valueA;

@@ -120,23 +120,19 @@ By default, Home Assistant stores **10 days**. You can increase this time, but k
 - **Stops:**
   - **Stop radius (in meters):** (Minimum value: 0 meters) 
     - Radius around which positions are considered stopped. 
+	- If the value is 0, stops are not calculated.
   - **Stop time (in seconds):** (Minimum value: 0 seconds) 
     - Time that a position must spend at a point to be considered stopped. 
-	
-  You must adjust these two parameters according to the application used to send the positions and the device on which it is installed.
-
-  If either value is 0, stops are not calculated.
-	
-- **Anti-Spike:**
-  - **Anti-Spike Radius (in meters):** (Minimum value: 0 meters) 
-    - It is the minimum radius that determines which positions, around a central point, are discarded over a period of time.
-  - **Anti-Spike Time (in seconds):** (Minimum value: 0 seconds) 
-    - It is the maximum time within which positions that escape the minimum radius are discarded.
+	- If the value is 0, stops are not calculated.
+  - **Reentry gap (in seconds):** (Minimum value: 0 seconds) 
+	- If you leave for a moment and return to the same place immediately, it counts as the same stop.
+	- If the value is 0, it is not calculated.
+  - **Outside gap (in seconds):** (Minimum value: 0 seconds) 
+	- The stop is not closed for an exit less than this time.
+	- If the value is 0, it is not calculated.
 
   You must adjust these two parameters according to the application used to send the positions and the device on which it is installed.
 
-  If either value is 0, the Anti-Spike stops are not calculated.
-	
 - **Sources:**
   - **OwnTracks URL** 
     - Only lowercase letters and numbers are accepted. 
@@ -291,6 +287,8 @@ In the phone app, if you tap in the top left corner: **"Menu &rarr; profile name
 
 - If you do not want to import the properties, you can do so manually using the data provided during the integration installation.
 - In sending positions it is configured at 30 seconds but if you have many devices it would be convenient to increase this time in: **Menu &rarr; Performance &rarr; Logging interval**
+
+On some devices you must enable the option to run in the background
   
 ---  
 	

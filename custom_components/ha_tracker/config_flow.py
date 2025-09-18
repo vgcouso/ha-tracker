@@ -5,7 +5,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.data_entry_flow import section  # 👈 NUEVO
+from homeassistant.data_entry_flow import section 
 
 from .const import DOMAIN
 
@@ -15,8 +15,10 @@ DEFAULTS = {
     "geocode_distance": 20,
     "stop_radius": 25,
     "stop_time": 300,
+    "reentry_gap": 60,
+    "outside_gap": 300,
     "anti_spike_radius": 20,
-    "anti_spike_time": 250,
+    "anti_spike_time": 300,
     "only_admin": False,
     "enable_debug": False,
     "use_imperial": False,
@@ -61,10 +63,14 @@ class HATrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.All(vol.Coerce(int), vol.Range(min=0)),
                 vol.Required("stop_time", default=DEFAULTS["stop_time"]):
                     vol.All(vol.Coerce(int), vol.Range(min=0)),
-                vol.Required("anti_spike_radius", default=DEFAULTS["anti_spike_radius"]):
+                vol.Required("reentry_gap", default=DEFAULTS["reentry_gap"]):
                     vol.All(vol.Coerce(int), vol.Range(min=0)),
-                vol.Required("anti_spike_time", default=DEFAULTS["anti_spike_time"]):
+                vol.Required("outside_gap", default=DEFAULTS["outside_gap"]):
                     vol.All(vol.Coerce(int), vol.Range(min=0)),
+                #vol.Required("anti_spike_radius", default=DEFAULTS["anti_spike_radius"]):
+                #    vol.All(vol.Coerce(int), vol.Range(min=0)),
+                #vol.Required("anti_spike_time", default=DEFAULTS["anti_spike_time"]):
+                #    vol.All(vol.Coerce(int), vol.Range(min=0)),
                 vol.Required("only_admin", default=DEFAULTS["only_admin"]): bool,
                 vol.Required("enable_debug", default=DEFAULTS["enable_debug"]): bool,
                 vol.Required("use_imperial", default=DEFAULTS["use_imperial"]): bool,
@@ -136,14 +142,18 @@ class HATrackerOptionsFlowHandler(config_entries.OptionsFlow):
                 vol.All(vol.Coerce(int), vol.Range(min=0)),
             vol.Required("stop_time", default=self._opts["stop_time"]):
                 vol.All(vol.Coerce(int), vol.Range(min=0)),
+            vol.Required("reentry_gap", default=self._opts["reentry_gap"]):
+                vol.All(vol.Coerce(int), vol.Range(min=0)),
+            vol.Required("outside_gap", default=self._opts["outside_gap"]):
+                vol.All(vol.Coerce(int), vol.Range(min=0)),
         })
 
-        anti_spike = vol.Schema({
-            vol.Required("anti_spike_radius", default=self._opts["anti_spike_radius"]):
-                vol.All(vol.Coerce(int), vol.Range(min=0)),
-            vol.Required("anti_spike_time", default=self._opts["anti_spike_time"]):
-                vol.All(vol.Coerce(int), vol.Range(min=0)),
-        })
+        #anti_spike = vol.Schema({
+        #    vol.Required("anti_spike_radius", default=self._opts["anti_spike_radius"]):
+        #        vol.All(vol.Coerce(int), vol.Range(min=0)),
+        #    vol.Required("anti_spike_time", default=self._opts["anti_spike_time"]):
+        #        vol.All(vol.Coerce(int), vol.Range(min=0)),
+        #})
 
         sources = vol.Schema({
             vol.Required("owntracks", default=self._opts["owntracks"]): str,
@@ -154,7 +164,7 @@ class HATrackerOptionsFlowHandler(config_entries.OptionsFlow):
             vol.Required("general"): section(general, {"collapsed": True}),
             vol.Required("geocoding"): section(geocoding, {"collapsed": True}),
             vol.Required("stops"): section(stops, {"collapsed": True}),
-            vol.Required("anti_spike"): section(anti_spike, {"collapsed": True}),
+            #vol.Required("anti_spike"): section(anti_spike, {"collapsed": True}),
             vol.Required("sources"): section(sources, {"collapsed": True}),
         }
         return vol.Schema(data_schema)

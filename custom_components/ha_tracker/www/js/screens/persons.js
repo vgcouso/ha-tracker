@@ -131,7 +131,7 @@ export async function handlePersonsSelection(personId) {
 
 export function updatePersonsFilter() {
   const select = document.getElementById('person-select');
-  const selectedPersonId = select.value;
+  const prevSelected = select.value;
 
   const fragment = document.createDocumentFragment();
   const defaultOption = document.createElement('option');
@@ -140,7 +140,7 @@ export function updatePersonsFilter() {
   fragment.appendChild(defaultOption);
 
   persons
-    .filter(p => Boolean(personsDevicesMap[p.entity_id])) // <-- sólo con device
+    .filter(p => Boolean(personsDevicesMap[p.entity_id])) // solo personas con device válido
     .forEach(person => {
       const option = document.createElement('option');
       option.value = person.entity_id;
@@ -149,13 +149,24 @@ export function updatePersonsFilter() {
       fragment.appendChild(option);
     });
 
+  // Reemplaza todas las opciones de golpe
   select.innerHTML = '';
   select.appendChild(fragment);
 
-  if (selectedPersonId && personsDevicesMap[selectedPersonId]) {
-    select.value = selectedPersonId;
+  const hasPersons = select.options.length > 1;
+  const prevStillValid = !!(prevSelected && personsDevicesMap[prevSelected]);
+
+  if (hasPersons && prevStillValid) {
+    // Mantén la selección previa si sigue siendo válida
+    select.value = prevSelected;
+  } else {
+    // No hay personas o la selección ha dejado de existir -> fuerza la lógica de "sin usuario"
+    select.value = '';
+    // MUY IMPORTANTE: dispara el change para que se ejecute tu listener de personSelect (oculta calendario y export)
+    select.dispatchEvent(new Event('change', { bubbles: true }));
   }
 }
+
 
 
 export async function fitMapToAllPersons() {
@@ -234,12 +245,12 @@ async function updatePersonsMarkers() {
 
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
         const popupContent = `
-      <strong>${ownerName}</strong> (${friendly_name})<br>
-      ${formattedDate}<br>
-      ${t('speed')}: ${Math.round((speed || 0) * (use_imperial ? 2.23694 : 3.6))} ${t(use_imperial ? 'mi_per_hour' : 'km_per_hour')}
-      ${batteryLevel}<br><br>
-      <a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"><strong>${t('open_location')}</strong></a>
-    `;
+		  <strong>${ownerName}</strong> (${friendly_name})<br>
+		  ${formattedDate}<br>
+		  ${t('speed')}: ${Math.round((speed || 0) * (use_imperial ? 2.23694 : 3.6))} ${t(use_imperial ? 'mi_per_hour' : 'km_per_hour')}
+		  ${batteryLevel}
+		  <br><br><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"><strong>${t('open_location')}</strong></a>
+		`;
 
         const markerIcon = L.divIcon({
             className: '',

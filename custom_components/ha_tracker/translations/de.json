@@ -15,6 +15,8 @@
           "gpslogger": "GPSLogger-Kennung (Kleinbuchstaben und Ziffern)",
           "stop_radius": "Stopp-Radius (Meter)",
           "stop_time": "Stopp-Zeit (Sekunden)",
+		  "reentry_gap": "Wiedereintrittsintervall (Sekunden)",   
+		  "outside_gap": "Außerhalb-Intervall (Sekunden)",         		  
           "anti_spike_radius": "Anti-Spike-Radius (Meter)",
           "anti_spike_time": "Anti-Spike-Zeit (Sekunden)"
         },
@@ -61,7 +63,9 @@
             "description": "Schwellenwerte zur Stopp-Erkennung.",
             "data": {
               "stop_radius": "Stopp-Radius (Meter)",
-              "stop_time": "Stopp-Zeit (Sekunden)"
+              "stop_time": "Stopp-Zeit (Sekunden)",
+			  "reentry_gap": "Wiedereintrittsintervall (Sekunden)",   
+			  "outside_gap": "Außerhalb-Intervall (Sekunden)"			  
             }
           },
           "anti_spike": {

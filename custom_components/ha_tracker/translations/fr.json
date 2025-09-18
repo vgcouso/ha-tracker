@@ -15,6 +15,8 @@
           "gpslogger": "Identifiant GPSLogger (lettres minuscules et chiffres)",
           "stop_radius": "Rayon d’arrêt (mètres)",
           "stop_time": "Temps d’arrêt (secondes)",
+		  "reentry_gap": "Délai de ré-entrée (secondes)",
+		  "outside_gap": "Délai à l’extérieur (secondes)",		  
           "anti_spike_radius": "Rayon anti-spike (mètres)",
           "anti_spike_time": "Temps anti-spike (secondes)"
         },
@@ -61,7 +63,9 @@
             "description": "Seuils de détection des arrêts.",
             "data": {
               "stop_radius": "Rayon d’arrêt (mètres)",
-              "stop_time": "Temps d’arrêt (secondes)"
+              "stop_time": "Temps d’arrêt (secondes)",
+			  "reentry_gap": "Délai de ré-entrée (secondes)",
+			  "outside_gap": "Délai à l’extérieur (secondes)"			  
             }
           },
           "anti_spike": {

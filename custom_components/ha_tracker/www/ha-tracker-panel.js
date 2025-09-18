@@ -120,8 +120,7 @@ class HATrackerPanel extends HTMLElement {
                     "allow-popups",
                     "allow-popups-to-escape-sandbox",
                     "allow-top-navigation-by-user-activation",
-                    "allow-downloads",
-                    "allow-downloads-without-user-activation" // opcional pero útil
+                    "allow-downloads"
                 ].join(" "));
             iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
             // Si necesitas APIs extra, descomenta: iframe.setAttribute("allow", "fullscreen; clipboard-write");

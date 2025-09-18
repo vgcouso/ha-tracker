@@ -15,6 +15,8 @@
           "gpslogger": "Identificatore GPSLogger (lettere minuscole e cifre)",
           "stop_radius": "Raggio di sosta (metri)",
           "stop_time": "Tempo di sosta (secondi)",
+		  "reentry_gap": "Intervallo di rientro (secondi)",
+		  "outside_gap": "Intervallo all'esterno (secondi)",		  
           "anti_spike_radius": "Raggio anti-spike (metri)",
           "anti_spike_time": "Tempo anti-spike (secondi)"
         },
@@ -61,7 +63,9 @@
             "description": "Soglie di rilevamento delle soste.",
             "data": {
               "stop_radius": "Raggio di sosta (metri)",
-              "stop_time": "Tempo di sosta (secondi)"
+              "stop_time": "Tempo di sosta (secondi)",
+			  "reentry_gap": "Intervallo di rientro (secondi)",
+			  "outside_gap": "Intervallo all'esterno (secondi)"			  
             }
           },
           "anti_spike": {

@@ -105,7 +105,7 @@ export async function setFilter(payload) {
             await resetFilter(false, false);
             await updatePositionsTable(positions);
 
-            // NUEVO: si el servidor trae estadísticas, úsalas.
+            // si el servidor trae estadísticas, úsalas.
             if (summary) {
                 applyServerSummary(summary);
             }
@@ -630,6 +630,10 @@ export async function resetFilter(resetCalendar = true, resetUsers = true) {
         _filterAddrObserver.disconnect();
         _filterAddrObserver = null;
     }
+	
+    // recalcula visibilidad del rango de fechas y oculta export SIEMPRE tras un reset
+    updateDaterangeVisibility();
+    updateExportFilterVisibility(false);	
 }
 
 async function toggleGroup(groupClass, btn) {
@@ -683,8 +687,13 @@ async function selectRow(row) {
 }
 
 function openInfoPopup(lat, lon, lastUpdated, speed, isStop = false) {
+	const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
     const stopLine = isStop ? `<strong>${t('stop') || 'Stop'}</strong><br>` : '';
-    const html = `${stopLine}${formatDate(lastUpdated)}<br>${t('speed')}: ${fmt0(speed)} ${t(use_imperial ? 'mi_per_hour' : 'km_per_hour')}`;
+    const html = `
+	  ${stopLine}
+	  ${formatDate(lastUpdated)}<br>${t('speed')}: ${fmt0(speed)} ${t(use_imperial ? 'mi_per_hour' : 'km_per_hour')}
+	  <br><br><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"><strong>${t('open_location')}</strong></a>
+	`;
 
     if (currentPopup)
         currentPopup.remove();
@@ -787,7 +796,7 @@ async function addRouteLine(
     if (coords.length < 2)
         return;
 
-    // === NUEVO: curva que pasa por los puntos ===
+    // === curva que pasa por los puntos ===
     if (curved) {
         if (curveAlg === 'catmull') {
             // límite de rendimiento: evita explotar en miles de segmentos
@@ -1100,7 +1109,7 @@ function formatTotalTime(totalTimeMs) {
     // Condicional para incluir "día" o "días"
     const daysText = days > 0 ? `${days} ${days === 1 ? t('day') : t('days')} ` : '';
 
-    return `${daysText}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    return `${daysText}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 function formatForDatetimeLocal(d) {
