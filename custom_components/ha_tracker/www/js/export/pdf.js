@@ -1,8 +1,8 @@
 // export/pdf.js
 
 import { t } from '../utils/i18n.js';
-import { SHOW_VISITS } from '../screens/filter.js';
-import { map } from '../utils/map.js';
+import { DEFAULT_ALPHA, SHOW_VISITS, DEFAULT_COLOR } from '../globals.js'
+
 
 const JSPDF_CDN = "https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
 const AUTOTABLE_CDN = "https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.3/dist/jspdf.plugin.autotable.min.js";
@@ -24,8 +24,7 @@ function loadScriptOnce(src) {
     });
 }
 async function ensureJsPdf() {
-    if (window.jspdf?.jsPDF && window.jspdf?.autoTable)
-        return;
+    if (window.jspdf?.jsPDF?.API?.autoTable) return;
     await loadScriptOnce(JSPDF_CDN);
     await loadScriptOnce(AUTOTABLE_CDN);
 }
@@ -52,7 +51,7 @@ async function captureMapPngDataURL() {
   return canvas.toDataURL('image/jpeg', 0.92);
 }
 
-function blendWithWhite(hex, alpha = 0.25) {
+function blendWithWhite(hex, alpha = DEFAULT_ALPHA) {
     const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
     if (!m)
         return null;
@@ -64,32 +63,17 @@ function blendWithWhite(hex, alpha = 0.25) {
     return [out(r), out(g), out(b)];
 }
 
-// Helpers exportables que ya te pasé antes
-export function hexOfZone(meta, {
-    customDefault = '#0088ff',
-    noCustomDefault = '#c0c0c0'
-} = {}) {
-    if (!meta)
-        return noCustomDefault;
-    const isCustom = (typeof meta.is_custom === 'boolean') ? meta.is_custom
-     : (typeof meta.custom === 'boolean') ? meta.custom
-     : !!meta.color;
-    return isCustom ? (meta.color || customDefault) : noCustomDefault;
+function hexOfZone(meta, { defaultColor = DEFAULT_COLOR } = {}) {
+  return (meta && meta.color) ? meta.color : defaultColor;
 }
-export function blendedFill(zoneName, zonePositions = {}, {
-    alpha = 0.25,
-    customDefault = '#0088ff',
-    noCustomDefault = '#c0c0c0',
-} = {}) {
-    if (!zoneName)
-        return null;
-    const meta = zonePositions[zoneName];
-    const baseHex = hexOfZone(meta, {
-        customDefault,
-        noCustomDefault
-    });
-    return blendWithWhite(baseHex, alpha);
+
+export function blendedFill(zoneName, zonePositions = {}, { alpha = DEFAULT_ALPHA } = {}) {
+  if (!zoneName) return null;
+  const meta = zonePositions[zoneName];
+  const baseHex = hexOfZone(meta);
+  return blendWithWhite(baseHex, alpha);
 }
+
 export function reducePositionsForPdf(positions = []) {
     const out = [];
     let lastZone = null;
@@ -170,67 +154,6 @@ function drawTitle(doc, {
 
     y += 6; // pequeña separación antes de la primera tabla
     return y;
-}
-
-// ——— cálculo robusto de anchos para la tabla de posiciones ———
-function computePositionTableWidths(pageW, margin) {
-    const avail = pageW - margin * 2;
-
-    // Base (en pt). Más conservador para evitar overflow.
-    let wDate = 120;
-    let wStop = 14;
-    let wZone = 110;
-    let wSpeed = 66;
-    let wBatt = 46;
-    const minAddr = 80; // dirección mínima
-
-    const fixedSum = wDate + wStop + wZone + wSpeed + wBatt;
-
-    // Si ni siquiera cabe con dirección mínima, reescalamos todo lo fijo.
-    let scale = (avail - minAddr) / fixedSum;
-    if (scale < 1) {
-        // No bajar por debajo del 60% para no hacer ilegible; si sigue sin caber,
-        // dejamos al menos la dirección mínima y el resto en lo que quepa.
-        scale = Math.max(scale, 0.6);
-        wDate = Math.round(wDate * scale);
-        wStop = Math.round(wStop * scale);
-        wZone = Math.round(wZone * scale);
-        wSpeed = Math.round(wSpeed * scale);
-        wBatt = Math.round(wBatt * scale);
-    }
-
-    let wAddr = avail - (wDate + wStop + wZone + wSpeed + wBatt);
-    if (wAddr < minAddr) {
-        // Aún falta hueco para dirección: restamos un poco proporcionalmente
-        const need = (minAddr - wAddr);
-        const pool = wDate + wZone + wSpeed + wBatt; // (no tocamos stop)
-        if (pool > 0) {
-            const k = need / pool;
-            wDate = Math.max(80, Math.round(wDate * (1 - k)));
-            wZone = Math.max(80, Math.round(wZone * (1 - k)));
-            wSpeed = Math.max(54, Math.round(wSpeed * (1 - k)));
-            wBatt = Math.max(42, Math.round(wBatt * (1 - k)));
-        }
-        wAddr = avail - (wDate + wStop + wZone + wSpeed + wBatt);
-        if (wAddr < minAddr)
-            wAddr = minAddr; // última salvaguarda
-    }
-
-    // Ajuste fino por redondeos: fuerza que la suma encaje exactamente
-    const sumNow = wDate + wStop + wZone + wSpeed + wBatt + wAddr;
-    const diff = avail - sumNow;
-    if (diff !== 0) {
-        wAddr = Math.max(40, wAddr + diff);
-    }
-
-    return {
-        wDate,
-        wStop,
-        wZone,
-        wSpeed,
-        wBatt,
-        wAddr
-    };
 }
 
 // Centra una tabla y limita su ancho al % del área útil (página - márgenes)
@@ -552,6 +475,6 @@ function formatZoneDistanceCell(z) {
 
     const unitShort = (z._unitShort === 'mi' || z._unitShort === 'km') ? z._unitShort : 'km';
     const value = unitShort === 'mi' ? (m / 1609.344) : (m / 1000);
-    // 2 decimales
+ 
     return `${value.toFixed(0)}`;
 }

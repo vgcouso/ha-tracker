@@ -3,9 +3,9 @@
 //
 
 import { map } from '../utils/map.js';
-import { formatDate, fmt0, fmt2, use_imperial, CUSTOM_DEFAULT_COLOR, NO_CUSTOM_DEFAULT_COLOR, DEFAULT_ALPHA } from '../globals.js';
+import { formatDate, fmt0, fmt2, use_imperial, DEFAULT_ALPHA } from '../globals.js';
 import { fetchFilteredPositions, fetchResetReverseGeocodeCache } from '../ha/fetch.js';
-import { handleZonePosition, showZone } from '../screens/zones.js';
+import { handleZonePosition, showZone, getZoneStyleById } from '../screens/zones.js';
 import { handlePersonsSelection, updatePersonsFilter } from '../screens/persons.js';
 import { requestAddress } from '../utils/geocode.js';
 import { t } from '../utils/i18n.js';
@@ -22,19 +22,18 @@ let cachedZoneStats = null;
 let summaryZonesSortColumn = "zone";
 let summaryZonesSortAscending = true;
 
-export const SHOW_VISITS = false; // Ponlo a false para ocultarla
-
+const MIN_ZOOM_TO_SHOW = 16;
 const FILTER_ICON = '/local/ha-tracker/images/filter.png';
 const STOP_ICON_16_16 = '/local/ha-tracker/images/stop16x16.png';
 const STOP_ICON_24_24 = '/local/ha-tracker/images/stop24x24.png';
 
 const pad = n => String(n).padStart(2, '0');
 
-document.getElementById('combo-select').addEventListener('change', function () {
-    resetFilter();
-});
+const combo = document.getElementById('combo-select');
+if (combo)
+    combo.addEventListener('change', () => resetFilter());
 
-function showPosittionsTab() {
+function showPositionsTab() {
     const positionsTabButton = document.querySelector('.tab-button[data-tab="positions"]');
     if (positionsTabButton) {
         openTab({
@@ -47,7 +46,7 @@ function openTab(event, tabId) {
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
-    event.currentTarget.classList.add('active');
+    if (event?.currentTarget) event.currentTarget.classList.add('active');
 }
 
 export async function initFilter() {
@@ -56,24 +55,26 @@ export async function initFilter() {
     updateDaterangeVisibility();
 
     const personSelect = document.getElementById("person-select");
-    personSelect.addEventListener("focus", async() => {
-        try {
-            await updatePersonsFilter();
-        } catch (e) {
-            console.error(e);
-        }
-    });
+    if (personSelect) {
+        personSelect.addEventListener("focus", async() => {
+            try {
+                await updatePersonsFilter();
+            } catch (e) {
+                console.error(e);
+            }
+        });
 
-    personSelect.addEventListener("change", () => {
-        try {
-            resetFilter(true, false);
-            handlePersonsSelection(document.getElementById('person-select').value);
-            updateDaterangeVisibility();
-            updateExportFilterVisibility(false);
-        } catch (e) {
-            console.error(e);
-        }
-    });
+        personSelect.addEventListener("change", () => {
+            try {
+                resetFilter(true, false);
+                handlePersonsSelection(personSelect.value);
+                updateDaterangeVisibility();
+                updateExportFilterVisibility(false);
+            } catch (e) {
+                console.error(e);
+            }
+        });
+    }
 
     const tabButtons = document.querySelectorAll(".tab-button");
     tabButtons.forEach(button => {
@@ -92,6 +93,22 @@ export async function initFilter() {
     });
 }
 
+function retintFilterList() {
+    if (!cachedZoneStats)
+        return;
+    const rows = document.querySelectorAll('#filter-table-body tr');
+    rows.forEach(r => {
+        const zoneName = r.dataset.zone || '';
+        const meta = zoneName && cachedZoneStats.zonePositions?.[zoneName] || null;
+        const z = zoneName ? {
+            name: zoneName,
+            color: meta?.color || null, // solo si hay color explícito
+        }
+         : null;
+        applyRowZoneTint(r, z, DEFAULT_ALPHA);
+    });
+}
+
 export async function setFilter(payload) {
     try {
         // Back-compat: si payload es array, actúa como antes
@@ -103,18 +120,23 @@ export async function setFilter(payload) {
             console.log("Positions:", positions);
 
             await resetFilter(false, false);
-            await updatePositionsTable(positions);
-
-            // si el servidor trae estadísticas, úsalas.
-            if (summary) {
-                applyServerSummary(summary);
-            }
-
+            // Primero cacheamos zonas para tener los colores listos al pintar
             if (zones) {
                 setCachedZoneStatsFromServer(zones);
             }
 
+            // Ahora sí, pintamos la tabla de posiciones con los colores correctos
+            await updatePositionsTable(positions);
+
+            // Resumen del servidor (si viene)
+            if (summary) {
+                applyServerSummary(summary);
+            }
             await updateSummaryZonesTable();
+
+            // Por si acaso algún color cambia dinámicamente, retintamos todo
+            retintFilterList();
+
             await addFilterMarkers(positions);
             await addRouteLine(positions, undefined, undefined, undefined, undefined, undefined, {
                 curved: true,
@@ -148,9 +170,14 @@ async function updatePositionsTable(positions) {
     const groupRanges = [];
     let prevZonePre = null;
     let startIdx = 0;
+    const zonesByIndex = [];
     positions.forEach((pos, i) => {
         const zone = handleZonePosition(pos.attributes.latitude, pos.attributes.longitude);
         const zn = zone ? zone.name : '';
+        zonesByIndex[i] = {
+            zone,
+            zn
+        };
         if (i === 0) {
             prevZonePre = zn;
             startIdx = 0;
@@ -179,9 +206,8 @@ async function updatePositionsTable(positions) {
 
     const frag = document.createDocumentFragment();
 
-    positions.forEach((pos) => {
-        const zone = handleZonePosition(pos.attributes.latitude, pos.attributes.longitude);
-        const zoneName = zone ? zone.name : '';
+    positions.forEach((pos, i) => {
+        const { zone, zn: zoneName } = zonesByIndex[i];
         if (zoneName !== prevZone) {
             groupClassIndex++;
             prevZone = zoneName;
@@ -297,6 +323,7 @@ async function updatePositionsTable(positions) {
             addressRow.style.cursor = 'pointer';
             addressRow.dataset.entityId = uniqueId;
             addressRow.style.display = 'table-row';
+            addressRow.dataset.zone = zoneName || '';
 
             // dataset necesarios para el observer
             const tsMs = new Date(pos.last_updated).getTime();
@@ -416,7 +443,7 @@ function applyServerSummary(summary) {
 }
 
 function setCachedZoneStatsFromServer(zones) {
-    // zones: [{ zone, time_s, visits, stops, distance_m, meta? }]
+    // zones: [{ zone, time_s, visits, stops, distance_m }]
     cachedZoneStats = {
         zoneDurations: {},
         zoneVisits: {},
@@ -432,17 +459,18 @@ function setCachedZoneStatsFromServer(zones) {
         cachedZoneStats.zoneStops[name] = z.stops || 0;
         cachedZoneStats.zoneDistanceMeters[name] = z.distance_m || 0;
 
-        // meta para tintes de fila si el servidor lo proporciona
-        if (z.meta) {
-            cachedZoneStats.zonePositions[name] = {
-                id: z.meta.id,
-                name: z.meta.name || name,
-                lat: z.meta.latitude,
-                lon: z.meta.longitude,
-                color: z.meta.color || null,
-                custom: !!z.meta.is_custom,
-                is_custom: !!z.meta.is_custom
-            };
+        // Resolver color y flags desde zones.js usando el ID de zona
+        if (z.id != null) {
+            const style = getZoneStyleById(z.id);
+            if (style) {
+                cachedZoneStats.zonePositions[name] = {
+                    id: style.id,
+                    name: style.name || name,
+                    lat: style.lat,
+                    lon: style.lon,
+                    color: style.color || null,
+                };
+            }
         }
     }
 }
@@ -453,7 +481,7 @@ async function addFilterMarkers(positions) {
         map.getPane('filterMarkers').style.zIndex = 400;
     }
 
-    const minZoomToShow = 18;
+    const minZoomToShow = MIN_ZOOM_TO_SHOW;
 
     positions.forEach(pos => {
         const lat = Number(pos?.attributes?.latitude);
@@ -573,14 +601,14 @@ export async function resetFilter(resetCalendar = true, resetUsers = true) {
         clearRangeTextbox();
     if (resetUsers) {
         const sel = document.getElementById('person-select');
-        sel.value = '';
-        sel.dispatchEvent(new Event('change', {
-                bubbles: true
-            }));
+        if (sel) {
+          sel.value = '';
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     closeInfoPopup();
-    showPosittionsTab();
+    showPositionsTab();
 
     // Reiniciar posiciones
     document.getElementById('filter-table-body').innerHTML = '';
@@ -630,10 +658,10 @@ export async function resetFilter(resetCalendar = true, resetUsers = true) {
         _filterAddrObserver.disconnect();
         _filterAddrObserver = null;
     }
-	
+
     // recalcula visibilidad del rango de fechas y oculta export SIEMPRE tras un reset
     updateDaterangeVisibility();
-    updateExportFilterVisibility(false);	
+    updateExportFilterVisibility(false);
 }
 
 async function toggleGroup(groupClass, btn) {
@@ -687,7 +715,7 @@ async function selectRow(row) {
 }
 
 function openInfoPopup(lat, lon, lastUpdated, speed, isStop = false) {
-	const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
     const stopLine = isStop ? `<strong>${t('stop') || 'Stop'}</strong><br>` : '';
     const html = `
 	  ${stopLine}
@@ -755,15 +783,7 @@ async function handleFilterRowSelection(uniqueId) {
     }
 
     selectRow(row);
-    showPosittionsTab();
-
-    const lat = parseFloat(row.dataset.latitude);
-    const lon = parseFloat(row.dataset.longitude);
-    const lastUpdated = row.dataset.lastUpdated;
-    const speed = Math.round(row.dataset.speed || 0);
-    const isStop = row.dataset.isStop === '1';
-
-    openInfoPopup(lat, lon, lastUpdated, speed, isStop);
+    showPositionsTab();
 
     row.scrollIntoView({
         behavior: 'smooth',
@@ -930,36 +950,36 @@ async function updateSummaryZonesTable() {
     const { zoneDurations, zoneVisits, zonePositions, zoneStops, zoneDistanceMeters } = cachedZoneStats;
 
     const zoneKeys = new Set([
-        ...Object.keys(zoneDurations || {}),
-        ...Object.keys(zoneVisits || {}),
-        ...Object.keys(zoneStops || {}),
-        ...Object.keys(zoneDistanceMeters || {}),
-    ]);
+                ...Object.keys(zoneDurations || {}),
+                ...Object.keys(zoneVisits || {}),
+                ...Object.keys(zoneStops || {}),
+                ...Object.keys(zoneDistanceMeters || {}),
+            ]);
 
     const zones = [...zoneKeys];
 
     const sortedZones = zones.sort((zoneA, zoneB) => {
         switch (summaryZonesSortColumn) {
-            case "zone":
-                return summaryZonesSortAscending ? zoneA.localeCompare(zoneB) : zoneB.localeCompare(zoneA);
-            case "time":
-                return summaryZonesSortAscending
-                    ? ((zoneDurations?.[zoneA] || 0) - (zoneDurations?.[zoneB] || 0))
-                    : ((zoneDurations?.[zoneB] || 0) - (zoneDurations?.[zoneA] || 0));
-            case "visits":
-                return summaryZonesSortAscending
-                    ? ((zoneVisits?.[zoneA] || 0) - (zoneVisits?.[zoneB] || 0))
-                    : ((zoneVisits?.[zoneB] || 0) - (zoneVisits?.[zoneA] || 0));
-            case "stops":
-                return summaryZonesSortAscending
-                    ? ((zoneStops?.[zoneA] || 0) - (zoneStops?.[zoneB] || 0))
-                    : ((zoneStops?.[zoneB] || 0) - (zoneStops?.[zoneA] || 0));
-            case "distance":
-                return summaryZonesSortAscending
-                    ? ((zoneDistanceMeters?.[zoneA] || 0) - (zoneDistanceMeters?.[zoneB] || 0))
-                    : ((zoneDistanceMeters?.[zoneB] || 0) - (zoneDistanceMeters?.[zoneA] || 0));
-            default:
-                return 0;
+        case "zone":
+            return summaryZonesSortAscending ? zoneA.localeCompare(zoneB) : zoneB.localeCompare(zoneA);
+        case "time":
+            return summaryZonesSortAscending
+             ? ((zoneDurations?.[zoneA] || 0) - (zoneDurations?.[zoneB] || 0))
+             : ((zoneDurations?.[zoneB] || 0) - (zoneDurations?.[zoneA] || 0));
+        case "visits":
+            return summaryZonesSortAscending
+             ? ((zoneVisits?.[zoneA] || 0) - (zoneVisits?.[zoneB] || 0))
+             : ((zoneVisits?.[zoneB] || 0) - (zoneVisits?.[zoneA] || 0));
+        case "stops":
+            return summaryZonesSortAscending
+             ? ((zoneStops?.[zoneA] || 0) - (zoneStops?.[zoneB] || 0))
+             : ((zoneStops?.[zoneB] || 0) - (zoneStops?.[zoneA] || 0));
+        case "distance":
+            return summaryZonesSortAscending
+             ? ((zoneDistanceMeters?.[zoneA] || 0) - (zoneDistanceMeters?.[zoneB] || 0))
+             : ((zoneDistanceMeters?.[zoneB] || 0) - (zoneDistanceMeters?.[zoneA] || 0));
+        default:
+            return 0;
         }
     });
 
@@ -975,24 +995,38 @@ async function updateSummaryZonesTable() {
         const distText = `${fmt0(distValue)}`;
         const pretty = zoneName;
 
-        const row = document.createElement('tr');
-        row.style.cursor = 'pointer';
-        row.innerHTML = `
-            <td>${pretty}</td>
-            <td>${formatTotalTime(duration)}</td>
-            <td>${fmt0(visits)}</td>
-            <td>${fmt0(stops)}</td>
-            <td>${distText}</td>
-        `;
+		const row = document.createElement('tr');
+		row.innerHTML = `
+		  <td>${pretty}</td>
+		  <td>${formatTotalTime(duration)}</td>
+		  <td>${fmt0(visits)}</td>
+		  <td>${fmt0(stops)}</td>
+		  <td>${distText}</td>
+		`;
+
+		// Solo hacer clic y mostrar puntero si existe id de zona
+		const zoneData = zonePositions[zoneName];
+		if (zoneData && zoneData.id != null) {
+		  row.style.cursor = 'pointer';
+		  row.title = t('show_zone') || '';
+		  row.addEventListener('click', () => showZone(zoneData.id));
+		} else {
+		  // sin id: sin puntero ni click
+		  row.style.cursor = ''; // o 'default'
+		}
 
         row.addEventListener('click', () => {
             const zoneData = zonePositions[zoneName];
-            if (zoneData) showZone(zoneData.id);
+            if (zoneData)
+                showZone(zoneData.id);
         });
 
         const meta = zonePositions[zoneName];
-        if (zoneName && meta) {
-            const z = { name: zoneName, color: meta.color, custom: meta.custom, is_custom: meta.custom };
+        if (zoneName) {
+            const z = {
+                name: zoneName,
+                color: meta?.color || null
+            };
             applyRowZoneTint(row, z, DEFAULT_ALPHA);
         } else {
             row.classList.remove('zone-tinted');
@@ -1019,26 +1053,40 @@ function updateSummaryZonesTableHeaders() {
         let columnName = "";
 
         switch (columnKey) {
-            case "zone": columnName = "zone"; break;
-            case "time": columnName = "time"; break;
-            case "visits": columnName = "visits"; break;
-            case "stops": columnName = "stops"; break;
-            case "distance": columnName = "distance"; break;
+        case "zone":
+            columnName = "zone";
+            break;
+        case "time":
+            columnName = "time";
+            break;
+        case "visits":
+            columnName = "visits";
+            break;
+        case "stops":
+            columnName = "stops";
+            break;
+        case "distance":
+            columnName = "distance";
+            break;
         }
-        if (!columnName) return;
-
+        if (!columnName)
+            return;
 
         header.style.cursor = "pointer";
         header.onclick = () => {
-            if (summaryZonesSortColumn === columnName) summaryZonesSortAscending = !summaryZonesSortAscending;
-            else { summaryZonesSortColumn = columnName; summaryZonesSortAscending = true; }
+            if (summaryZonesSortColumn === columnName)
+                summaryZonesSortAscending = !summaryZonesSortAscending;
+            else {
+                summaryZonesSortColumn = columnName;
+                summaryZonesSortAscending = true;
+            }
             updateSummaryZonesTable();
         };
 
         let arrow = (summaryZonesSortColumn === columnName) ? (summaryZonesSortAscending ? "▲" : "▼") : "";
         const label = columnKey === "distance"
-            ? (use_imperial ? t("miles") : t("kilometres"))
-            : t(columnKey);
+             ? (use_imperial ? t("miles") : t("kilometres"))
+             : t(columnKey);
 
         header.innerHTML = `
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:30px;">
@@ -1080,22 +1128,19 @@ function applyRowZoneTint(el, zone, alpha = DEFAULT_ALPHA) {
     }
 }
 
-function isCustomZone(zone) {
-    if (!zone)
-        return false;
-    if (typeof zone.is_custom === 'boolean')
-        return zone.is_custom;
-    if (typeof zone.custom === 'boolean')
-        return zone.custom;
-    if (zone.color)
-        return true; // si tiene color, tratamos como custom
-    return false;
-}
 function getZoneBgCssFromZone(zone, alpha = DEFAULT_ALPHA) {
     if (!zone)
         return null;
-    const baseHex = isCustomZone(zone) ? (zone.color || CUSTOM_DEFAULT_COLOR) : NO_CUSTOM_DEFAULT_COLOR;
-    return toRgba(baseHex, alpha);
+    // 1) color explícito de la zona
+    let hex = zone.color;
+    // 2) fallback: busca color precalculado en cache (si la fila solo trae el nombre)
+    if (!hex && zone.name && cachedZoneStats?.zonePositions?.[zone.name]?.color) {
+        hex = cachedZoneStats.zonePositions[zone.name].color;
+    }
+    // 3) sin color => SIN tinte en tablas
+    if (!hex)
+        return null;
+    return toRgba(hex, alpha);
 }
 
 // Formatear tiempo total en el formato "X días horas:minutos"
@@ -1447,9 +1492,7 @@ async function doExportPdf() {
                 distance, // ⬅️ string ya formateado para PDF
                 _unitShort: unitShort,
                 _fillColor: blendedFill(zoneName, zonePositions, {
-                    alpha: 0.25,
-                    customDefault: CUSTOM_DEFAULT_COLOR,
-                    noCustomDefault: NO_CUSTOM_DEFAULT_COLOR,
+                    alpha: DEFAULT_ALPHA,
                 }),
             });
         }
@@ -1469,9 +1512,7 @@ async function doExportPdf() {
             battery: Number.isFinite(p?.battery) ? p.battery : '',
             address: p.address || '',
             _fillColor: p.zone ? blendedFill(p.zone, zonePositions, {
-                alpha: 0.25,
-                customDefault: CUSTOM_DEFAULT_COLOR,
-                noCustomDefault: NO_CUSTOM_DEFAULT_COLOR,
+                alpha: DEFAULT_ALPHA,
             }) : null,
         };
     });
@@ -1562,9 +1603,9 @@ function _zoomHandler() {
     filterMarkers.forEach(marker => {
         if (!marker.isStop) {
             const onMap = map.hasLayer(marker);
-            if (zoom >= 18 && !onMap)
+            if (zoom >= MIN_ZOOM_TO_SHOW && !onMap)
                 marker.addTo(map);
-            else if (zoom < 18 && onMap)
+            else if (zoom < MIN_ZOOM_TO_SHOW && onMap)
                 map.removeLayer(marker);
         }
     });

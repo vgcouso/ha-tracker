@@ -1,7 +1,7 @@
 import logging
 import math
-from typing import List, Tuple, Optional
 
+from typing import List, Tuple, Optional
 from dateutil.parser import isoparse
 from datetime import timedelta, datetime
 from functools import partial
@@ -19,10 +19,11 @@ _LOGGER = logging.getLogger(__name__)
 # ----------------------------
 # UMBRALES DE FILTRO (ajustables)
 # ----------------------------
-MAX_GPS_ACCURACY_M = 20.0   # descartar puntos con precisión peor que esto (m)
-MAX_SPEED_KMH = 250.0       # descartar puntos con salto a > 250 km/h (filtro base)
-MIN_DISTANCE = 0.0          # distancia mínima entre puntos aceptados (m) 0.0 => desactivado
-MIN_TIME = 0                # tiempo mínimo entre puntos aceptados (segundos). 0 => desactivado
+MAX_GPS_ACCURACY_M_FALLBACK = 15.0  # descartar puntos con precisión peor que esto (m)
+MAX_SPEED_KMH_FALLBACK = 200.0      # descartar puntos con salto mayores a este valor
+
+MIN_DISTANCE = 0.0                  # distancia mínima entre puntos aceptados (m) 0.0 => desactivado
+MIN_TIME = 0                        # tiempo mínimo entre puntos aceptados (segundos) 0 => desactivado
 
 # ----------------------------
 # PARADAS/JITTER por radio + “gap” al primer punto fuera
@@ -77,21 +78,23 @@ def _acc_from_pos(pos) -> Optional[float]:
 def _dt_from_pos(pos):
     v = pos.get("last_updated")
     if isinstance(v, datetime):
-        return v
+        return dt_util.as_utc(v) if v.tzinfo else dt_util.as_utc(v.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE))
     if v is None:
         return None
     try:
-        return isoparse(v if isinstance(v, str) else str(v))
+        dt = isoparse(v if isinstance(v, str) else str(v))
+        return dt_util.as_utc(dt if dt.tzinfo else dt.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE))
     except Exception:
         return None
 
 def _as_dt(v):
     if isinstance(v, datetime):
-        return v
+        return dt_util.as_utc(v) if v.tzinfo else dt_util.as_utc(v.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE))
     if v is None:
         return None
     try:
-        return isoparse(v if isinstance(v, str) else str(v))
+        dt = isoparse(v if isinstance(v, str) else str(v))
+        return dt_util.as_utc(dt if dt.tzinfo else dt.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE))
     except Exception:
         return None
 
@@ -161,8 +164,8 @@ def validate_dates(start_date, end_date):
 # ----------------------------
 def filter_positions(
     history,
-    max_gps_accuracy=MAX_GPS_ACCURACY_M,
-    max_speed_kmh=MAX_SPEED_KMH,
+    max_gps_accuracy_m: float,
+    max_speed_kmh: float,
     min_distance=MIN_DISTANCE,
     min_time_s=MIN_TIME,   
 ):
@@ -200,7 +203,15 @@ def filter_positions(
             except (TypeError, ValueError):
                 pass
 
-        current_datetime = isoparse(state.last_updated.isoformat())
+       # Normaliza speed: si es numérica y < 0 -> 0.0
+        try:
+            spd = float(attrs.get("speed"))
+            if math.isfinite(spd) and spd < 0:
+                attrs["speed"] = 0.0
+        except (TypeError, ValueError):
+            pass
+            
+        current_datetime = dt_util.as_utc(state.last_updated)
         current_datetime_rounded = current_datetime.replace(microsecond=0)
 
         # Precisión GPS
@@ -220,7 +231,7 @@ def filter_positions(
         last_position = candidate
 
         # 1) Precisión
-        if accuracy_m is not None and accuracy_m > max_gps_accuracy:
+        if accuracy_m is not None and accuracy_m > max_gps_accuracy_m:
             continue
 
         # 2) Velocidad respecto al último aceptado
@@ -288,7 +299,7 @@ def filter_positions(
 
         if last_seen_dt_real is not None:
             try:
-                t2 = isoparse(last_position["last_updated"])
+                t2 = dt_util.as_utc(isoparse(last_position["last_updated"]))
                 dt_s = (t2 - last_seen_dt_real).total_seconds()
 
                 # tiempo mínimo entre aceptados
@@ -313,7 +324,7 @@ def filter_positions(
             latlon_ok
             and ok_by_speed
             and ok_by_time
-            and not (accuracy_m is not None and accuracy_m > max_gps_accuracy)
+            and not (accuracy_m is not None and accuracy_m > max_gps_accuracy_m)
         ):
             positions.append(last_position)
 
@@ -325,12 +336,12 @@ def filter_positions(
 #------------------------------
 def drop_c_spikes_relative_5pt(
     positions: List[dict],
+    max_gps_accuracy_m: float = MAX_GPS_ACCURACY_M_FALLBACK,
     factor_k: float = 3.0,          # v_detour debe superar k·v1 y k·v2
     min_detour_ratio: float = 1.7,   # (dBC + dCD) / dBD > R => hay ida-vuelta clara
     max_bd_dt_s: int = 180,          # B→D debe suceder “rápido”
     min_leg_m: float = 15.0,         # cada pierna (BC y CD) al menos X m
-    require_good_acc: bool = REQUIRE_GOOD_ACC,
-    max_acc_m: float = MAX_GPS_ACCURACY_M,
+    require_good_acc: bool = REQUIRE_GOOD_ACC,    
 ) -> List[dict]:
     """
     Elimina el punto central C cuando el tramo B→C→D es anormalmente rápido
@@ -354,7 +365,7 @@ def drop_c_spikes_relative_5pt(
         # Precisión opcional (al menos en C; puedes ampliar a B y D si quieres)
         if require_good_acc:
             accC = _acc_from_pos(C)
-            if accC is not None and accC > max_acc_m:
+            if accC is not None and accC > max_gps_accuracy_m:
                 continue
 
         tA, tB, tC, tD, tE = _t(i-2), _t(i-1), _t(i), _t(i+1), _t(i+2)
@@ -407,7 +418,7 @@ def squash_return_jitter(
     max_loop_time_s,
     min_excursion_m,
     require_good_acc: bool = REQUIRE_GOOD_ACC,
-    max_acc_m: float = MAX_GPS_ACCURACY_M,
+    max_gps_accuracy_m: float = MAX_GPS_ACCURACY_M_FALLBACK,
 ) -> List[dict]:
     """
     Elimina excursiones cortas que salen del radio y vuelven en poco tiempo.
@@ -435,7 +446,7 @@ def squash_return_jitter(
             out.append(A); i += 1; continue
         if require_good_acc:
             accA = _acc_from_pos(A)
-            if accA is not None and accA > max_acc_m:
+            if accA is not None and accA > max_gps_accuracy_m:
                 out.append(A); i += 1; continue
 
         # Busca el primer retorno a <= center_radius_m en <= max_loop_time_s
@@ -560,8 +571,8 @@ def annotate_stops_and_collapse(
     stop_time_s: int,
     reentry_gap_s: int,
     outside_gap_s: int,   
-    require_good_acc: bool = REQUIRE_GOOD_ACC,
-    max_acc_m: float = MAX_GPS_ACCURACY_M,
+    max_gps_accuracy_m: float,
+    require_good_acc: bool = REQUIRE_GOOD_ACC,    
 ) -> List[dict]:
     """
     Detección de paradas por radio + cálculo del dwell hasta el primer punto FUERA.
@@ -602,7 +613,7 @@ def annotate_stops_and_collapse(
         if not require_good_acc:
             return True
         a = _acc_from_pos(positions[idx])
-        return (a is None) or (a <= max_acc_m)
+        return (a is None) or (a <= max_gps_accuracy_m)
 
     out = []
     i = 0
@@ -724,7 +735,8 @@ def _deg_lon(m: float, lat: float) -> float:
 
 # --- utilidades zonas ---
 def _all_zones(hass):
-    """Lee zonas de Home Assistant con id SIN el prefijo 'zone.'. Añade bounding boxes para acelerar lookup."""
+    """Lee zonas HA. (Colores ignorados intencionadamente en backend)."""
+
     zones = []
     for st in hass.states.async_all("zone"):
         a = st.attributes or {}
@@ -734,11 +746,14 @@ def _all_zones(hass):
             r_m = float(a.get("radius", 100.0))
             dlat = _deg_lat(r_m)
             dlon = _deg_lon(r_m, lat)
+
             object_id = st.entity_id.split("zone.", 1)[1]
+            name = a.get("friendly_name", st.name or st.entity_id)
+
             zones.append({
-                "id": object_id,                              # <-- sin 'zone.'
-                "entity_id": st.entity_id,                    #     con 'zone.'
-                "name": a.get("friendly_name", st.name or st.entity_id),
+                "id": object_id,
+                "entity_id": st.entity_id,
+                "name": name,
                 "latitude": lat,
                 "longitude": lon,
                 "radius_m": r_m,
@@ -746,12 +761,11 @@ def _all_zones(hass):
                 "lat_max": lat + dlat,
                 "lon_min": lon - dlon,
                 "lon_max": lon + dlon,
-                "color": a.get("color") or a.get("icon_color") or None,
-                "is_custom": bool(a.get("icon") or a.get("color")),  # heurística
             })
         except Exception:
             continue
     return zones
+
 
 def _zone_of(lat, lon, zones):
     """Devuelve el nombre de la zona que contiene el punto, o '' si ninguna. Usa bbox previa para minimizar Haversine."""
@@ -901,7 +915,7 @@ def _calc_summary(positions, window_end_utc=None):
         v = p.get("attributes", {}).get("speed")
         try:
             v = float(v)
-            if math.isfinite(v):
+            if math.isfinite(v) and v >= 0:     # ignora negativas
                 speeds.append(v)
         except Exception:
             pass
@@ -915,6 +929,8 @@ def _calc_summary(positions, window_end_utc=None):
         B = positions[i]
         try:
             vA = float(A.get("attributes", {}).get("speed"))
+            if not math.isfinite(vA) or vA < 0:   # ignora negativas
+                vA = None            
         except Exception:
             vA = None
         tA = _as_dt(A.get("last_updated"))
@@ -950,7 +966,7 @@ def _calc_summary(positions, window_end_utc=None):
                 if tA and tB and tB > tA:
                     stopped_time_s += int((tB - tA).total_seconds())
 
-    # Si la última posición es una parada abierta, añade la cola hasta fin de ventana
+    # Si la última posición es una parada abierta, añade la cola hasta fin de ventana (una sola vez)
     if window_end_utc is not None and positions and positions[-1].get("stop"):
         leave = (_as_dt(positions[-1].get("stop_leave"))
                  or _as_dt(positions[-1].get("stop_end"))
@@ -958,12 +974,9 @@ def _calc_summary(positions, window_end_utc=None):
         if leave and window_end_utc > leave:
             stopped_time_s += int(round((window_end_utc - leave).total_seconds()))
 
-
-    # Si la última posición es una parada abierta, añade el tramo extra hasta fin de ventana
-    if window_end_utc is not None and positions and positions[-1].get("stop"):
-        leave = _as_dt(positions[-1].get("stop_leave")) or _as_dt(positions[-1].get("stop_end")) or _as_dt(positions[-1].get("last_updated"))
-        if leave and window_end_utc > leave:
-            stopped_time_s += int(round((window_end_utc - leave).total_seconds()))
+    # Seguridad: nunca exceder el tiempo total de la ventana
+    if stopped_time_s > total_time_s:
+        stopped_time_s = total_time_s
 
     return {
         "positions_count": len(positions),
@@ -999,17 +1012,20 @@ def _count_zone_visits_by_runs(positions, zones):
 # --- estadísticas por zona ---
 def _calc_zone_stats(positions, zones, window_end_utc=None, expected_total_s=None):
     out = {}
-
+    
+    # Índice rápido de zonas por nombre para resolver el id
+    zones_by_name = {str(z.get("name")): z for z in (zones or [])}
+    
     def _ensure(name):
         if name not in out:
-            meta = next((z for z in zones if z["name"] == name), None)
+            zinfo = zones_by_name.get(name) or {}
             out[name] = {
                 "zone": name,
+                "id": zinfo.get("id"),
                 "time_s": 0.0,     # parado + movimiento
                 "visits": 0,
                 "stops": 0,
-                "distance_m": 0.0,
-                "meta": meta
+                "distance_m": 0.0
             }
         return out[name]
 
@@ -1116,11 +1132,11 @@ def _calc_zone_stats(positions, zones, window_end_utc=None, expected_total_s=Non
     for name, agg in out.items():
         rows.append({
             "zone": name,
+            "id": agg.get("id"),
             "time_s": int(round(agg["time_s"])),
             "visits": int(agg.get("visits", 0)),
             "stops": int(agg["stops"]),
-            "distance_m": float(agg["distance_m"]),
-            "meta": agg["meta"]
+            "distance_m": float(agg["distance_m"])
         })
 
     if expected_total_s is not None and rows:
@@ -1166,7 +1182,8 @@ class FilteredPositionsEndpoint(HomeAssistantView):
         anti_spike_time: int = int(ANTI_SPIKE_TIME_S_FALLBACK)
         reentry_gap_s: int = int(REENTRY_GAP_S_FALLBACK)
         outside_gap_s: int = int(OUTSIDE_GAP_S_FALLBACK)
-        
+        max_gps_accuracy_m: float = float(MAX_GPS_ACCURACY_M_FALLBACK)
+        max_speed_kmh: float = float(MAX_SPEED_KMH_FALLBACK)        
 
         entries = hass.config_entries.async_entries(DOMAIN)
         if entries:
@@ -1203,23 +1220,39 @@ class FilteredPositionsEndpoint(HomeAssistantView):
                 if outside_gap_s < 0:
                     outside_gap_s = 0
             except (TypeError, ValueError):
-                pass                
+                pass        
+
+            # gps_accuracy (float >= 0)
+            try:
+                max_gps_accuracy_m = float(entry.options.get("gps_accuracy", entry.data.get("gps_accuracy", max_gps_accuracy_m)))
+                if max_gps_accuracy_m < 0:
+                    max_gps_accuracy_m = 0
+            except (TypeError, ValueError):
+                pass
+                
+            # max_speed (float >= 0)
+            try:
+                max_speed_kmh = float(entry.options.get("max_speed", entry.data.get("max_speed", max_speed_kmh)))
+                if max_speed_kmh < 0:
+                    max_speed_kmh = 0
+            except (TypeError, ValueError):
+                pass                     
 
             # anti_spike_radius (float >= 0)
-            try:
-                anti_spike_radius = float(entry.options.get("anti_spike_radius", entry.data.get("anti_spike_radius", anti_spike_radius)))
-                if anti_spike_radius < 0:
-                    anti_spike_radius = 0.0
-            except (TypeError, ValueError):
-                pass
+            #try:
+            #    anti_spike_radius = float(entry.options.get("anti_spike_radius", entry.data.get("anti_spike_radius", anti_spike_radius)))
+            #    if anti_spike_radius < 0:
+            #        anti_spike_radius = 0.0
+            #except (TypeError, ValueError):
+            #    pass
 
             # anti_spike_time (int >= 0)
-            try:
-                anti_spike_time = int(entry.options.get("anti_spike_time", entry.data.get("anti_spike_time", anti_spike_time)))
-                if anti_spike_time < 0:
-                    anti_spike_time = 0
-            except (TypeError, ValueError):
-                pass
+            #try:
+            #    anti_spike_time = int(entry.options.get("anti_spike_time", entry.data.get("anti_spike_time", anti_spike_time)))
+            #    if anti_spike_time < 0:
+            #        anti_spike_time = 0
+            #except (TypeError, ValueError):
+            #    pass
 
         user = request["hass_user"]
         if only_admin and (user is None or not user.is_admin):
@@ -1269,8 +1302,8 @@ class FilteredPositionsEndpoint(HomeAssistantView):
         # Filtra posiciones
         positions = filter_positions(
             states, 
-            max_gps_accuracy=MAX_GPS_ACCURACY_M,
-            max_speed_kmh=MAX_SPEED_KMH, 
+            max_gps_accuracy_m=max_gps_accuracy_m,
+            max_speed_kmh=max_speed_kmh, 
             min_distance=MIN_DISTANCE
         )
 
@@ -1282,7 +1315,7 @@ class FilteredPositionsEndpoint(HomeAssistantView):
         #        max_loop_time_s=int(anti_spike_time),
         #        min_excursion_m=None,  # usa 1.2*radio/15m por defecto
         #        require_good_acc=REQUIRE_GOOD_ACC,
-        #        max_acc_m=MAX_GPS_ACCURACY_M,
+        #        max_gps_accuracy_m=max_gps_accuracy_m,
         #    )               
 
         # Anti-spike 5 puntos por velocidad relativa (A→B, B→C→D, D→E)
@@ -1290,8 +1323,9 @@ class FilteredPositionsEndpoint(HomeAssistantView):
         #    positions,
         #    factor_k=3.0,
         #    min_detour_ratio=1.7,
-        #    max_bd_dt_s=int(anti_spike_time),      # puedes reutilizar tu opción existente
-        #    min_leg_m=max(10.0, anti_spike_radius) # coherente con tu escala espacial
+        #    max_bd_dt_s=int(anti_spike_time),          # puedes reutilizar tu opción existente
+        #    min_leg_m=max(10.0, anti_spike_radius),    # coherente con tu escala espacial
+        #    max_gps_accuracy_m=max_gps_accuracy_m
         #)   
 
         # Paradas
@@ -1302,15 +1336,15 @@ class FilteredPositionsEndpoint(HomeAssistantView):
                 stop_time_s=int(stop_time_s),
                 reentry_gap_s=int(reentry_gap_s),
                 outside_gap_s=int(outside_gap_s),
-                require_good_acc=REQUIRE_GOOD_ACC,
-                max_acc_m=MAX_GPS_ACCURACY_M,
+                max_gps_accuracy_m=float(max_gps_accuracy_m),
+                require_good_acc=REQUIRE_GOOD_ACC,               
             )
 
         # --- calcular resumen y zonas en servidor ---
         zones = _all_zones(hass)
+        
         summary = _calc_summary(positions, window_end_utc=end_datetime_utc)
         zones_rows = _calc_zone_stats(positions, zones, window_end_utc=end_datetime_utc, expected_total_s=summary["total_time_s"])
-
 
         payload = {
             "positions": positions,

@@ -2,50 +2,91 @@
   "config": {
     "step": {
       "user": {
-        "title": "HA Tracker configuration",
+        "title": "HA Tracker Configuration",
         "description": "Configure the integration's basic options.",
+        "sections": {
+          "general": {
+            "name": "General",
+            "description": "Core behavior and units."
+          },
+          "geocoding": {
+            "name": "Geocoding",
+            "description": "Reverse geocoding parameters."
+          },
+          "stops": {
+            "name": "Stops",
+            "description": "Stop detection thresholds."
+          },
+          "accuracy": {
+            "name": "Accuracy",
+            "description": "Parameters for considering positions."
+          },
+          "anti_spike": {
+            "name": "Anti-spike",
+            "description": "Filters for sporadic position jumps."
+          },
+          "sources": {
+            "name": "Sources",
+            "description": "Identifiers for input endpoints."
+          }
+        },
         "data": {
           "update_interval": "Update interval (seconds)",
           "enable_debug": "Enable debugging",
           "geocode_time": "Geocoding time (seconds)",
-          "geocode_distance": "Minimum geocoding distance (meters)",
-          "only_admin": "Admin only",
+          "geocode_distance": "Minimum distance to geocode (meters)",
+          "only_admin": "Admins only",
           "use_imperial": "Use imperial units",
           "owntracks": "OwnTracks identifier (lowercase letters and digits)",
           "gpslogger": "GPSLogger identifier (lowercase letters and digits)",
           "stop_radius": "Stop radius (meters)",
           "stop_time": "Stop time (seconds)",
-		  "reentry_gap": "Reentry gap (seconds)",
-		  "outside_gap": "Outside gap (seconds)",
+          "reentry_gap": "Re-entry interval (seconds)",
+          "outside_gap": "Outside-area interval (seconds)",
+          "gps_accuracy": "GPS accuracy (meters)",
+          "max_speed": "Maximum speed (km/h)",
           "anti_spike_radius": "Anti-spike radius (meters)",
           "anti_spike_time": "Anti-spike time (seconds)"
         },
         "data_description": {
-          "owntracks": "This will be used as an endpoint/slug; only lowercase letters and digits.",
-          "gpslogger": "This will be used as an endpoint/slug; only lowercase letters and digits."
+          "owntracks": "Will be used as endpoint/slug; lowercase letters and digits only.",
+          "gpslogger": "Will be used as endpoint/slug; lowercase letters and digits only."
         }
       }
     },
     "error": {
       "invalid_identifier": "Invalid identifier (use lowercase letters and digits only).",
-      "identifiers_must_differ": "Identifiers must be different."
+      "identifiers_must_differ": "Identifiers must be different.",
+      "min_update_interval": "Update interval must be at least 10 seconds.",
+      "min_geocode_time": "Geocoding time must be at least 10 seconds.",
+      "min_geocode_distance": "Minimum distance to geocode must be at least 20 meters.",
+      "min_stop_radius": "Stop radius cannot be negative.",
+      "min_stop_time": "Stop time cannot be negative.",
+      "min_reentry_gap": "Re-entry interval cannot be negative.",
+      "min_outside_gap": "Outside-area interval cannot be negative.",
+      "min_gps_accuracy": "GPS accuracy must be at least 10 meters.",
+      "min_max_speed": "Maximum speed must be at least 100 km/h.",
+      "min_anti_spike_radius": "Anti-spike radius cannot be negative.",
+      "min_anti_spike_time": "Anti-spike time cannot be negative."
     },
     "abort": {
-      "config_entry_not_found": "Configuration entry not found."
+      "config_entry_not_found": "Configuration entry not found.",
+      "single_instance_allowed": "Only a single instance is allowed.",
+      "already_configured": "This integration is already configured."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "HA Tracker options",
-        "description": "Configure the integration's advanced options.",
+        "title": "HA Tracker Options",
+        "description": "Configure advanced integration options.",
         "sections": {
           "general": {
             "name": "General",
             "description": "Core behavior and units.",
             "data": {
               "update_interval": "Update interval (seconds)",
-              "only_admin": "Admin only",
+              "only_admin": "Admins only",
               "enable_debug": "Enable debugging",
               "use_imperial": "Use imperial units"
             }
@@ -55,7 +96,7 @@
             "description": "Reverse geocoding parameters.",
             "data": {
               "geocode_time": "Geocoding time (seconds)",
-              "geocode_distance": "Minimum geocoding distance (meters)"
+              "geocode_distance": "Minimum distance to geocode (meters)"
             }
           },
           "stops": {
@@ -64,13 +105,21 @@
             "data": {
               "stop_radius": "Stop radius (meters)",
               "stop_time": "Stop time (seconds)",
-		      "reentry_gap": "Reentry gap (seconds)",
-			  "outside_gap": "Outside gap (seconds)"			  
+              "reentry_gap": "Re-entry interval (seconds)",
+              "outside_gap": "Outside-area interval (seconds)"
+            }
+          },
+          "accuracy": {
+            "name": "Accuracy",
+            "description": "Parameters for considering positions.",
+            "data": {
+              "gps_accuracy": "GPS accuracy (meters)",
+              "max_speed": "Maximum speed (km/h)"
             }
           },
           "anti_spike": {
             "name": "Anti-spike",
-            "description": "Filters sporadic position jumps.",
+            "description": "Filters for sporadic position jumps.",
             "data": {
               "anti_spike_radius": "Anti-spike radius (meters)",
               "anti_spike_time": "Anti-spike time (seconds)"
@@ -78,14 +127,14 @@
           },
           "sources": {
             "name": "Sources",
-            "description": "Identifiers for incoming endpoints.",
+            "description": "Identifiers for input endpoints.",
             "data": {
               "owntracks": "OwnTracks identifier (lowercase letters and digits)",
               "gpslogger": "GPSLogger identifier (lowercase letters and digits)"
             },
             "data_description": {
-              "owntracks": "Only lowercase letters and digits. Must be different from GPSLogger.",
-              "gpslogger": "Only lowercase letters and digits. Must be different from OwnTracks."
+              "owntracks": "Lowercase letters and digits only. Must differ from GPSLogger.",
+              "gpslogger": "Lowercase letters and digits only. Must differ from OwnTracks."
             }
           }
         }
@@ -93,7 +142,18 @@
     },
     "error": {
       "invalid_identifier": "Invalid identifier (use lowercase letters and digits only).",
-      "identifiers_must_differ": "Identifiers must be different."
+      "identifiers_must_differ": "Identifiers must be different.",
+      "min_update_interval": "Update interval must be at least 10 seconds.",
+      "min_geocode_time": "Geocoding time must be at least 10 seconds.",
+      "min_geocode_distance": "Minimum distance to geocode must be at least 20 meters.",
+      "min_stop_radius": "Stop radius cannot be negative.",
+      "min_stop_time": "Stop time cannot be negative.",
+      "min_reentry_gap": "Re-entry interval cannot be negative.",
+      "min_outside_gap": "Outside-area interval cannot be negative.",
+      "min_gps_accuracy": "GPS accuracy must be at least 10 meters.",
+      "min_max_speed": "Maximum speed must be at least 100 km/h.",
+      "min_anti_spike_radius": "Anti-spike radius cannot be negative.",
+      "min_anti_spike_time": "Anti-spike time cannot be negative."
     }
   }
 }

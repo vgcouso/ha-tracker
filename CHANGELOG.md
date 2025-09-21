@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.32] - 2025-09-21
+
+### Changes
+- Possibility to hide zones on the map of both HA Tracker and Home Assistant #29
+- Possibility to change the color of Home Assistant zones
+- Added Map and Type columns to the Zones screen
+- The GPS accuracy in meters is configurable in the options
+- The maximum speed of the positions is configurable in the options
+- Some device trackers send negative speeds. We set them to 0.
+- We round the battery level since some tracker devices send decimals.
+
+### Fixed
+- Calculating "Stopped Time" on the Summary tab of the Filter screen
+
+
 ## [0.0.31] - 2025-09-18
 
 ### Changes

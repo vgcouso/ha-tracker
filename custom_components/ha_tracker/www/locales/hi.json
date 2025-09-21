@@ -31,7 +31,7 @@
   "zone_without_name": "नाम रहित क्षेत्र",
   "radius": "त्रिज्या",
   "meters": "मीटर",
-  "feets": "फुट",
+  "feet": "फीट",
   "km_per_hour": "किमी/घंटा",
   "mi_per_hour": "मील/घंटा",
   "disconnected": "सर्वर से कनेक्शन टूटा",
@@ -96,5 +96,9 @@
   "latitude": "अक्षांश",
   "longitude": "देशांतर",
   "stops": "स्टॉप्स",
-  "stop": "स्टॉप"  
+  "stop": "स्टॉप",
+  "show_on_map": "मानचित्र पर दिखाएँ",
+  "zone_name_ha": "Home Assistant में ज़ोन का नाम",
+  "column_map": "मानचित्र",
+  "column_type": "प्रकार"  
 }

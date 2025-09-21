@@ -4,34 +4,75 @@
       "user": {
         "title": "HA Tracker の設定",
         "description": "統合の基本オプションを設定します。",
+        "sections": {
+          "general": {
+            "name": "一般",
+            "description": "基本動作と単位。"
+          },
+          "geocoding": {
+            "name": "ジオコーディング",
+            "description": "逆ジオコーディングのパラメータ。"
+          },
+          "stops": {
+            "name": "停止判定",
+            "description": "停止検出のしきい値。"
+          },
+          "accuracy": {
+            "name": "精度",
+            "description": "位置を有効とみなすためのパラメータ。"
+          },
+          "anti_spike": {
+            "name": "スパイク除去",
+            "description": "突発的な位置ジャンプを除去するフィルタ。"
+          },
+          "sources": {
+            "name": "ソース",
+            "description": "入力エンドポイントの識別子。"
+          }
+        },
         "data": {
           "update_interval": "更新間隔（秒）",
           "enable_debug": "デバッグを有効にする",
           "geocode_time": "ジオコーディング時間（秒）",
-          "geocode_distance": "ジオコーディングの最小距離（メートル）",
+          "geocode_distance": "ジオコーディングの最小距離（m）",
           "only_admin": "管理者のみ",
-          "use_imperial": "ヤード・ポンド法の単位を使用",
-          "owntracks": "OwnTracks 識別子（小文字の英字と数字）",
-          "gpslogger": "GPSLogger 識別子（小文字の英字と数字）",
-          "stop_radius": "停止半径（メートル）",
+          "use_imperial": "ヤード・ポンド法を使用",
+          "owntracks": "OwnTracks 識別子（小文字英数字）",
+          "gpslogger": "GPSLogger 識別子（小文字英数字）",
+          "stop_radius": "停止半径（m）",
           "stop_time": "停止時間（秒）",
-		  "reentry_gap": "再入間隔（秒）",
-		  "outside_gap": "外部間隔（秒）",	  
-          "anti_spike_radius": "スパイク防止半径（メートル）",
-          "anti_spike_time": "スパイク防止時間（秒）"
+          "reentry_gap": "再進入間隔（秒）",
+          "outside_gap": "領域外間隔（秒）",
+          "gps_accuracy": "GPS 精度（m）",
+          "max_speed": "最大速度（km/h）",
+          "anti_spike_radius": "スパイク除去半径（m）",
+          "anti_spike_time": "スパイク除去時間（秒）"
         },
         "data_description": {
-          "owntracks": "エンドポイント／スラッグとして使用します。小文字の英字と数字のみ。",
-          "gpslogger": "エンドポイント／スラッグとして使用します。小文字の英字と数字のみ。」"
+          "owntracks": "エンドポイント／スラッグとして使用します。小文字英数字のみ。",
+          "gpslogger": "エンドポイント／スラッグとして使用します。小文字英数字のみ。"
         }
       }
     },
     "error": {
-      "invalid_identifier": "無効な識別子です（小文字の英字と数字のみを使用してください）。",
-      "identifiers_must_differ": "識別子は互いに異なる必要があります。"
+      "invalid_identifier": "無効な識別子です（小文字英数字のみ使用できます）。",
+      "identifiers_must_differ": "識別子は互いに異なる必要があります。",
+      "min_update_interval": "更新間隔は 10 秒以上である必要があります。",
+      "min_geocode_time": "ジオコーディング時間は 10 秒以上である必要があります。",
+      "min_geocode_distance": "ジオコーディングの最小距離は 20 m 以上である必要があります。",
+      "min_stop_radius": "停止半径を負の値にはできません。",
+      "min_stop_time": "停止時間を負の値にはできません。",
+      "min_reentry_gap": "再進入間隔を負の値にはできません。",
+      "min_outside_gap": "領域外間隔を負の値にはできません。",
+      "min_gps_accuracy": "GPS 精度は少なくとも 10 m である必要があります。",
+      "min_max_speed": "最大速度は少なくとも 100 km/h である必要があります。",
+      "min_anti_spike_radius": "スパイク除去半径を負の値にはできません。",
+      "min_anti_spike_time": "スパイク除去時間を負の値にはできません。"
     },
     "abort": {
-      "config_entry_not_found": "設定エントリが見つかりません。"
+      "config_entry_not_found": "設定エントリが見つかりません。",
+      "single_instance_allowed": "インスタンスは 1 つのみ許可されています。",
+      "already_configured": "この統合はすでに設定されています。"
     }
   },
   "options": {
@@ -47,7 +88,7 @@
               "update_interval": "更新間隔（秒）",
               "only_admin": "管理者のみ",
               "enable_debug": "デバッグを有効にする",
-              "use_imperial": "ヤード・ポンド法の単位を使用"
+              "use_imperial": "ヤード・ポンド法を使用"
             }
           },
           "geocoding": {
@@ -55,45 +96,64 @@
             "description": "逆ジオコーディングのパラメータ。",
             "data": {
               "geocode_time": "ジオコーディング時間（秒）",
-              "geocode_distance": "ジオコーディングの最小距離（メートル）"
+              "geocode_distance": "ジオコーディングの最小距離（m）"
             }
           },
           "stops": {
-            "name": "停止",
+            "name": "停止判定",
             "description": "停止検出のしきい値。",
             "data": {
-              "stop_radius": "停止半径（メートル）",
+              "stop_radius": "停止半径（m）",
               "stop_time": "停止時間（秒）",
-			  "reentry_gap": "再入間隔（秒）",
-			  "outside_gap": "外部間隔（秒）"			  
+              "reentry_gap": "再進入間隔（秒）",
+              "outside_gap": "領域外間隔（秒）"
+            }
+          },
+          "accuracy": {
+            "name": "精度",
+            "description": "位置を有効とみなすためのパラメータ。",
+            "data": {
+              "gps_accuracy": "GPS 精度（m）",
+              "max_speed": "最大速度（km/h）"
             }
           },
           "anti_spike": {
-            "name": "スパイク防止",
-            "description": "位置の突発的なジャンプをフィルタリングします。",
+            "name": "スパイク除去",
+            "description": "突発的な位置ジャンプを除去するフィルタ。",
             "data": {
-              "anti_spike_radius": "スパイク防止半径（メートル）",
-              "anti_spike_time": "スパイク防止時間（秒）"
+              "anti_spike_radius": "スパイク除去半径（m）",
+              "anti_spike_time": "スパイク除去時間（秒）"
             }
           },
           "sources": {
             "name": "ソース",
-            "description": "受信エンドポイントの識別子。",
+            "description": "入力エンドポイントの識別子。",
             "data": {
-              "owntracks": "OwnTracks 識別子（小文字の英字と数字）",
-              "gpslogger": "GPSLogger 識別子（小文字の英字と数字）"
+              "owntracks": "OwnTracks 識別子（小文字英数字）",
+              "gpslogger": "GPSLogger 識別子（小文字英数字）"
             },
             "data_description": {
-              "owntracks": "小文字の英字と数字のみ。GPSLogger と異なる必要があります。",
-              "gpslogger": "小文字の英字と数字のみ。OwnTracks と異なる必要があります。"
+              "owntracks": "小文字英数字のみ。GPSLogger と異なる必要があります。",
+              "gpslogger": "小文字英数字のみ。OwnTracks と異なる必要があります。"
             }
           }
         }
       }
     },
     "error": {
-      "invalid_identifier": "無効な識別子です（小文字の英字と数字のみを使用してください）。",
-      "identifiers_must_differ": "識別子は互いに異なる必要があります。"
+      "invalid_identifier": "無効な識別子です（小文字英数字のみ使用できます）。",
+      "identifiers_must_differ": "識別子は互いに異なる必要があります。",
+      "min_update_interval": "更新間隔は 10 秒以上である必要があります。",
+      "min_geocode_time": "ジオコーディング時間は 10 秒以上である必要があります。",
+      "min_geocode_distance": "ジオコーディングの最小距離は 20 m 以上である必要があります。",
+      "min_stop_radius": "停止半径を負の値にはできません。",
+      "min_stop_time": "停止時間を負の値にはできません。",
+      "min_reentry_gap": "再進入間隔を負の値にはできません。",
+      "min_outside_gap": "領域外間隔を負の値にはできません。",
+      "min_gps_accuracy": "GPS 精度は少なくとも 10 m である必要があります。",
+      "min_max_speed": "最大速度は少なくとも 100 km/h である必要があります。",
+      "min_anti_spike_radius": "スパイク除去半径を負の値にはできません。",
+      "min_anti_spike_time": "スパイク除去時間を負の値にはできません。"
     }
   }
 }

@@ -4,21 +4,49 @@
       "user": {
         "title": "Configuración de HA Tracker",
         "description": "Configura las opciones básicas de la integración.",
+        "sections": {
+          "general": {
+            "name": "General",
+            "description": "Comportamiento básico y unidades."
+          },
+          "geocoding": {
+            "name": "Geocodificación",
+            "description": "Parámetros de geocodificación inversa."
+          },
+          "stops": {
+            "name": "Paradas",
+            "description": "Umbrales de detección de paradas."
+          },
+          "accuracy": {
+            "name": "Precisión",
+            "description": "Parámetros para considerar posiciones."
+          },
+          "anti_spike": {
+            "name": "Anti-picos",
+            "description": "Filtros para saltos esporádicos de posición."
+          },
+          "sources": {
+            "name": "Fuentes",
+            "description": "Identificadores para los endpoints de entrada."
+          }
+        },
         "data": {
           "update_interval": "Intervalo de actualización (segundos)",
-          "enable_debug": "Habilitar depuración",
+          "enable_debug": "Activar depuración",
           "geocode_time": "Tiempo de geocodificación (segundos)",
           "geocode_distance": "Distancia mínima para geocodificar (metros)",
           "only_admin": "Solo administradores",
           "use_imperial": "Usar unidades imperiales",
-          "owntracks": "Identificador de OwnTracks (letras minúsculas y dígitos)",
-          "gpslogger": "Identificador de GPSLogger (letras minúsculas y dígitos)",
+          "owntracks": "Identificador de OwnTracks (minúsculas y dígitos)",
+          "gpslogger": "Identificador de GPSLogger (minúsculas y dígitos)",
           "stop_radius": "Radio de parada (metros)",
           "stop_time": "Tiempo de parada (segundos)",
-		  "reentry_gap": "Intervalo de reentrada (segundos)",
-		  "outside_gap": "Intervalo fuera del área (segundos)",
-          "anti_spike_radius": "Radio anti-spike (metros)",
-          "anti_spike_time": "Tiempo anti-spike (segundos)"
+          "reentry_gap": "Intervalo de re-entrada (segundos)",
+          "outside_gap": "Intervalo fuera de zona (segundos)",
+          "gps_accuracy": "Precisión GPS (metros)",
+          "max_speed": "Velocidad máxima (km/h)",
+          "anti_spike_radius": "Radio anti-picos (metros)",
+          "anti_spike_time": "Tiempo anti-picos (segundos)"
         },
         "data_description": {
           "owntracks": "Se usará como endpoint/slug; solo letras minúsculas y dígitos.",
@@ -28,25 +56,38 @@
     },
     "error": {
       "invalid_identifier": "Identificador no válido (usa solo letras minúsculas y dígitos).",
-      "identifiers_must_differ": "Los identificadores deben ser diferentes."
+      "identifiers_must_differ": "Los identificadores deben ser distintos.",
+      "min_update_interval": "El intervalo de actualización debe ser al menos 10 segundos.",
+      "min_geocode_time": "El tiempo de geocodificación debe ser al menos 10 segundos.",
+      "min_geocode_distance": "La distancia mínima para geocodificar debe ser al menos 20 metros.",
+      "min_stop_radius": "El radio de parada no puede ser negativo.",
+      "min_stop_time": "El tiempo de parada no puede ser negativo.",
+      "min_reentry_gap": "El intervalo de re-entrada no puede ser negativo.",
+      "min_outside_gap": "El intervalo fuera de zona no puede ser negativo.",
+      "min_gps_accuracy": "La precisión GPS debe ser de al menos 10 metros.",
+      "min_max_speed": "La velocidad máxima debe ser de al menos 100 km/h.",
+      "min_anti_spike_radius": "El radio anti-picos no puede ser negativo.",
+      "min_anti_spike_time": "El tiempo anti-picos no puede ser negativo."
     },
     "abort": {
-      "config_entry_not_found": "No se encontró la entrada de configuración."
+      "config_entry_not_found": "No se encontró la entrada de configuración.",
+      "single_instance_allowed": "Solo se permite una única instancia.",
+      "already_configured": "Esta integración ya está configurada."
     }
   },
   "options": {
     "step": {
       "init": {
         "title": "Opciones de HA Tracker",
-        "description": "Configura las opciones avanzadas de la integración.",
+        "description": "Configura opciones avanzadas de la integración.",
         "sections": {
           "general": {
             "name": "General",
-            "description": "Comportamiento principal y unidades.",
+            "description": "Comportamiento básico y unidades.",
             "data": {
               "update_interval": "Intervalo de actualización (segundos)",
               "only_admin": "Solo administradores",
-              "enable_debug": "Habilitar depuración",
+              "enable_debug": "Activar depuración",
               "use_imperial": "Usar unidades imperiales"
             }
           },
@@ -64,28 +105,36 @@
             "data": {
               "stop_radius": "Radio de parada (metros)",
               "stop_time": "Tiempo de parada (segundos)",
-			  "reentry_gap": "Intervalo de reentrada (segundos)",
-			  "outside_gap": "Intervalo fuera del área (segundos)"			  
+              "reentry_gap": "Intervalo de re-entrada (segundos)",
+              "outside_gap": "Intervalo fuera de zona (segundos)"
+            }
+          },
+          "accuracy": {
+            "name": "Precisión",
+            "description": "Parámetros para considerar posiciones.",
+            "data": {
+              "gps_accuracy": "Precisión GPS (metros)",
+              "max_speed": "Velocidad máxima (km/h)"
             }
           },
           "anti_spike": {
-            "name": "Anti-spike",
+            "name": "Anti-picos",
             "description": "Filtros para saltos esporádicos de posición.",
             "data": {
-              "anti_spike_radius": "Radio anti-spike (metros)",
-              "anti_spike_time": "Tiempo anti-spike (segundos)"
+              "anti_spike_radius": "Radio anti-picos (metros)",
+              "anti_spike_time": "Tiempo anti-picos (segundos)"
             }
           },
           "sources": {
             "name": "Fuentes",
             "description": "Identificadores para los endpoints de entrada.",
             "data": {
-              "owntracks": "Identificador de OwnTracks (letras minúsculas y dígitos)",
-              "gpslogger": "Identificador de GPSLogger (letras minúsculas y dígitos)"
+              "owntracks": "Identificador de OwnTracks (minúsculas y dígitos)",
+              "gpslogger": "Identificador de GPSLogger (minúsculas y dígitos)"
             },
             "data_description": {
-              "owntracks": "Solo letras minúsculas y dígitos. Debe ser distinto de GPSLogger.",
-              "gpslogger": "Solo letras minúsculas y dígitos. Debe ser distinto de OwnTracks."
+              "owntracks": "Solo letras minúsculas y dígitos. Debe diferir de GPSLogger.",
+              "gpslogger": "Solo letras minúsculas y dígitos. Debe diferir de OwnTracks."
             }
           }
         }
@@ -93,7 +142,18 @@
     },
     "error": {
       "invalid_identifier": "Identificador no válido (usa solo letras minúsculas y dígitos).",
-      "identifiers_must_differ": "Los identificadores deben ser diferentes."
+      "identifiers_must_differ": "Los identificadores deben ser distintos.",
+      "min_update_interval": "El intervalo de actualización debe ser al menos 10 segundos.",
+      "min_geocode_time": "El tiempo de geocodificación debe ser al menos 10 segundos.",
+      "min_geocode_distance": "La distancia mínima para geocodificar debe ser al menos 20 metros.",
+      "min_stop_radius": "El radio de parada no puede ser negativo.",
+      "min_stop_time": "El tiempo de parada no puede ser negativo.",
+      "min_reentry_gap": "El intervalo de re-entrada no puede ser negativo.",
+      "min_outside_gap": "El intervalo fuera de zona no puede ser negativo.",
+      "min_gps_accuracy": "La precisión GPS debe ser de al menos 10 metros.",
+      "min_max_speed": "La velocidad máxima debe ser de al menos 100 km/h.",
+      "min_anti_spike_radius": "El radio anti-picos no puede ser negativo.",
+      "min_anti_spike_time": "El tiempo anti-picos no puede ser negativo."
     }
   }
 }

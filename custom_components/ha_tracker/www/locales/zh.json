@@ -31,7 +31,7 @@
   "zone_without_name": "未命名区域",
   "radius": "半径",
   "meters": "米",
-  "feets": "英尺",
+  "feet": "英尺",
   "km_per_hour": "公里/小时",  
   "mi_per_hour": "英里/小时",
   "disconnected": "与服务器断开连接",
@@ -96,5 +96,9 @@
   "latitude": "纬度",
   "longitude": "经度",
   "stops": "停靠点",
-  "stop": "停靠点"  
+  "stop": "停靠点",
+  "show_on_map": "在地图上显示",
+  "zone_name_ha": "Home Assistant 中的区域名称",
+  "column_map": "地图",
+  "column_type": "类型"  
 }

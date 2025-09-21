@@ -4,34 +4,75 @@
       "user": {
         "title": "Configurazione di HA Tracker",
         "description": "Configura le opzioni di base dell'integrazione.",
+        "sections": {
+          "general": {
+            "name": "Generale",
+            "description": "Comportamento principale e unità."
+          },
+          "geocoding": {
+            "name": "Geocodifica",
+            "description": "Parametri di geocodifica inversa."
+          },
+          "stops": {
+            "name": "Soste",
+            "description": "Soglie per il rilevamento delle soste."
+          },
+          "accuracy": {
+            "name": "Precisione",
+            "description": "Parametri per considerare le posizioni."
+          },
+          "anti_spike": {
+            "name": "Anti-spike",
+            "description": "Filtri per salti sporadici di posizione."
+          },
+          "sources": {
+            "name": "Sorgenti",
+            "description": "Identificatori per gli endpoint di input."
+          }
+        },
         "data": {
           "update_interval": "Intervallo di aggiornamento (secondi)",
           "enable_debug": "Abilita debug",
           "geocode_time": "Tempo di geocodifica (secondi)",
-          "geocode_distance": "Distanza minima per geocodifica (metri)",
+          "geocode_distance": "Distanza minima per geocodificare (metri)",
           "only_admin": "Solo amministratori",
           "use_imperial": "Usa unità imperiali",
-          "owntracks": "Identificatore OwnTracks (lettere minuscole e cifre)",
-          "gpslogger": "Identificatore GPSLogger (lettere minuscole e cifre)",
+          "owntracks": "Identificatore OwnTracks (solo minuscole e cifre)",
+          "gpslogger": "Identificatore GPSLogger (solo minuscole e cifre)",
           "stop_radius": "Raggio di sosta (metri)",
           "stop_time": "Tempo di sosta (secondi)",
-		  "reentry_gap": "Intervallo di rientro (secondi)",
-		  "outside_gap": "Intervallo all'esterno (secondi)",		  
+          "reentry_gap": "Intervallo di rientro (secondi)",
+          "outside_gap": "Intervallo fuori area (secondi)",
+          "gps_accuracy": "Precisione GPS (metri)",
+          "max_speed": "Velocità massima (km/h)",
           "anti_spike_radius": "Raggio anti-spike (metri)",
           "anti_spike_time": "Tempo anti-spike (secondi)"
         },
         "data_description": {
-          "owntracks": "Verrà usato come endpoint/slug; solo lettere minuscole e cifre.",
-          "gpslogger": "Verrà usato come endpoint/slug; solo lettere minuscole e cifre."
+          "owntracks": "Sarà usato come endpoint/slug; solo lettere minuscole e cifre.",
+          "gpslogger": "Sarà usato come endpoint/slug; solo lettere minuscole e cifre."
         }
       }
     },
     "error": {
       "invalid_identifier": "Identificatore non valido (usa solo lettere minuscole e cifre).",
-      "identifiers_must_differ": "Gli identificatori devono essere diversi."
+      "identifiers_must_differ": "Gli identificatori devono essere diversi.",
+      "min_update_interval": "L'intervallo di aggiornamento deve essere almeno 10 secondi.",
+      "min_geocode_time": "Il tempo di geocodifica deve essere almeno 10 secondi.",
+      "min_geocode_distance": "La distanza minima per geocodificare deve essere almeno 20 metri.",
+      "min_stop_radius": "Il raggio di sosta non può essere negativo.",
+      "min_stop_time": "Il tempo di sosta non può essere negativo.",
+      "min_reentry_gap": "L'intervallo di rientro non può essere negativo.",
+      "min_outside_gap": "L'intervallo fuori area non può essere negativo.",
+      "min_gps_accuracy": "La precisione GPS deve essere almeno 10 metri.",
+      "min_max_speed": "La velocità massima deve essere almeno 100 km/h.",
+      "min_anti_spike_radius": "Il raggio anti-spike non può essere negativo.",
+      "min_anti_spike_time": "Il tempo anti-spike non può essere negativo."
     },
     "abort": {
-      "config_entry_not_found": "Voce di configurazione non trovata."
+      "config_entry_not_found": "Voce di configurazione non trovata.",
+      "single_instance_allowed": "È consentita una sola istanza.",
+      "already_configured": "Questa integrazione è già configurata."
     }
   },
   "options": {
@@ -55,17 +96,25 @@
             "description": "Parametri di geocodifica inversa.",
             "data": {
               "geocode_time": "Tempo di geocodifica (secondi)",
-              "geocode_distance": "Distanza minima per geocodifica (metri)"
+              "geocode_distance": "Distanza minima per geocodificare (metri)"
             }
           },
           "stops": {
             "name": "Soste",
-            "description": "Soglie di rilevamento delle soste.",
+            "description": "Soglie per il rilevamento delle soste.",
             "data": {
               "stop_radius": "Raggio di sosta (metri)",
               "stop_time": "Tempo di sosta (secondi)",
-			  "reentry_gap": "Intervallo di rientro (secondi)",
-			  "outside_gap": "Intervallo all'esterno (secondi)"			  
+              "reentry_gap": "Intervallo di rientro (secondi)",
+              "outside_gap": "Intervallo fuori area (secondi)"
+            }
+          },
+          "accuracy": {
+            "name": "Precisione",
+            "description": "Parametri per considerare le posizioni.",
+            "data": {
+              "gps_accuracy": "Precisione GPS (metri)",
+              "max_speed": "Velocità massima (km/h)"
             }
           },
           "anti_spike": {
@@ -78,14 +127,14 @@
           },
           "sources": {
             "name": "Sorgenti",
-            "description": "Identificatori per gli endpoint in ingresso.",
+            "description": "Identificatori per gli endpoint di input.",
             "data": {
-              "owntracks": "Identificatore OwnTracks (lettere minuscole e cifre)",
-              "gpslogger": "Identificatore GPSLogger (lettere minuscole e cifre)"
+              "owntracks": "Identificatore OwnTracks (solo minuscole e cifre)",
+              "gpslogger": "Identificatore GPSLogger (solo minuscole e cifre)"
             },
             "data_description": {
-              "owntracks": "Solo lettere minuscole e cifre. Deve essere diverso da GPSLogger.",
-              "gpslogger": "Solo lettere minuscole e cifre. Deve essere diverso da OwnTracks."
+              "owntracks": "Solo lettere minuscole e cifre. Deve differire da GPSLogger.",
+              "gpslogger": "Solo lettere minuscole e cifre. Deve differire da OwnTracks."
             }
           }
         }
@@ -93,7 +142,18 @@
     },
     "error": {
       "invalid_identifier": "Identificatore non valido (usa solo lettere minuscole e cifre).",
-      "identifiers_must_differ": "Gli identificatori devono essere diversi."
+      "identifiers_must_differ": "Gli identificatori devono essere diversi.",
+      "min_update_interval": "L'intervallo di aggiornamento deve essere almeno 10 secondi.",
+      "min_geocode_time": "Il tempo di geocodifica deve essere almeno 10 secondi.",
+      "min_geocode_distance": "La distanza minima per geocodificare deve essere almeno 20 metri.",
+      "min_stop_radius": "Il raggio di sosta non può essere negativo.",
+      "min_stop_time": "Il tempo di sosta non può essere negativo.",
+      "min_reentry_gap": "L'intervallo di rientro non può essere negativo.",
+      "min_outside_gap": "L'intervallo fuori area non può essere negativo.",
+      "min_gps_accuracy": "La precisione GPS deve essere almeno 10 metri.",
+      "min_max_speed": "La velocità massima deve essere almeno 100 km/h.",
+      "min_anti_spike_radius": "Il raggio anti-spike non può essere negativo.",
+      "min_anti_spike_time": "Il tempo anti-spike non può essere negativo."
     }
   }
 }

@@ -31,7 +31,7 @@
   "zone_without_name": "名前のないゾーン",
   "radius": "半径",
   "meters": "メートル",
-  "feets": "フィート",
+  "feet": "フィート",
   "km_per_hour": "km/h", 
   "mi_per_hour": "mph",  
   "disconnected": "サーバーとの接続が切れました",
@@ -96,5 +96,9 @@
   "latitude": "緯度",
   "longitude": "経度",
   "stops": "停止箇所",
-  "stop": "停止"  
+  "stop": "停止",
+  "show_on_map": "地図に表示",
+  "zone_name_ha": "Home Assistantのゾーン名",
+  "column_map": "地図",
+  "column_type": "種類"  
 }

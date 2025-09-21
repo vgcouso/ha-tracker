@@ -31,7 +31,7 @@
   "zone_without_name": "Зона без названия",
   "radius": "Радиус",
   "meters": "Метры",
-  "feets": "Футы",
+  "feet": "Футы",
   "km_per_hour": "км/ч",
   "mi_per_hour": "ми/ч",
   "disconnected": "Отключено от сервера",
@@ -96,5 +96,9 @@
   "latitude": "Широта",
   "longitude": "Долгота",
   "stops": "Остановки",
-  "stop": "Остановка"
+  "stop": "Остановка",
+  "show_on_map": "Показать на карте",
+  "zone_name_ha": "Название зоны в Home Assistant",
+  "column_map": "Карта",
+  "column_type": "Тип"  
 }

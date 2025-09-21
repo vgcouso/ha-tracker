@@ -2,7 +2,7 @@
 // FETCH
 //
 
-import { haUrl, CUSTOM_DEFAULT_COLOR } from '../globals.js';
+import { haUrl, DEFAULT_COLOR } from '../globals.js';
 import { getToken } from './auth.js';
 import { setDevices, setPersons } from '../screens/persons.js';
 import { setZones } from '../screens/zones.js';
@@ -253,9 +253,9 @@ export async function deleteZone(zoneId) {
     }
 }
 
-export async function updateZone(zoneId, name, radius, latitude, longitude, color = CUSTOM_DEFAULT_COLOR) {
+export async function updateZone(zoneId, name, radius, latitude, longitude, color = DEFAULT_COLOR, visible = true) {
     if (!zoneId || !name || !radius || !latitude || !longitude) {
-        console.error("All parameters (zoneId, name, radius, latitude, longitude) are mandatory.");
+        console.error("Parameters: zoneId, name, radius, latitude and longitude are mandatory.");
         return null;
     }
 
@@ -267,6 +267,7 @@ export async function updateZone(zoneId, name, radius, latitude, longitude, colo
         latitude: latitude,
         longitude: longitude,
         color: color,
+		visible: visible,
     });
 
     try {
@@ -288,7 +289,7 @@ export async function updateZone(zoneId, name, radius, latitude, longitude, colo
     }
 }
 
-export async function createZone(name, radius, latitude, longitude, icon = "mdi:map-marker", passive = false, custom = true, color = CUSTOM_DEFAULT_COLOR) {
+export async function createZone(name, radius, latitude, longitude, icon = "mdi:map-marker", passive = false, custom = true, color = DEFAULT_COLOR) {
     if (!name || !radius || !latitude || !longitude) {
         console.error("All parameters (name, radius, latitude, longitude) are mandatory.");
         return null;

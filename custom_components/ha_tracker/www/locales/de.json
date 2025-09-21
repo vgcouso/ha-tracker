@@ -31,7 +31,7 @@
   "zone_without_name": "Zone ohne Namen",
   "radius": "Radius",
   "meters": "Meter",
-  "feets": "Fuß",
+  "feet": "Fuß",
   "km_per_hour": "Km/h",  
   "mi_per_hour": "Mph",
   "disconnected": "Vom Server getrennt",
@@ -96,5 +96,9 @@
   "latitude": "Breitengrad",
   "longitude": "Längengrad",
   "stops": "Stopps",
-  "stop": "Stopp"  
+  "stop": "Stopp",
+  "show_on_map": "Auf der Karte anzeigen",
+  "zone_name_ha": "Zonenname in Home Assistant",
+  "column_map": "Karte",
+  "column_type": "Typ"  
 }

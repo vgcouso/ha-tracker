@@ -228,6 +228,39 @@ body.loaded {
   padding-left: 36px;
 }
 
+/* --- Igualar caret de combos (Personas / Exportar) al del calendario --- */
+.id-toggle .id-caret{
+  /* Oculta el carácter ▾ y usa el SVG */
+  font-size: 0; 
+  color: transparent;
+
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+
+  /* lo manda al extremo derecho (el texto ocupa todo gracias a .id-text {flex:1}) */
+  margin-left: auto;
+
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10' fill='none'><path d='M1 3l4 4 4-4' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 10px 10px;
+}
+
+/* Aseguramos mismo look (gradiente azul claro) que el calendario */
+.id-toggle{
+  /* mismo padding derecho que usamos como "right 12px" en #daterange */
+  padding-right: 12px !important;
+  background: var(--controls-grad) !important;
+  border: 1px solid var(--controls-border);
+  color: #fff !important;
+  box-shadow: var(--elev-2) !important;
+}
+.id-toggle:hover{ background: var(--controls-grad-hover) !important; }
+
+
 /* ===== Botones de acción y contenedores ===== */
 .zone-actions,
 .filter-actions {
@@ -415,6 +448,10 @@ body.no-scroll { overflow: hidden; }
 }
 .modal-body { color: #0f172a; text-align: center; }
 .modal-message { text-align: left; padding: 10px; white-space: pre-wrap; word-break: break-word; }
+.modal-message > label > input[type="checkbox"] {
+  margin-left: 6px;
+  vertical-align: middle;
+}
 .modal-input {
   width: 90%; padding: 10px; margin: 10px auto 0;
   border: 1px solid #ccc; border-radius: 8px; font-size: 14px;
@@ -829,8 +866,9 @@ body.no-scroll { overflow: hidden; }
 #combo-container .id-toggle .id-icon { width: 22px; height: 22px; }
 #combo-container .id-toggle .id-text { font-weight: 700; }
 
-/* === Calendar como combo mejorado (mismo look que combos pequeños) === */
-#daterange {
+
+/* === Calendar como combo mejorado (con caret a la derecha) === */
+#daterange{
   appearance: none;
   -webkit-appearance: none;
   width: 100%;
@@ -846,24 +884,39 @@ body.no-scroll { overflow: hidden; }
   cursor: pointer;
   box-sizing: border-box;
 
-  /* 2 capas: [0]=icono blanco, [1]=gradiente azul claro */
+  /* 3 capas: [0]=caret derecha, [1]=icono calendario izq., [2]=gradiente */
   background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10' fill='none'><path d='M1 3l4 4 4-4' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'><path d='M14 2V1h-3v1H6V1H3v1H0v15h17V2h-3zM12 2h1v2h-1V2zM4 2h1v2H4V2zM16 16H1v-8.921h15V16zM1 6.079v-3.079h2v2h3V3h5v2h3V3h2v3.079H1z' fill='%23fff'/></svg>"),
     var(--controls-grad);
-  background-repeat: no-repeat, no-repeat;
-  background-position: 10px center, 0 0;
-  background-size: 20px 20px, 100% 100%;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position:
+    right 12px center,   /* caret */
+    10px center,         /* icono calendario */
+    0 0;                 /* gradiente */
+  background-size:
+    10px 10px,           /* caret */
+    20px 20px,           /* icono calendario */
+    100% 100%;           /* gradiente */
 
-  padding: .6rem .9rem .6rem 40px; /* espacio para icono */
+  padding-left: 40px;    /* hueco para icono */
+  padding-right: 32px;   /* hueco para caret */
 }
-#daterange:hover {
+
+#daterange:hover{
   background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10' fill='none'><path d='M1 3l4 4 4-4' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/></svg>"),
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'><path d='M14 2V1h-3v1H6V1H3v1H0v15h17V2h-3zM12 2h1v2h-1V2zM4 2h1v2H4V2zM16 16H1v-8.921h15V16zM1 6.079v-3.079h2v2h3V3h5v2h3V3h2v3.079H1z' fill='%23fff'/></svg>"),
     var(--controls-grad-hover);
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-position: right 12px center, 10px center, 0 0;
+  background-size: 10px 10px, 20px 20px, 100% 100%;
 }
-#daterange::placeholder { color: rgba(255,255,255,.85); }
-#daterange:focus { outline: 2px solid var(--focus-ring) !important; outline-offset: 2px; }
-#daterange:disabled { opacity: .85; filter: grayscale(.15); cursor: not-allowed; }
+
+#daterange::placeholder{ color: rgba(255,255,255,.85); }
+#daterange:focus{ outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+#daterange:disabled{ opacity:.85; filter: grayscale(.15); cursor: not-allowed; }
+
 
 /* ===== Botones de acción unificados (azul claro) ===== */
 .action-button{
@@ -939,3 +992,4 @@ body.no-scroll { overflow: hidden; }
   white-space: nowrap !important;
   border: 0 !important;
 }
+

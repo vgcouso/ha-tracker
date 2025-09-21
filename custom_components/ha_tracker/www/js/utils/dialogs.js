@@ -3,9 +3,9 @@
 /************************************************************************/
 
 import { t } from './i18n.js';
-import { CUSTOM_DEFAULT_COLOR } from '../globals.js';
+import { DEFAULT_COLOR, DEFAULT_ALPHA } from '../globals.js';
 
-const ZONE_PALETTE_COLORS = ['#008000', '#09CB09', '#946F24', '#333333', '#999999', '#BBB31A', '#ECAA77', '#981052', '#D265E4', '#854CD7', '#2196F3', '#28A289', '#0000FF', '#42DFD3'];
+const ZONE_PALETTE_COLORS = ['#008000', '#09CB09', '#946F24', '#333333', '#999999', '#EEF077', '#BBB31A', '#ECAA77', '#981052', '#D265E4', '#854CD7', '#2196F3', '#28A289', '#0000FF', '#42DFD3', '#FF0000', '#D2A3A3'];
 
 let _activeModal = null;
 
@@ -116,10 +116,14 @@ export function uiPrompt(message, defaultValue = '', opts = {}) {
             type: opts.type ?? 'info',
             withInput: true,
             inputValue: defaultValue,
+			inputDisabled: opts.inputDisabled === true,
             placeholder: opts.placeholder ?? '',
             withColor: opts.withColor === true,
-            colorValue: opts.defaultColor ?? CUSTOM_DEFAULT_COLOR,
+            colorValue: opts.defaultColor ?? DEFAULT_COLOR,
             colorLabel: opts.colorLabel,
+            withVisibility: opts.withVisibility === true,
+            visibilityValue: opts.visibilityValue !== false, // por defecto true
+            visibilityLabel: opts.visibilityLabel || 'Mostrar en el mapa',			
             okLabel: opts.okLabel ?? t('save'),
             cancelLabel: opts.cancelLabel ?? t('cancel'),
             colorOptions: opts.colorOptions,
@@ -127,6 +131,7 @@ export function uiPrompt(message, defaultValue = '', opts = {}) {
         wireModalResolve(modal, {
             withInput: true,
             withColor: opts.withColor === true,
+			withVisibility: opts.withVisibility === true,
             resolve
         });
         modal.focusDefault();
@@ -279,10 +284,14 @@ function buildModal({
     type = 'info',
     withInput = false,
     inputValue = '',
+	inputDisabled = false,
     placeholder = '',
     withColor = false,
-    colorValue = CUSTOM_DEFAULT_COLOR,
+    colorValue = DEFAULT_COLOR,
     colorLabel,
+    withVisibility = false,
+    visibilityValue = true,
+    visibilityLabel = 'Mostrar en el mapa',	
     okLabel,
     cancelLabel,
     colorOptions = {}
@@ -320,10 +329,35 @@ function buildModal({
         inputEl.className = 'modal-input';
         inputEl.type = 'text';
         inputEl.value = inputValue ?? '';
+		if (inputDisabled) inputEl.disabled = true;
         if (placeholder)
             inputEl.placeholder = placeholder;
         body.appendChild(inputEl);
     }
+
+	// Checkbox de visibilidad: justo después del texto del label
+	let visibleEl = null;
+	if (withVisibility) {
+	  const row = document.createElement('div');
+	  row.className = 'modal-message'; // mismo look que el label del color
+
+	  const lbl = document.createElement('label');
+	  // Texto + espacio no separable para que no quede pegado al check
+	  lbl.append(document.createTextNode(visibilityLabel + ' '));
+
+	  const chk = document.createElement('input');
+	  chk.type = 'checkbox';
+	  chk.checked = !!visibilityValue;
+	  chk.autocomplete = 'off';
+
+	  // check dentro del label ⇒ queda justo tras el texto
+	  lbl.append(chk);
+	  row.append(lbl);
+
+	  body.appendChild(row);
+	  visibleEl = chk;
+	}
+
 
     // bloque de color opcional
     let colorEl = null;
@@ -335,7 +369,7 @@ function buildModal({
 
         const { palette = [], allowAlpha = false, showNative = false } = colorOptions || {};
         const picker = createColorPickerUI({
-            initial: colorValue || CUSTOM_DEFAULT_COLOR,
+            initial: colorValue || DEFAULT_COLOR,
             palette,
             allowAlpha,
             showNative,
@@ -377,9 +411,15 @@ function buildModal({
         cancel,
         closeBtn,
         inputEl,
-        // exporta el colorEl
         colorEl,
-        focusDefault: () => (withInput ? inputEl?.focus() : ok.focus()),
+        visibleEl,
+        focusDefault: () => {
+            if (withInput && inputEl && !inputEl.disabled) {
+                inputEl.focus();
+            } else {
+                ok.focus();
+            }
+        },
         destroy: restore,
     };
 }
@@ -387,10 +427,11 @@ function buildModal({
 function wireModalResolve(modalObj, {
     withInput,
     withColor = false,
+    withVisibility = false,
     resolve,
     reject
 }) {
-    const { overlay, modal, ok, cancel, closeBtn, inputEl, colorEl, destroy } = modalObj;
+    const { overlay, modal, ok, cancel, closeBtn, inputEl, colorEl, visibleEl, destroy } = modalObj;
 
     const onKey = (e) => {
         if (!_activeModal)
@@ -419,19 +460,13 @@ function wireModalResolve(modalObj, {
     function onOk() {
         const nameVal = withInput ? (inputEl?.value ?? '') : true;
         const colorVal = withColor ? (colorEl?.value ?? '') : undefined;
+		const visVal = withVisibility ? !!visibleEl?.checked : undefined;
         cleanup();
         destroy();
-        if (withColor) {
-            resolve(withInput ? {
-                value: nameVal,
-                color: colorVal
-            }
-                 : {
-                color: colorVal
-            });
-        } else {
-            resolve(nameVal);
-        }
+        const payload = withInput ? { value: nameVal } : {};
+        if (withColor) payload.color = colorVal;
+        if (withVisibility) payload.visible = visVal;
+        resolve(Object.keys(payload).length ? payload : nameVal);
     }
 
     function onCancel() {
@@ -454,7 +489,7 @@ function wireModalResolve(modalObj, {
 }
 
 function createColorPickerUI({
-    initial = CUSTOM_DEFAULT_COLOR,
+    initial = DEFAULT_COLOR,
     palette = [],
     allowAlpha = false,
     showNative = false,
@@ -749,7 +784,7 @@ function createColorPickerUI({
     });
 
     // Inicial
-    setFromHex(initial || CUSTOM_DEFAULT_COLOR);
+    setFromHex(initial || DEFAULT_COLOR);
 
     // Auto-resize (ajusta tamaños y apila si no cabe)
     function setupResponsiveSizing() {

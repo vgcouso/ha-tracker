@@ -20,6 +20,7 @@
     - [Home Assistant](#home-assistant)
 	- [OwnTracks](#owntracks)
     - [GPSLogger](#gpslogger)
+	- [Traccar](#traccar)
 - [Quick Start](#quick-start)
   - [Screens](#screens)
     - [Users](#users)
@@ -133,6 +134,14 @@ By default, Home Assistant stores **10 days**. You can increase this time, but k
 
   You must adjust these two parameters according to the application used to send the positions and the device on which it is installed.
 
+- **Accuracy:**
+  - **GPS accuracy (meters):** (Minimum value: 10 meters) 
+    - Positions with a GPS accuracy value greater than this parameter are discarded.
+  - **Maximum speed (km/h):** (Minimum value: 100 km/h) 
+    - Positions where the speed resulting from dividing space by time is greater than this parameter are discarded.
+	
+  You must adjust these two parameters according to the application used to send the positions and the device on which it is installed.
+
 - **Sources:**
   - **OwnTracks URL** 
     - Only lowercase letters and numbers are accepted. 
@@ -208,26 +217,25 @@ In **Android** make sure in the **"Settings &rarr; Companion app"** that:
   <em>This is the OwnTracks screen</em>
 </div>
 
-The first thing you need to do is install the Home Assistant integration:
+The first thing you need to do is install the **OwnTracks integration**:
  - Go to: **"Settings &rarr; Devices and Services &rarr; Add Integration"**
  - Search for **OwnTracks**, select it. The **configuration screen** will open.
- - If you want to manually configure the application on your mobile, write down the information provided on this screen in a safe place.
+ - If you want to manually configure the application on your mobile, write down the information provided on this screen in a safe place. The **webhook** is required to configure the application on the smartphone.
  - Press **Send** button and integration will be created
  
-Before installing OwnTracks on your devices you can download the properties file called **"ha-tracker.otrc"** (if you want to make it automatic) from:
+Before installing OwnTracks on your devices, you can download the properties file called **"ha-tracker.otrc"** to them (if you want to make it automatic) from:
 
    `https://<HOST>/api/ha-tracker/<OwnTracks URL in options of HA Tracker>`
 
 Then you can then install OwnTracks on your devices from **[iOS](https://apps.apple.com/us/app/owntracks/id692424691)** and **[Android](https://play.google.com/store/apps/details?id=org.owntracks.android)**. Then:
-- Allow the permissions that the application requests for its correct operation
-- In **Android**:
-  - In **Preferences &rarr; Connection &rarr; Identification** set a unique **Device ID** and **Tracker ID** for each phone
-  - In **Preferences &rarr; Configuration management &rarr; Import (top right menu)** open the previously downloaded file with the properties and accept (top right check). If you do not want to import the properties, you can do so manually using the data provided during the integration installation.
-  - In sending positions it is configured at 30 seconds but if you have many devices it would be convenient to increase this time in: **Menu &rarr; Preferences &rarr; location interval**
-- In **iOS**:
-  - Locate the downloaded **"ha-tracker.otrc"** file and open it with OwnTracks to import the properties. If you do not want to import the properties, you can do so manually using the data provided during the integration installation.
-  - In OwnTracks, click the icon with an "i" in the top left corner. In Parameters, open Settings and set a unique **DeviceID** and **UserID** for each phone
-  - In sending positions it is configured at 30 seconds but if you have many devices it would be convenient to increase this time in: **i &rarr; Settings &rarr; locatorInterval**
+  - Set a unique **Device ID** and **Tracker ID** for each phone
+  - To make the installation on the smartphone: 
+    - **Automatic:** 
+      In **Preferences &rarr; Configuration management &rarr; Import (top right menu)** open the previously downloaded file (ha-tracker.otrc) with the properties and accept (top right check). 
+    - **Manual:** 
+      To configure the application: [here's a link](https://www.home-assistant.io/integrations/owntracks/)
+
+In sending positions it is configured at 30 seconds but if you have many devices it would be convenient to increase this time in: **Menu &rarr; Preferences &rarr; location interval**
 
 - Finally, assign the device to a person in Home Assistant: **"Settings &rarr; People"**
 - In Home Assistant, you'll find connected devices under **"Settings &rarr; Devices & services &rarr; OwnTracks"**
@@ -261,10 +269,10 @@ To send positions, on the map screen, in the top left icon, you can select betwe
   <em>This is the GPSLogger Android screen</em>
 </div>
 
-The first thing you need to do is install the Home Assistant integration:
+The first thing you need to do is install the **GPSLogger integration**:
  - Go to: **"Settings &rarr; Devices and Services &rarr; Add Integration"**
  - Search for **GPSLogger**, select it. The **configuration screen** will open.
- - If you want to manually configure the application on your mobile, write down the information provided on this screen in a safe place.
+ - If you want to manually configure the application on your mobile, write down the information provided on this screen in a safe place. The **webhook** is required to configure the application on the smartphone.
  - Press **Send** button and integration will be created
  
 Then you can then install GPSLogger on your devices through the **F-Droid** Android app store.
@@ -281,14 +289,31 @@ Then you can then install GPSLogger on your devices through the **F-Droid** Andr
 
 Allow the permissions that the application requests for its correct operation.
 
-In the phone app, if you tap in the top left corner: **"Menu &rarr; profile name"**, the default settings for GPSLogger to connect to Home Assistant (if you want to make it automatic) will be available at the URL:
+In the phone app, if you tap in the top left corner: **"Open Menu &rarr; Click on the profile name &rarr; Select From the URL address"**, the default settings for GPSLogger to connect to Home Assistant (if you want to make it automatic) will be available at the URL:
 
    `https://<HOST>/api/ha-tracker/<GPSLogger URL in options of HA Tracker>`
 
-- If you do not want to import the properties, you can do so manually using the data provided during the integration installation.
+- If you do not want to import the properties, you can do so manually using the data provided during the integration installation. To configure the application: [here's a link](https://www.home-assistant.io/integrations/gpslogger/)
 - In sending positions it is configured at 30 seconds but if you have many devices it would be convenient to increase this time in: **Menu &rarr; Performance &rarr; Logging interval**
 
 On some devices you must enable the option to run in the background
+
+### Traccar
+
+[Traccar](https://www.traccar.org/) is an **[iOS](https://apps.apple.com/us/app/traccar-client/id843156974)** and **[Android](https://play.google.com/store/apps/details?id=org.traccar.client)** app designed to send your phone's positions to a URL.
+
+The first thing you need to do is install the **Traccar Client integration**:
+ - Go to: **"Settings &rarr; Devices and Services &rarr; Add Integration"**
+ - Search for **Traccar Client**, select it. The **configuration screen** will open.
+ - Write down the information provided on this screen in a safe place. The **webhook** is required to configure the application on the smartphone.
+ - Press **Send** button and integration will be created
+ 
+Install the client on the smartphone: 
+- To configure Traccar on your smartphone, you must provide the server URL. 
+- This is the Webhook that was displayed during the integration setup. 
+- The easiest way to enter this URL is to search the internet for a service that allows you to convert web addresses to QR codes. 
+- On your mobile device, go to Settings and scan the QR code in the top right corner.
+- To configure the rest of the parameters: [here's a link](https://www.traccar.org/client-configuration/)
   
 ---  
 	
@@ -311,14 +336,15 @@ On some devices you must enable the option to run in the background
 
 ### Zones
 
-- **Home Assistant zones** They cannot be edited and are shown on the map and in the table in red.
-- **Zones created within the application**, with admin permissions.
+- **Home Assistant zones:** 
+  - In these zones, you can only change their visibility and their color on the map. 
+  - To change their name, radius, or location, you must do so in Home Assistant.
+- **Zones created within the application:**
   - These zones can be moved and have their radius changed.
   - Zones created within the application are visible in Home Assistant but cannot be modified there.
   - The name of the zones must be unique and its size must be less than 30 characters.
   - You can assign a different color to each one.
   - The zone color is used as the background for cells in the user, zone, filter tables, and in the summary of visited zones.
-  
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/zones.png" alt="HA Tracker zones screen" style="width: 80%; max-width: 100%; height: auto;" />
@@ -332,6 +358,7 @@ On some devices you must enable the option to run in the background
   <br>
   <em>This is the dialog in zones</em>
 </div>
+
 ---
 
 ### Filters

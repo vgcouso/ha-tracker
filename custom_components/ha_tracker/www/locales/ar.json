@@ -31,7 +31,7 @@
   "zone_without_name": "منطقة بلا اسم",
   "radius": "نصف القطر",
   "meters": "أمتار",
-  "feets": "أقدام",
+  "feet": "أقدام",
   "km_per_hour": "كم/ساعة",
   "mi_per_hour": "ميل/ساعة",
   "disconnected": "تم قطع الاتصال بالخادم",
@@ -96,5 +96,9 @@
   "latitude": "خط العرض",
   "longitude": "خط الطول",
   "stops": "نقاط التوقف",
-  "stop": "نقطة توقف"  
+  "stop": "نقطة توقف",
+  "show_on_map": "إظهار على الخريطة",
+  "zone_name_ha": "اسم المنطقة في Home Assistant",
+  "column_map": "الخريطة",
+  "column_type": "النوع"  
 }

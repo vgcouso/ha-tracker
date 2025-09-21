@@ -2,8 +2,34 @@
   "config": {
     "step": {
       "user": {
-        "title": "HA Tracker – Konfiguration",
+        "title": "HA Tracker Konfiguration",
         "description": "Konfigurieren Sie die grundlegenden Optionen der Integration.",
+        "sections": {
+          "general": {
+            "name": "Allgemein",
+            "description": "Grundlegendes Verhalten und Einheiten."
+          },
+          "geocoding": {
+            "name": "Geokodierung",
+            "description": "Parameter für die Rückwärts-Geokodierung."
+          },
+          "stops": {
+            "name": "Stopps",
+            "description": "Schwellwerte für die Stopp-Erkennung."
+          },
+          "accuracy": {
+            "name": "Genauigkeit",
+            "description": "Parameter zur Berücksichtigung von Positionen."
+          },
+          "anti_spike": {
+            "name": "Anti-Spikes",
+            "description": "Filter für sporadische Positionssprünge."
+          },
+          "sources": {
+            "name": "Quellen",
+            "description": "Bezeichner für Eingabe-Endpunkte."
+          }
+        },
         "data": {
           "update_interval": "Aktualisierungsintervall (Sekunden)",
           "enable_debug": "Debugging aktivieren",
@@ -11,12 +37,14 @@
           "geocode_distance": "Mindestentfernung für Geokodierung (Meter)",
           "only_admin": "Nur Administratoren",
           "use_imperial": "Imperiale Einheiten verwenden",
-          "owntracks": "OwnTracks-Kennung (Kleinbuchstaben und Ziffern)",
-          "gpslogger": "GPSLogger-Kennung (Kleinbuchstaben und Ziffern)",
+          "owntracks": "OwnTracks-Bezeichner (Kleinbuchstaben und Ziffern)",
+          "gpslogger": "GPSLogger-Bezeichner (Kleinbuchstaben und Ziffern)",
           "stop_radius": "Stopp-Radius (Meter)",
-          "stop_time": "Stopp-Zeit (Sekunden)",
-		  "reentry_gap": "Wiedereintrittsintervall (Sekunden)",   
-		  "outside_gap": "Außerhalb-Intervall (Sekunden)",         		  
+          "stop_time": "Stoppzeit (Sekunden)",
+          "reentry_gap": "Wiedereintrittsintervall (Sekunden)",
+          "outside_gap": "Intervall außerhalb des Bereichs (Sekunden)",
+          "gps_accuracy": "GPS-Genauigkeit (Meter)",
+          "max_speed": "Höchstgeschwindigkeit (km/h)",
           "anti_spike_radius": "Anti-Spike-Radius (Meter)",
           "anti_spike_time": "Anti-Spike-Zeit (Sekunden)"
         },
@@ -27,22 +55,35 @@
       }
     },
     "error": {
-      "invalid_identifier": "Ungültige Kennung (verwenden Sie nur Kleinbuchstaben und Ziffern).",
-      "identifiers_must_differ": "Kennungen müssen unterschiedlich sein."
+      "invalid_identifier": "Ungültiger Bezeichner (nur Kleinbuchstaben und Ziffern verwenden).",
+      "identifiers_must_differ": "Bezeichner müssen unterschiedlich sein.",
+      "min_update_interval": "Aktualisierungsintervall muss mindestens 10 Sekunden betragen.",
+      "min_geocode_time": "Geokodierungszeit muss mindestens 10 Sekunden betragen.",
+      "min_geocode_distance": "Mindestentfernung für die Geokodierung muss mindestens 20 Meter betragen.",
+      "min_stop_radius": "Stopp-Radius darf nicht negativ sein.",
+      "min_stop_time": "Stoppzeit darf nicht negativ sein.",
+      "min_reentry_gap": "Wiedereintrittsintervall darf nicht negativ sein.",
+      "min_outside_gap": "Intervall außerhalb des Bereichs darf nicht negativ sein.",
+      "min_gps_accuracy": "GPS-Genauigkeit muss mindestens 10 Meter betragen.",
+      "min_max_speed": "Höchstgeschwindigkeit muss mindestens 100 km/h betragen.",
+      "min_anti_spike_radius": "Anti-Spike-Radius darf nicht negativ sein.",
+      "min_anti_spike_time": "Anti-Spike-Zeit darf nicht negativ sein."
     },
     "abort": {
-      "config_entry_not_found": "Konfigurationseintrag nicht gefunden."
+      "config_entry_not_found": "Konfigurationseintrag nicht gefunden.",
+      "single_instance_allowed": "Es ist nur eine einzige Instanz erlaubt.",
+      "already_configured": "Diese Integration ist bereits konfiguriert."
     }
   },
   "options": {
     "step": {
       "init": {
-        "title": "HA Tracker – Optionen",
-        "description": "Konfigurieren Sie die erweiterten Optionen der Integration.",
+        "title": "HA Tracker Optionen",
+        "description": "Erweiterte Integrationsoptionen konfigurieren.",
         "sections": {
           "general": {
             "name": "Allgemein",
-            "description": "Grundverhalten und Einheiten.",
+            "description": "Grundlegendes Verhalten und Einheiten.",
             "data": {
               "update_interval": "Aktualisierungsintervall (Sekunden)",
               "only_admin": "Nur Administratoren",
@@ -52,7 +93,7 @@
           },
           "geocoding": {
             "name": "Geokodierung",
-            "description": "Parameter für die Reverse-Geokodierung.",
+            "description": "Parameter für die Rückwärts-Geokodierung.",
             "data": {
               "geocode_time": "Geokodierungszeit (Sekunden)",
               "geocode_distance": "Mindestentfernung für Geokodierung (Meter)"
@@ -60,16 +101,24 @@
           },
           "stops": {
             "name": "Stopps",
-            "description": "Schwellenwerte zur Stopp-Erkennung.",
+            "description": "Schwellwerte für die Stopp-Erkennung.",
             "data": {
               "stop_radius": "Stopp-Radius (Meter)",
-              "stop_time": "Stopp-Zeit (Sekunden)",
-			  "reentry_gap": "Wiedereintrittsintervall (Sekunden)",   
-			  "outside_gap": "Außerhalb-Intervall (Sekunden)"			  
+              "stop_time": "Stoppzeit (Sekunden)",
+              "reentry_gap": "Wiedereintrittsintervall (Sekunden)",
+              "outside_gap": "Intervall außerhalb des Bereichs (Sekunden)"
+            }
+          },
+          "accuracy": {
+            "name": "Genauigkeit",
+            "description": "Parameter zur Berücksichtigung von Positionen.",
+            "data": {
+              "gps_accuracy": "GPS-Genauigkeit (Meter)",
+              "max_speed": "Höchstgeschwindigkeit (km/h)"
             }
           },
           "anti_spike": {
-            "name": "Anti-Spike",
+            "name": "Anti-Spikes",
             "description": "Filter für sporadische Positionssprünge.",
             "data": {
               "anti_spike_radius": "Anti-Spike-Radius (Meter)",
@@ -78,10 +127,10 @@
           },
           "sources": {
             "name": "Quellen",
-            "description": "Kennungen für eingehende Endpunkte.",
+            "description": "Bezeichner für Eingabe-Endpunkte.",
             "data": {
-              "owntracks": "OwnTracks-Kennung (Kleinbuchstaben und Ziffern)",
-              "gpslogger": "GPSLogger-Kennung (Kleinbuchstaben und Ziffern)"
+              "owntracks": "OwnTracks-Bezeichner (Kleinbuchstaben und Ziffern)",
+              "gpslogger": "GPSLogger-Bezeichner (Kleinbuchstaben und Ziffern)"
             },
             "data_description": {
               "owntracks": "Nur Kleinbuchstaben und Ziffern. Muss sich von GPSLogger unterscheiden.",
@@ -92,8 +141,19 @@
       }
     },
     "error": {
-      "invalid_identifier": "Ungültige Kennung (verwenden Sie nur Kleinbuchstaben und Ziffern).",
-      "identifiers_must_differ": "Kennungen müssen unterschiedlich sein."
+      "invalid_identifier": "Ungültiger Bezeichner (nur Kleinbuchstaben und Ziffern verwenden).",
+      "identifiers_must_differ": "Bezeichner müssen unterschiedlich sein.",
+      "min_update_interval": "Aktualisierungsintervall muss mindestens 10 Sekunden betragen.",
+      "min_geocode_time": "Geokodierungszeit muss mindestens 10 Sekunden betragen.",
+      "min_geocode_distance": "Mindestentfernung für die Geokodierung muss mindestens 20 Meter betragen.",
+      "min_stop_radius": "Stopp-Radius darf nicht negativ sein.",
+      "min_stop_time": "Stoppzeit darf nicht negativ sein.",
+      "min_reentry_gap": "Wiedereintrittsintervall darf nicht negativ sein.",
+      "min_outside_gap": "Intervall außerhalb des Bereichs darf nicht negativ sein.",
+      "min_gps_accuracy": "GPS-Genauigkeit muss mindestens 10 Meter betragen.",
+      "min_max_speed": "Höchstgeschwindigkeit muss mindestens 100 km/h betragen.",
+      "min_anti_spike_radius": "Anti-Spike-Radius darf nicht negativ sein.",
+      "min_anti_spike_time": "Anti-Spike-Zeit darf nicht negativ sein."
     }
   }
 }

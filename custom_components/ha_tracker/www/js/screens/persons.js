@@ -2,7 +2,7 @@
 // DEVICES
 //
 
-import { formatDate, geocodeTime, geocodeDistance, use_imperial, CUSTOM_DEFAULT_COLOR, NO_CUSTOM_DEFAULT_COLOR, DEFAULT_ALPHA } from '../globals.js';
+import { formatDate, geocodeTime, geocodeDistance, use_imperial, DEFAULT_ALPHA } from '../globals.js';
 import { fetchPersons, fetchDevices } from '../ha/fetch.js';
 import { handleZonePosition } from '../screens/zones.js';
 import { map, isValidCoordinates, getDistanceFromLatLonInMeters } from '../utils/map.js';
@@ -24,6 +24,22 @@ let previousSortColumn = "";
 let previousSortAscending = true;
 
 const lastGeocodeRequests = {}; // { [personId]: {lat, lon, timestamp, address} }
+
+(function ensurePersonsTintCSS() {
+    if (document.getElementById('persons-tint-css'))
+        return;
+    const style = document.createElement('style');
+    style.id = 'persons-tint-css';
+    style.textContent = `
+    #persons-table-body tr.selected > td {
+      background-color: transparent !important;
+    }
+    #persons-table-body tr.zone-tinted:not(.selected) > td {
+      background-color: var(--zone-bg) !important;
+    }	
+  `;
+    document.head.appendChild(style);
+})();
 
 // Observer perezoso para las filas de dirección de personas
 let _personsAddrObserver = null;
@@ -49,16 +65,22 @@ function ensurePersonsAddrObserver() {
                 continue;
 
             // dispara resolución (usa cachés/cola/backoff del módulo común)
-			requestAddress(uniqueId, lat, lon, tsMs, (newAddress) => {
-			  lastGeocodeRequests[personId] = { lat, lon, timestamp: tsMs, address: newAddress || "" };
+            requestAddress(uniqueId, lat, lon, tsMs, (newAddress) => {
+                lastGeocodeRequests[personId] = {
+                    lat,
+                    lon,
+                    timestamp: tsMs,
+                    address: newAddress || ""
+                };
 
-			  const row = document.querySelector(`tr.person-address-row[data-person-id="${personId}"]`);
-			  if (row && row.dataset.lastUpdated === String(tsMs)) {
-				const cell = row.querySelector('td');
-				if (cell) cell.textContent = newAddress || "";
-			  }
-			});
-			
+                const row = document.querySelector(`tr.person-address-row[data-person-id="${personId}"]`);
+                if (row && row.dataset.lastUpdated === String(tsMs)) {
+                    const cell = row.querySelector('td');
+                    if (cell)
+                        cell.textContent = newAddress || "";
+                }
+            });
+
         }
     }, {
         root,
@@ -130,44 +152,46 @@ export async function handlePersonsSelection(personId) {
 }
 
 export function updatePersonsFilter() {
-  const select = document.getElementById('person-select');
-  const prevSelected = select.value;
+    const select = document.getElementById('person-select');
+    if (!select)
+        return;
+    const prevSelected = select.value;
 
-  const fragment = document.createDocumentFragment();
-  const defaultOption = document.createElement('option');
-  defaultOption.value = '';
-  defaultOption.textContent = t('select_user');
-  fragment.appendChild(defaultOption);
+    const fragment = document.createDocumentFragment();
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = t('select_user');
+    fragment.appendChild(defaultOption);
 
-  persons
+    persons
     .filter(p => Boolean(personsDevicesMap[p.entity_id])) // solo personas con device válido
     .forEach(person => {
-      const option = document.createElement('option');
-      option.value = person.entity_id;
-      const label = person.attributes.friendly_name || person.attributes.id || person.entity_id;
-      option.textContent = (label || "").trim();
-      fragment.appendChild(option);
+        const option = document.createElement('option');
+        option.value = person.entity_id;
+        const label = person.attributes.friendly_name || person.attributes.id || person.entity_id;
+        option.textContent = (label || "").trim();
+        fragment.appendChild(option);
     });
 
-  // Reemplaza todas las opciones de golpe
-  select.innerHTML = '';
-  select.appendChild(fragment);
+    // Reemplaza todas las opciones de golpe
+    select.innerHTML = '';
+    select.appendChild(fragment);
 
-  const hasPersons = select.options.length > 1;
-  const prevStillValid = !!(prevSelected && personsDevicesMap[prevSelected]);
+    const hasPersons = select.options.length > 1;
+    const prevStillValid = !!(prevSelected && personsDevicesMap[prevSelected]);
 
-  if (hasPersons && prevStillValid) {
-    // Mantén la selección previa si sigue siendo válida
-    select.value = prevSelected;
-  } else {
-    // No hay personas o la selección ha dejado de existir -> fuerza la lógica de "sin usuario"
-    select.value = '';
-    // MUY IMPORTANTE: dispara el change para que se ejecute tu listener de personSelect (oculta calendario y export)
-    select.dispatchEvent(new Event('change', { bubbles: true }));
-  }
+    if (hasPersons && prevStillValid) {
+        // Mantén la selección previa si sigue siendo válida
+        select.value = prevSelected;
+    } else {
+        // No hay personas o la selección ha dejado de existir -> fuerza la lógica de "sin usuario"
+        select.value = '';
+        // MUY IMPORTANTE: dispara el change para que se ejecute tu listener de personSelect (oculta calendario y export)
+        select.dispatchEvent(new Event('change', {
+                bubbles: true
+            }));
+    }
 }
-
-
 
 export async function fitMapToAllPersons() {
     try {
@@ -234,14 +258,16 @@ async function updatePersonsMarkers() {
     currentPersonIds.forEach(personId => {
         const device = personsDevicesMap[personId];
         const { latitude, longitude, friendly_name, speed } = device.attributes;
-        const batteryLevel = device.battery_level ? `<br>${t('battery')}: ${device.battery_level}${t('percentage')}` : "";
+        const bat = readBattery(device);
+        const batteryLevel = bat != null ? `<br>${t('battery')}: ${bat}${t('percentage')}` : "";
 
         if (!isValidCoordinates(latitude, longitude))
             return;
 
         const formattedDate = formatDate(device.last_updated || t("date_unavailable"));
-        const ownerName = persons.find(p => p.entity_id === personId)?.attributes.friendly_name || '';
-        const iconUrl = persons.find(p => p.entity_id === personId)?.attributes.entity_picture || DEFAULT_ICON_URL;
+        const personObj = persons.find(p => p.entity_id === personId);
+        const ownerName = personObj?.attributes.friendly_name || '';
+        const iconUrl = personObj?.attributes.entity_picture || DEFAULT_ICON_URL;
 
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
         const popupContent = `
@@ -264,7 +290,9 @@ async function updatePersonsMarkers() {
             const existing = personsMarkers[personId];
             existing.setLatLng([latitude, longitude]);
             existing.setIcon(markerIcon);
-            existing.getPopup().setContent(popupContent);
+            const p = existing.getPopup?.();
+            if (p) p.setContent(popupContent);
+            else existing.bindPopup(popupContent, { autoPan: false });
         } else {
             personsMarkers[personId] = L.marker([latitude, longitude], {
                 icon: markerIcon,
@@ -277,9 +305,9 @@ async function updatePersonsMarkers() {
                 .on('click', async() => {
                     await handlePersonRowSelection(personId);
                     map.invalidateSize();
-					const ll = personsMarkers[personId].getLatLng();
-					map.setView(ll, map.getZoom());
-					personsMarkers[personId].openPopup();
+                    const ll = personsMarkers[personId].getLatLng();
+                    map.setView(ll, map.getZoom());
+                    personsMarkers[personId].openPopup();
                 });
         }
     });
@@ -323,9 +351,10 @@ export async function handlePersonRowSelection(personId) {
          ? row.nextElementSibling : null;
 
     // 4) Restaurar tintes de la selección previa y aplicar la nueva selección
-	personTableBody.querySelectorAll('tr.selected').forEach(r => r.classList.remove('selected'));
-	row.classList.add('selected');
-	if (addressRow) addressRow.classList.add('selected');
+    personTableBody.querySelectorAll('tr.selected').forEach(r => r.classList.remove('selected'));
+    row.classList.add('selected');
+    if (addressRow)
+        addressRow.classList.add('selected');
 
     // 5) Scroll a la vista
     row.scrollIntoView({
@@ -379,21 +408,33 @@ export function updatePersonsTableHeaders() {
             updatePersonsTable();
         };
 
-		const arrow = (sortColumn === columnName) ? (sortAscending ? "▲" : "▼") : "";
+        const arrow = (sortColumn === columnName) ? (sortAscending ? "▲" : "▼") : "";
 
-		// Etiqueta que se mostrará en el TH
-		const label =
-		  columnKey === "speed"
-			? (use_imperial ? t("mi_per_hour") : t("km_per_hour"))
-			: t(columnKey);
+        // Etiqueta que se mostrará en el TH
+        const label =
+            columnKey === "speed"
+             ? (use_imperial ? t("mi_per_hour") : t("km_per_hour"))
+             : t(columnKey);
 
-		header.innerHTML = `
+        header.innerHTML = `
 		  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:30px;">
 			<span class="hdr-label">${label}</span>
 			<span class="hdr-arrow" style="font-size:12px;">${arrow}</span>
 		  </div>
 		`;
     });
+}
+
+function applyTint(tr, color) {
+    if (!tr)
+        return;
+    if (color) {
+        tr.classList.add('zone-tinted');
+        tr.style.setProperty('--zone-bg', color);
+    } else {
+        tr.classList.remove('zone-tinted');
+        tr.style.removeProperty('--zone-bg');
+    }
 }
 
 export async function updatePersonsTable() {
@@ -407,7 +448,7 @@ export async function updatePersonsTable() {
         const selectedRow = tableBody.querySelector("tr.selected");
         const selectedPersonId = selectedRow ? selectedRow.dataset.personId : null;
 
-		const peopleWithDevice = persons.filter(p => personsDevicesMap[p.entity_id]);
+        const peopleWithDevice = persons.filter(p => personsDevicesMap[p.entity_id]);
 
         const sortedPersons = [...peopleWithDevice].sort((a, b) => {
             const deviceA = personsDevicesMap[a.entity_id] || {};
@@ -429,8 +470,8 @@ export async function updatePersonsTable() {
                 valueB = parseFloat(deviceB.attributes?.speed) || 0;
                 return sortAscending ? valueA - valueB : valueB - valueA;
             case "percentage":
-                valueA = parseFloat(deviceA.battery_level) || 0;
-                valueB = parseFloat(deviceB.battery_level) || 0;
+                valueA = Number(readBattery(deviceA)) || 0;
+                valueB = Number(readBattery(deviceB)) || 0;
                 return sortAscending ? valueA - valueB : valueB - valueA;
             case "zone":
                 valueA = handleZonePosition(deviceA.attributes?.latitude, deviceA.attributes?.longitude)?.name || "";
@@ -452,7 +493,7 @@ export async function updatePersonsTable() {
             let deviceName = "",
             time = "",
             speed = "",
-            battery = "",
+            battery = null,
             currentZoneName = "",
             address = "";
             let zone = null;
@@ -465,7 +506,7 @@ export async function updatePersonsTable() {
             if (source && personsDevicesMap[personId]) {
                 const device = personsDevicesMap[personId];
                 deviceName = device.attributes.friendly_name ? `(${device.attributes.friendly_name})` : "";
-                battery = device.battery_level;
+                battery = readBattery(device);
                 time = formatDate(device.last_updated);
                 speed = Math.round((device.attributes.speed || 0) * (use_imperial ? 2.23694 : 3.6));
                 zone = handleZonePosition(device.attributes.latitude, device.attributes.longitude);
@@ -518,42 +559,46 @@ export async function updatePersonsTable() {
 				<td>${time}</td>
 				<td>${currentZoneName}</td>
 				<td>${speed}</td>
-				<td>${battery}</td>
+				<td>${battery ?? ''}</td>
 			  `;
             if (row.innerHTML !== newContent)
                 row.innerHTML = newContent;
 
-			// Tinte como en zonas (CSS var)
-			const tint = zoneTintRgba(zone, DEFAULT_ALPHA);
-			row.style.setProperty('--color-bg', tint || '');
-			if (addressRow) addressRow.style.setProperty('--color-bg', tint || '');
+            // Tinte como en zonas usando clase + CSS var (helper global)
+            const tint = zoneTintRgba(zone, DEFAULT_ALPHA);
+            applyTint(row, tint);
+            applyTint(addressRow, tint);
 
-			// Sustituye todo el bloque de "Datos para el observer..."
-			const td = addressRow.querySelector("td");
-			addressRow.dataset.latitude = Number.isFinite(lat) ? String(lat) : '';
-			addressRow.dataset.longitude = Number.isFinite(lon) ? String(lon) : '';
-			addressRow.dataset.lastUpdated = Number.isFinite(lastUpdated) ? String(lastUpdated) : '0';
+            // Sustituye todo el bloque de "Datos para el observer..."
+            if (addressRow) {
+                const td = addressRow.querySelector("td");
+                addressRow.dataset.latitude = Number.isFinite(lat) ? String(lat) : '';
+                addressRow.dataset.longitude = Number.isFinite(lon) ? String(lon) : '';
+                addressRow.dataset.lastUpdated = Number.isFinite(lastUpdated) ? String(lastUpdated) : '0';
 
-			const hasLast = Boolean(lastGeocodeRequests[personId]);
-			const needsGeocode = shouldRequestGeocode || (!hasLast && Number.isFinite(lat) && Number.isFinite(lon));
+                const hasLast = Boolean(lastGeocodeRequests[personId]);
+                const needsGeocode = shouldRequestGeocode || (!hasLast && Number.isFinite(lat) && Number.isFinite(lon));
 
-			if (needsGeocode) {
-			  if (td && td.textContent !== "…") td.textContent = "…";
-			  io.observe(addressRow);
-			} else {
-			  cancelAddress(`${personId}_${addressRow.dataset.lastUpdated}`);
-			  if (td && td.textContent !== address) td.textContent = address || "";
-			}
-
+                if (needsGeocode) {
+                    if (td && td.textContent !== "…")
+                        td.textContent = "…";
+                    io.observe(addressRow);
+                } else {
+                    cancelAddress(`${personId}_${addressRow?.dataset?.lastUpdated ?? ''}`);
+                    if (td && td.textContent !== address)
+                        td.textContent = address || "";
+                }
+            }
 
             // Click selection
-			const selectPerson = () => {
-			  tableBody.querySelectorAll("tr.selected").forEach(r => r.classList.remove("selected"));
-			  row.classList.add("selected");
-			  if (addressRow) addressRow.classList.add("selected");
-			  handlePersonsSelection(personId);
-			};
-			
+            const selectPerson = () => {
+                tableBody.querySelectorAll("tr.selected").forEach(r => r.classList.remove("selected"));
+                row.classList.add("selected");
+                if (addressRow)
+                    addressRow.classList.add("selected");
+                handlePersonsSelection(personId);
+            };
+
             row.onclick = selectPerson;
             if (addressRow)
                 addressRow.onclick = selectPerson;
@@ -565,10 +610,11 @@ export async function updatePersonsTable() {
             }
 
             // Mantener selección
-			if (personId === selectedPersonId) {
-			  row.classList.add("selected");
-			  if (addressRow) addressRow.classList.add("selected");
-			}
+            if (personId === selectedPersonId) {
+                row.classList.add("selected");
+                if (addressRow)
+                    addressRow.classList.add("selected");
+            }
         });
 
         // limpiar filas huérfanas
@@ -595,10 +641,13 @@ export async function updatePersonsTable() {
 //
 // Helper para el color de fondo según zona
 //
+
 export function zoneTintRgba(zone, alpha = DEFAULT_ALPHA) {
-    if (!zone)
-        return null;
-    const baseHex = zone?.custom ? (zone.color || CUSTOM_DEFAULT_COLOR) : NO_CUSTOM_DEFAULT_COLOR;
-    const a = Math.min(1, Math.max(0, Number(alpha) || 0));
-    return toRgba(baseHex, a) || toRgba(NO_CUSTOM_DEFAULT_COLOR, a);
+  if (!zone || !zone.color) return null; // sin color => sin tinte
+  const a = Math.min(1, Math.max(0, Number(alpha) || 0));
+  return toRgba(zone.color, a) || zone.color;
+}
+
+function readBattery(dev) {
+  return dev?.battery_level ?? dev?.attributes?.battery_level ?? null;
 }
