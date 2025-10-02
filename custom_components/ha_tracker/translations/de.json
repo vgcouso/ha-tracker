@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "HA Tracker Konfiguration",
-        "description": "Konfigurieren Sie die grundlegenden Optionen der Integration.",
+        "description": "Grundlegende Optionen der Integration konfigurieren.",
         "sections": {
           "general": {
             "name": "Allgemein",
@@ -11,23 +11,23 @@
           },
           "geocoding": {
             "name": "Geokodierung",
-            "description": "Parameter für die Rückwärts-Geokodierung."
+            "description": "Parameter für Reverse-Geokodierung."
           },
           "stops": {
             "name": "Stopps",
-            "description": "Schwellwerte für die Stopp-Erkennung."
+            "description": "Schwellenwerte für Stopperkennung."
           },
           "accuracy": {
             "name": "Genauigkeit",
             "description": "Parameter zur Berücksichtigung von Positionen."
           },
           "anti_spike": {
-            "name": "Anti-Spikes",
+            "name": "Ausreißerfilter",
             "description": "Filter für sporadische Positionssprünge."
           },
           "sources": {
             "name": "Quellen",
-            "description": "Bezeichner für Eingabe-Endpunkte."
+            "description": "Kopierbare Webhook-URLs für Mobile Apps."
           }
         },
         "data": {
@@ -37,41 +37,45 @@
           "geocode_distance": "Mindestentfernung für Geokodierung (Meter)",
           "only_admin": "Nur Administratoren",
           "use_imperial": "Imperiale Einheiten verwenden",
-          "owntracks": "OwnTracks-Bezeichner (Kleinbuchstaben und Ziffern)",
-          "gpslogger": "GPSLogger-Bezeichner (Kleinbuchstaben und Ziffern)",
+          "owntracks_webhook_url": "OwnTracks-Webhook-URL (nur Lesen)",
+          "gpslogger_webhook_url": "GPSLogger-Webhook-URL (nur Lesen)",
+          "traccar_webhook_url": "Traccar-Webhook-URL (nur Lesen)",
           "stop_radius": "Stopp-Radius (Meter)",
-          "stop_time": "Stoppzeit (Sekunden)",
+          "stop_time": "Stopp-Zeit (Sekunden)",
           "reentry_gap": "Wiedereintrittsintervall (Sekunden)",
-          "outside_gap": "Intervall außerhalb des Bereichs (Sekunden)",
+          "outside_gap": "Intervall außerhalb Bereich (Sekunden)",
           "gps_accuracy": "GPS-Genauigkeit (Meter)",
           "max_speed": "Höchstgeschwindigkeit (km/h)",
-          "anti_spike_radius": "Anti-Spike-Radius (Meter)",
-          "anti_spike_time": "Anti-Spike-Zeit (Sekunden)"
+          "anti_spike_factor_k": "Faktor K",
+          "anti_spike_detour_ratio": "Umweg-Verhältnis",
+          "anti_spike_radius": "Ausreißer-Radius (Meter)",
+          "anti_spike_time": "Ausreißer-Zeit (Sekunden)"
         },
         "data_description": {
-          "owntracks": "Wird als Endpoint/Slug verwendet; nur Kleinbuchstaben und Ziffern.",
-          "gpslogger": "Wird als Endpoint/Slug verwendet; nur Kleinbuchstaben und Ziffern."
+          "owntracks_webhook_url": "Diese URL in der OwnTracks-App einfügen.",
+          "gpslogger_webhook_url": "Diese URL in der GPSLogger-App einfügen.",
+          "traccar_webhook_url": "Diese URL in den Traccar-Server/die App einfügen."
         }
       }
     },
     "error": {
-      "invalid_identifier": "Ungültiger Bezeichner (nur Kleinbuchstaben und Ziffern verwenden).",
-      "identifiers_must_differ": "Bezeichner müssen unterschiedlich sein.",
-      "min_update_interval": "Aktualisierungsintervall muss mindestens 10 Sekunden betragen.",
-      "min_geocode_time": "Geokodierungszeit muss mindestens 10 Sekunden betragen.",
-      "min_geocode_distance": "Mindestentfernung für die Geokodierung muss mindestens 20 Meter betragen.",
-      "min_stop_radius": "Stopp-Radius darf nicht negativ sein.",
-      "min_stop_time": "Stoppzeit darf nicht negativ sein.",
-      "min_reentry_gap": "Wiedereintrittsintervall darf nicht negativ sein.",
-      "min_outside_gap": "Intervall außerhalb des Bereichs darf nicht negativ sein.",
-      "min_gps_accuracy": "GPS-Genauigkeit muss mindestens 10 Meter betragen.",
-      "min_max_speed": "Höchstgeschwindigkeit muss mindestens 100 km/h betragen.",
-      "min_anti_spike_radius": "Anti-Spike-Radius darf nicht negativ sein.",
-      "min_anti_spike_time": "Anti-Spike-Zeit darf nicht negativ sein."
+      "min_update_interval": "Das Aktualisierungsintervall muss mindestens 10 Sekunden betragen.",
+      "min_geocode_time": "Die Geokodierungszeit muss mindestens 10 Sekunden betragen.",
+      "min_geocode_distance": "Die Mindestentfernung für die Geokodierung muss mindestens 20 Meter betragen.",
+      "min_stop_radius": "Der Stopp-Radius darf nicht negativ sein.",
+      "min_stop_time": "Die Stopp-Zeit darf nicht negativ sein.",
+      "min_reentry_gap": "Das Wiedereintrittsintervall darf nicht negativ sein.",
+      "min_outside_gap": "Das Intervall außerhalb des Bereichs darf nicht negativ sein.",
+      "min_gps_accuracy": "Die GPS-Genauigkeit muss mindestens 10 Meter betragen.",
+      "min_max_speed": "Die Höchstgeschwindigkeit muss mindestens 100 km/h betragen.",
+      "min_anti_spike_factor_k": "Der Ausreißer-Faktor K muss mindestens 1,5 betragen.",
+      "min_anti_spike_detour_ratio": "Das Umweg-Verhältnis für Ausreißer muss mindestens 1,1 betragen.",
+      "min_anti_spike_radius": "Der Ausreißer-Radius darf nicht negativ sein.",
+      "min_anti_spike_time": "Die Ausreißer-Zeit darf nicht negativ sein."
     },
     "abort": {
       "config_entry_not_found": "Konfigurationseintrag nicht gefunden.",
-      "single_instance_allowed": "Es ist nur eine einzige Instanz erlaubt.",
+      "single_instance_allowed": "Es ist nur eine einzelne Instanz erlaubt.",
       "already_configured": "Diese Integration ist bereits konfiguriert."
     }
   },
@@ -93,7 +97,7 @@
           },
           "geocoding": {
             "name": "Geokodierung",
-            "description": "Parameter für die Rückwärts-Geokodierung.",
+            "description": "Parameter für Reverse-Geokodierung.",
             "data": {
               "geocode_time": "Geokodierungszeit (Sekunden)",
               "geocode_distance": "Mindestentfernung für Geokodierung (Meter)"
@@ -101,12 +105,12 @@
           },
           "stops": {
             "name": "Stopps",
-            "description": "Schwellwerte für die Stopp-Erkennung.",
+            "description": "Schwellenwerte für Stopperkennung.",
             "data": {
               "stop_radius": "Stopp-Radius (Meter)",
-              "stop_time": "Stoppzeit (Sekunden)",
+              "stop_time": "Stopp-Zeit (Sekunden)",
               "reentry_gap": "Wiedereintrittsintervall (Sekunden)",
-              "outside_gap": "Intervall außerhalb des Bereichs (Sekunden)"
+              "outside_gap": "Intervall außerhalb Bereich (Sekunden)"
             }
           },
           "accuracy": {
@@ -118,42 +122,46 @@
             }
           },
           "anti_spike": {
-            "name": "Anti-Spikes",
+            "name": "Ausreißerfilter",
             "description": "Filter für sporadische Positionssprünge.",
             "data": {
-              "anti_spike_radius": "Anti-Spike-Radius (Meter)",
-              "anti_spike_time": "Anti-Spike-Zeit (Sekunden)"
+              "anti_spike_factor_k": "Faktor K",
+              "anti_spike_detour_ratio": "Umweg-Verhältnis",
+              "anti_spike_radius": "Ausreißer-Radius (Meter)",
+              "anti_spike_time": "Ausreißer-Zeit (Sekunden)"
             }
           },
           "sources": {
             "name": "Quellen",
-            "description": "Bezeichner für Eingabe-Endpunkte.",
+            "description": "Kopierbare Webhook-URLs für Mobile Apps.",
             "data": {
-              "owntracks": "OwnTracks-Bezeichner (Kleinbuchstaben und Ziffern)",
-              "gpslogger": "GPSLogger-Bezeichner (Kleinbuchstaben und Ziffern)"
+              "owntracks_webhook_url": "OwnTracks-Webhook-URL (nur Lesen)",
+              "gpslogger_webhook_url": "GPSLogger-Webhook-URL (nur Lesen)",
+              "traccar_webhook_url": "Traccar-Webhook-URL (nur Lesen)"
             },
             "data_description": {
-              "owntracks": "Nur Kleinbuchstaben und Ziffern. Muss sich von GPSLogger unterscheiden.",
-              "gpslogger": "Nur Kleinbuchstaben und Ziffern. Muss sich von OwnTracks unterscheiden."
+              "owntracks_webhook_url": "Diese URL in der OwnTracks-App einfügen.",
+              "gpslogger_webhook_url": "Diese URL in der GPSLogger-App einfügen.",
+              "traccar_webhook_url": "Diese URL in den Traccar-Server/die App einfügen."
             }
           }
         }
       }
     },
     "error": {
-      "invalid_identifier": "Ungültiger Bezeichner (nur Kleinbuchstaben und Ziffern verwenden).",
-      "identifiers_must_differ": "Bezeichner müssen unterschiedlich sein.",
-      "min_update_interval": "Aktualisierungsintervall muss mindestens 10 Sekunden betragen.",
-      "min_geocode_time": "Geokodierungszeit muss mindestens 10 Sekunden betragen.",
-      "min_geocode_distance": "Mindestentfernung für die Geokodierung muss mindestens 20 Meter betragen.",
-      "min_stop_radius": "Stopp-Radius darf nicht negativ sein.",
-      "min_stop_time": "Stoppzeit darf nicht negativ sein.",
-      "min_reentry_gap": "Wiedereintrittsintervall darf nicht negativ sein.",
-      "min_outside_gap": "Intervall außerhalb des Bereichs darf nicht negativ sein.",
-      "min_gps_accuracy": "GPS-Genauigkeit muss mindestens 10 Meter betragen.",
-      "min_max_speed": "Höchstgeschwindigkeit muss mindestens 100 km/h betragen.",
-      "min_anti_spike_radius": "Anti-Spike-Radius darf nicht negativ sein.",
-      "min_anti_spike_time": "Anti-Spike-Zeit darf nicht negativ sein."
+      "min_update_interval": "Das Aktualisierungsintervall muss mindestens 10 Sekunden betragen.",
+      "min_geocode_time": "Die Geokodierungszeit muss mindestens 10 Sekunden betragen.",
+      "min_geocode_distance": "Die Mindestentfernung für die Geokodierung muss mindestens 20 Meter betragen.",
+      "min_stop_radius": "Der Stopp-Radius darf nicht negativ sein.",
+      "min_stop_time": "Die Stopp-Zeit darf nicht negativ sein.",
+      "min_reentry_gap": "Das Wiedereintrittsintervall darf nicht negativ sein.",
+      "min_outside_gap": "Das Intervall außerhalb des Bereichs darf nicht negativ sein.",
+      "min_gps_accuracy": "Die GPS-Genauigkeit muss mindestens 10 Meter betragen.",
+      "min_max_speed": "Die Höchstgeschwindigkeit muss mindestens 100 km/h betragen.",
+      "min_anti_spike_factor_k": "Der Ausreißer-Faktor K muss mindestens 1,5 betragen.",
+      "min_anti_spike_detour_ratio": "Das Umweg-Verhältnis für Ausreißer muss mindestens 1,1 betragen.",
+      "min_anti_spike_radius": "Der Ausreißer-Radius darf nicht negativ sein.",
+      "min_anti_spike_time": "Die Ausreißer-Zeit darf nicht negativ sein."
     }
   }
 }

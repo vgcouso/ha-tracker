@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.33] - 2025-10-02
+
+### Changes
+- Zone, on/off, and speed graph below the leaderboard on the Filter screen
+- Implementation of an Anti-Spike System
+- At the stops we adjust the coordinates to the center of the positions that form it
+- Average speed only in motion and without stops
+- If stopped the speed is 0
+- Changing the /config/www/ha-tracker folder to /config/custom_components/ha_tracker/www
+- We have released the possibility of downloading MacroDroid
+- Removed the ability to download GpsLogger and OwnTracks configurations
+- Configured GpsLogger, OwnTracks, and Traccar Webhook URLs in HA Tracker options
+- Updated translations
+- Updated Readme.md
+
+### Fixed
+- Filter calendar on small screens
+- Distance traveled by zone in the Filter screen summary
+
+
 ## [0.0.32] - 2025-09-21
 
 ### Changes

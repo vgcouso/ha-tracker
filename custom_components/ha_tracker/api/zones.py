@@ -5,15 +5,17 @@ import logging
 import os
 import re
 import unicodedata
+import aiofiles
+
 from datetime import datetime
 
-import aiofiles
 from homeassistant.components.http import HomeAssistantView
 
-from ..const import ZONES_FILE
-from ..const import DOMAIN
+DOMAIN = __package__.split(".")[-2]
 
 _LOGGER = logging.getLogger(__name__)
+
+ZONES_FILE = "ha_tracker_zones.json"
 
 DEFAULT_COLOR = "#008000"  # verde por defecto (CSS 'green')
 MAX_ZONE_NAME_LEN = 30     # longitud máxima del nombre de la zona

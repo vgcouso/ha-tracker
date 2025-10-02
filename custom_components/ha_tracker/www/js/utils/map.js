@@ -5,12 +5,14 @@ import {t} from './i18n.js';
 
 export let map;
 
+const v = '1.9.4';
+
 const CDN = {
-  leafletCSS: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  leafletJS:  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js',
-  geocoderCSS:'https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css',
-  geocoderJS: 'https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js',
-  editableJS: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet-editable/1.3.0/Leaflet.Editable.min.js',
+	leafletCSS: '/ha-tracker/vendor/leaflet/leaflet.css?v='+v,
+	leafletJS:  '/ha-tracker/vendor/leaflet/leaflet.js?v='+v,
+	geocoderCSS:'/ha-tracker/vendor/leaflet-control-geocoder/Control.Geocoder.css?v='+v,
+	geocoderJS: '/ha-tracker/vendor/leaflet-control-geocoder/Control.Geocoder.js?v='+v,
+	editableJS: '/ha-tracker/vendor/leaflet-editable/Leaflet.Editable.min.js?v='+v,
 };
 
 async function ensureLeafletLoaded() {
@@ -54,14 +56,16 @@ export async function initMap() {
             }),
         };
         baseLayers["OpenStreetMap"].addTo(map);
-
+		
+		map.attributionControl.setPosition('bottomleft');
+		
         // Control de capas
         const layersControl = L.control.layers(baseLayers, null, {
             position: 'topleft'
         });
         layersControl.addTo(map);
 
-        // Escala en bottom-right para no chocar con el geocoder
+        // Escala en bottom-left para no chocar con el geocoder
         const scaleCtl = L.control.scale({
             position: 'bottomleft'
         }).addTo(map);

@@ -11,89 +11,93 @@
           },
           "geocoding": {
             "name": "الترميز الجغرافي",
-            "description": "معلمات الترميز الجغرافي العكسي."
+            "description": "معاملات الترميز الجغرافي العكسي."
           },
           "stops": {
             "name": "التوقفات",
-            "description": "عتبات كشف التوقف."
+            "description": "عتبات اكتشاف التوقف."
           },
           "accuracy": {
             "name": "الدقة",
-            "description": "معلمات احتساب صلاحية المواقع."
+            "description": "معايير احتساب المواقع."
           },
           "anti_spike": {
             "name": "مكافحة القفزات",
-            "description": "مرشحات القفزات العشوائية للموقع."
+            "description": "مرشحات للقفزات العشوائية في الموقع."
           },
           "sources": {
             "name": "المصادر",
-            "description": "معرّفات نقاط الإدخال."
+            "description": "روابط Webhook قابلة للنسخ لتطبيقات الهاتف المحمول."
           }
         },
         "data": {
           "update_interval": "فاصل التحديث (ثوانٍ)",
-          "enable_debug": "تفعيل وضع التصحيح",
+          "enable_debug": "تفعيل التصحيح",
           "geocode_time": "زمن الترميز الجغرافي (ثوانٍ)",
           "geocode_distance": "أدنى مسافة للترميز الجغرافي (متر)",
-          "only_admin": "للمشرفين فقط",
+          "only_admin": "المشرفون فقط",
           "use_imperial": "استخدام الوحدات الإمبريالية",
-          "owntracks": "معرّف OwnTracks (أحرف صغيرة وأرقام فقط)",
-          "gpslogger": "معرّف GPSLogger (أحرف صغيرة وأرقام فقط)",
+          "owntracks_webhook_url": "رابط Webhook لـ OwnTracks (للقراءة فقط)",
+          "gpslogger_webhook_url": "رابط Webhook لـ GPSLogger (للقراءة فقط)",
+          "traccar_webhook_url": "رابط Webhook لـ Traccar (للقراءة فقط)",
           "stop_radius": "نصف قطر التوقف (متر)",
           "stop_time": "زمن التوقف (ثوانٍ)",
           "reentry_gap": "فاصل إعادة الدخول (ثوانٍ)",
-          "outside_gap": "فاصل الخروج عن النطاق (ثوانٍ)",
+          "outside_gap": "فاصل خارج المنطقة (ثوانٍ)",
           "gps_accuracy": "دقة GPS (متر)",
           "max_speed": "السرعة القصوى (كم/س)",
+          "anti_spike_factor_k": "المعامل K",
+          "anti_spike_detour_ratio": "نسبة الالتفاف",
           "anti_spike_radius": "نصف قطر مكافحة القفزات (متر)",
           "anti_spike_time": "زمن مكافحة القفزات (ثوانٍ)"
         },
         "data_description": {
-          "owntracks": "سيُستخدم كمسار/مُعرِّف للنقطة؛ يُسمح بالأحرف الصغيرة والأرقام فقط.",
-          "gpslogger": "سيُستخدم كمسار/مُعرِّف للنقطة؛ يُسمح بالأحرف الصغيرة والأرقام فقط."
+          "owntracks_webhook_url": "انسخ هذا الرابط إلى تطبيق OwnTracks.",
+          "gpslogger_webhook_url": "انسخ هذا الرابط إلى تطبيق GPSLogger.",
+          "traccar_webhook_url": "انسخ هذا الرابط إلى خادم/تطبيق Traccar."
         }
       }
     },
     "error": {
-      "invalid_identifier": "معرّف غير صالح (استخدم أحرفًا صغيرة وأرقامًا فقط).",
-      "identifiers_must_differ": "يجب أن تكون المعرّفات مختلفة.",
       "min_update_interval": "يجب أن يكون فاصل التحديث 10 ثوانٍ على الأقل.",
       "min_geocode_time": "يجب أن يكون زمن الترميز الجغرافي 10 ثوانٍ على الأقل.",
       "min_geocode_distance": "يجب أن تكون أدنى مسافة للترميز الجغرافي 20 مترًا على الأقل.",
       "min_stop_radius": "لا يمكن أن يكون نصف قطر التوقف سالبًا.",
       "min_stop_time": "لا يمكن أن يكون زمن التوقف سالبًا.",
       "min_reentry_gap": "لا يمكن أن يكون فاصل إعادة الدخول سالبًا.",
-      "min_outside_gap": "لا يمكن أن يكون فاصل الخروج عن النطاق سالبًا.",
+      "min_outside_gap": "لا يمكن أن يكون الفاصل خارج المنطقة سالبًا.",
       "min_gps_accuracy": "يجب أن تكون دقة GPS 10 أمتار على الأقل.",
       "min_max_speed": "يجب أن تكون السرعة القصوى 100 كم/س على الأقل.",
+      "min_anti_spike_factor_k": "يجب أن يكون المعامل K على الأقل 1.5.",
+      "min_anti_spike_detour_ratio": "يجب أن تكون نسبة الالتفاف على الأقل 1.1.",
       "min_anti_spike_radius": "لا يمكن أن يكون نصف قطر مكافحة القفزات سالبًا.",
       "min_anti_spike_time": "لا يمكن أن يكون زمن مكافحة القفزات سالبًا."
     },
     "abort": {
-      "config_entry_not_found": "لم يتم العثور على عنصر التهيئة.",
+      "config_entry_not_found": "لم يتم العثور على إدخال التهيئة.",
       "single_instance_allowed": "يُسمح بمثيل واحد فقط.",
-      "already_configured": "تم تهيئة هذا التكامل مسبقًا."
+      "already_configured": "تم تكوين هذا التكامل بالفعل."
     }
   },
   "options": {
     "step": {
       "init": {
         "title": "خيارات HA Tracker",
-        "description": "اضبط الخيارات المتقدمة للتكامل.",
+        "description": "قم بضبط الخيارات المتقدمة للتكامل.",
         "sections": {
           "general": {
             "name": "عام",
             "description": "السلوك الأساسي ووحدات القياس.",
             "data": {
               "update_interval": "فاصل التحديث (ثوانٍ)",
-              "only_admin": "للمشرفين فقط",
-              "enable_debug": "تفعيل وضع التصحيح",
+              "only_admin": "المشرفون فقط",
+              "enable_debug": "تفعيل التصحيح",
               "use_imperial": "استخدام الوحدات الإمبريالية"
             }
           },
           "geocoding": {
             "name": "الترميز الجغرافي",
-            "description": "معلمات الترميز الجغرافي العكسي.",
+            "description": "معاملات الترميز الجغرافي العكسي.",
             "data": {
               "geocode_time": "زمن الترميز الجغرافي (ثوانٍ)",
               "geocode_distance": "أدنى مسافة للترميز الجغرافي (متر)"
@@ -101,17 +105,17 @@
           },
           "stops": {
             "name": "التوقفات",
-            "description": "عتبات كشف التوقف.",
+            "description": "عتبات اكتشاف التوقف.",
             "data": {
               "stop_radius": "نصف قطر التوقف (متر)",
               "stop_time": "زمن التوقف (ثوانٍ)",
               "reentry_gap": "فاصل إعادة الدخول (ثوانٍ)",
-              "outside_gap": "فاصل الخروج عن النطاق (ثوانٍ)"
+              "outside_gap": "فاصل خارج المنطقة (ثوانٍ)"
             }
           },
           "accuracy": {
             "name": "الدقة",
-            "description": "معلمات احتساب صلاحية المواقع.",
+            "description": "معايير احتساب المواقع.",
             "data": {
               "gps_accuracy": "دقة GPS (متر)",
               "max_speed": "السرعة القصوى (كم/س)"
@@ -119,39 +123,43 @@
           },
           "anti_spike": {
             "name": "مكافحة القفزات",
-            "description": "مرشحات القفزات العشوائية للموقع.",
+            "description": "مرشحات للقفزات العشوائية في الموقع.",
             "data": {
+              "anti_spike_factor_k": "المعامل K",
+              "anti_spike_detour_ratio": "نسبة الالتفاف",
               "anti_spike_radius": "نصف قطر مكافحة القفزات (متر)",
               "anti_spike_time": "زمن مكافحة القفزات (ثوانٍ)"
             }
           },
           "sources": {
             "name": "المصادر",
-            "description": "معرّفات نقاط الإدخال.",
+            "description": "روابط Webhook قابلة للنسخ لتطبيقات الهاتف المحمول.",
             "data": {
-              "owntracks": "معرّف OwnTracks (أحرف صغيرة وأرقام فقط)",
-              "gpslogger": "معرّف GPSLogger (أحرف صغيرة وأرقام فقط)"
+              "owntracks_webhook_url": "رابط Webhook لـ OwnTracks (للقراءة فقط)",
+              "gpslogger_webhook_url": "رابط Webhook لـ GPSLogger (للقراءة فقط)",
+              "traccar_webhook_url": "رابط Webhook لـ Traccar (للقراءة فقط)"
             },
             "data_description": {
-              "owntracks": "أحرف صغيرة وأرقام فقط. يجب أن يختلف عن GPSLogger.",
-              "gpslogger": "أحرف صغيرة وأرقام فقط. يجب أن يختلف عن OwnTracks."
+              "owntracks_webhook_url": "انسخ هذا الرابط إلى تطبيق OwnTracks.",
+              "gpslogger_webhook_url": "انسخ هذا الرابط إلى تطبيق GPSLogger.",
+              "traccar_webhook_url": "انسخ هذا الرابط إلى خادم/تطبيق Traccar."
             }
           }
         }
       }
     },
     "error": {
-      "invalid_identifier": "معرّف غير صالح (استخدم أحرفًا صغيرة وأرقامًا فقط).",
-      "identifiers_must_differ": "يجب أن تكون المعرّفات مختلفة.",
       "min_update_interval": "يجب أن يكون فاصل التحديث 10 ثوانٍ على الأقل.",
       "min_geocode_time": "يجب أن يكون زمن الترميز الجغرافي 10 ثوانٍ على الأقل.",
       "min_geocode_distance": "يجب أن تكون أدنى مسافة للترميز الجغرافي 20 مترًا على الأقل.",
       "min_stop_radius": "لا يمكن أن يكون نصف قطر التوقف سالبًا.",
       "min_stop_time": "لا يمكن أن يكون زمن التوقف سالبًا.",
       "min_reentry_gap": "لا يمكن أن يكون فاصل إعادة الدخول سالبًا.",
-      "min_outside_gap": "لا يمكن أن يكون فاصل الخروج عن النطاق سالبًا.",
+      "min_outside_gap": "لا يمكن أن يكون الفاصل خارج المنطقة سالبًا.",
       "min_gps_accuracy": "يجب أن تكون دقة GPS 10 أمتار على الأقل.",
       "min_max_speed": "يجب أن تكون السرعة القصوى 100 كم/س على الأقل.",
+      "min_anti_spike_factor_k": "يجب أن يكون المعامل K على الأقل 1.5.",
+      "min_anti_spike_detour_ratio": "يجب أن تكون نسبة الالتفاف على الأقل 1.1.",
       "min_anti_spike_radius": "لا يمكن أن يكون نصف قطر مكافحة القفزات سالبًا.",
       "min_anti_spike_time": "لا يمكن أن يكون زمن مكافحة القفزات سالبًا."
     }

@@ -22,12 +22,12 @@
             "description": "Parâmetros para considerar posições."
           },
           "anti_spike": {
-            "name": "Anti-picos",
+            "name": "Anti-salto",
             "description": "Filtros para saltos esporádicos de posição."
           },
           "sources": {
             "name": "Fontes",
-            "description": "Identificadores para endpoints de entrada."
+            "description": "URLs de webhook para apps móveis (copiáveis)."
           }
         },
         "data": {
@@ -37,26 +37,28 @@
           "geocode_distance": "Distância mínima para geocodificar (metros)",
           "only_admin": "Apenas administradores",
           "use_imperial": "Usar unidades imperiais",
-          "owntracks": "Identificador OwnTracks (letras minúsculas e dígitos)",
-          "gpslogger": "Identificador GPSLogger (letras minúsculas e dígitos)",
+          "owntracks_webhook_url": "URL do webhook do OwnTracks (apenas leitura)",
+          "gpslogger_webhook_url": "URL do webhook do GPSLogger (apenas leitura)",
+          "traccar_webhook_url": "URL do webhook do Traccar (apenas leitura)",
           "stop_radius": "Raio de paragem (metros)",
           "stop_time": "Tempo de paragem (segundos)",
           "reentry_gap": "Intervalo de reentrada (segundos)",
           "outside_gap": "Intervalo fora da área (segundos)",
           "gps_accuracy": "Precisão do GPS (metros)",
           "max_speed": "Velocidade máxima (km/h)",
-          "anti_spike_radius": "Raio anti-picos (metros)",
-          "anti_spike_time": "Tempo anti-picos (segundos)"
+          "anti_spike_factor_k": "Fator K",
+          "anti_spike_detour_ratio": "Rácio de desvio",
+          "anti_spike_radius": "Raio anti-salto (metros)",
+          "anti_spike_time": "Tempo anti-salto (segundos)"
         },
         "data_description": {
-          "owntracks": "Será usado como endpoint/slug; apenas letras minúsculas e dígitos.",
-          "gpslogger": "Será usado como endpoint/slug; apenas letras minúsculas e dígitos."
+          "owntracks_webhook_url": "Copie este URL na app OwnTracks.",
+          "gpslogger_webhook_url": "Copie este URL na app GPSLogger.",
+          "traccar_webhook_url": "Copie este URL no servidor/app Traccar."
         }
       }
     },
     "error": {
-      "invalid_identifier": "Identificador inválido (use apenas letras minúsculas e dígitos).",
-      "identifiers_must_differ": "Os identificadores devem ser diferentes.",
       "min_update_interval": "O intervalo de atualização deve ser de pelo menos 10 segundos.",
       "min_geocode_time": "O tempo de geocodificação deve ser de pelo menos 10 segundos.",
       "min_geocode_distance": "A distância mínima para geocodificar deve ser de pelo menos 20 metros.",
@@ -66,8 +68,10 @@
       "min_outside_gap": "O intervalo fora da área não pode ser negativo.",
       "min_gps_accuracy": "A precisão do GPS deve ser de pelo menos 10 metros.",
       "min_max_speed": "A velocidade máxima deve ser de pelo menos 100 km/h.",
-      "min_anti_spike_radius": "O raio anti-picos não pode ser negativo.",
-      "min_anti_spike_time": "O tempo anti-picos não pode ser negativo."
+      "min_anti_spike_factor_k": "O Fator K deve ser, no mínimo, 1,5.",
+      "min_anti_spike_detour_ratio": "O rácio de desvio deve ser, no mínimo, 1,1.",
+      "min_anti_spike_radius": "O raio anti-salto não pode ser negativo.",
+      "min_anti_spike_time": "O tempo anti-salto não pode ser negativo."
     },
     "abort": {
       "config_entry_not_found": "Entrada de configuração não encontrada.",
@@ -118,31 +122,33 @@
             }
           },
           "anti_spike": {
-            "name": "Anti-picos",
+            "name": "Anti-salto",
             "description": "Filtros para saltos esporádicos de posição.",
             "data": {
-              "anti_spike_radius": "Raio anti-picos (metros)",
-              "anti_spike_time": "Tempo anti-picos (segundos)"
+              "anti_spike_factor_k": "Fator K",
+              "anti_spike_detour_ratio": "Rácio de desvio",
+              "anti_spike_radius": "Raio anti-salto (metros)",
+              "anti_spike_time": "Tempo anti-salto (segundos)"
             }
           },
           "sources": {
             "name": "Fontes",
-            "description": "Identificadores para endpoints de entrada.",
+            "description": "URLs de webhook para apps móveis (copiáveis).",
             "data": {
-              "owntracks": "Identificador OwnTracks (letras minúsculas e dígitos)",
-              "gpslogger": "Identificador GPSLogger (letras minúsculas e dígitos)"
+              "owntracks_webhook_url": "URL do webhook do OwnTracks (apenas leitura)",
+              "gpslogger_webhook_url": "URL do webhook do GPSLogger (apenas leitura)",
+              "traccar_webhook_url": "URL do webhook do Traccar (apenas leitura)"
             },
             "data_description": {
-              "owntracks": "Apenas letras minúsculas e dígitos. Deve ser diferente de GPSLogger.",
-              "gpslogger": "Apenas letras minúsculas e dígitos. Deve ser diferente de OwnTracks."
+              "owntracks_webhook_url": "Copie este URL na app OwnTracks.",
+              "gpslogger_webhook_url": "Copie este URL na app GPSLogger.",
+              "traccar_webhook_url": "Copie este URL no servidor/app Traccar."
             }
           }
         }
       }
     },
     "error": {
-      "invalid_identifier": "Identificador inválido (use apenas letras minúsculas e dígitos).",
-      "identifiers_must_differ": "Os identificadores devem ser diferentes.",
       "min_update_interval": "O intervalo de atualização deve ser de pelo menos 10 segundos.",
       "min_geocode_time": "O tempo de geocodificação deve ser de pelo menos 10 segundos.",
       "min_geocode_distance": "A distância mínima para geocodificar deve ser de pelo menos 20 metros.",
@@ -152,8 +158,10 @@
       "min_outside_gap": "O intervalo fora da área não pode ser negativo.",
       "min_gps_accuracy": "A precisão do GPS deve ser de pelo menos 10 metros.",
       "min_max_speed": "A velocidade máxima deve ser de pelo menos 100 km/h.",
-      "min_anti_spike_radius": "O raio anti-picos não pode ser negativo.",
-      "min_anti_spike_time": "O tempo anti-picos não pode ser negativo."
+      "min_anti_spike_factor_k": "O Fator K deve ser, no mínimo, 1,5.",
+      "min_anti_spike_detour_ratio": "O rácio de desvio deve ser, no mínimo, 1,1.",
+      "min_anti_spike_radius": "O raio anti-salto não pode ser negativo.",
+      "min_anti_spike_time": "O tempo anti-salto não pode ser negativo."
     }
   }
 }

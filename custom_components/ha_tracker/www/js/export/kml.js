@@ -5,7 +5,7 @@
 //   import { exportPositionsToKml } from './kml_stops_export.js';
 //   exportPositionsToKml(positions, {
 //     personId: 'alice',
-//     stopIconHref: '/local/ha-tracker/images/stop24x24.png', // absolute/relative URL
+//     stopIconHref: '/ha-tracker/images/stop24x24.png', // absolute/relative URL
 //     includeRoute: true
 //   });
 //

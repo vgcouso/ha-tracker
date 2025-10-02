@@ -10,7 +10,7 @@ import { t } from '../utils/i18n.js';
 import { requestAddress, cancelAddress } from '../utils/geocode.js';
 import { toRgba } from '../utils/dialogs.js';
 
-const DEFAULT_ICON_URL = '/local/ha-tracker/images/location-red.png';
+const DEFAULT_ICON_URL = '/ha-tracker/images/location-red.png';
 
 export let persons = [];
 
@@ -186,7 +186,7 @@ export function updatePersonsFilter() {
     } else {
         // No hay personas o la selección ha dejado de existir -> fuerza la lógica de "sin usuario"
         select.value = '';
-        // MUY IMPORTANTE: dispara el change para que se ejecute tu listener de personSelect (oculta calendario y export)
+        // dispara el change para que se ejecute tu listener de personSelect (oculta calendario y export)
         select.dispatchEvent(new Event('change', {
                 bubbles: true
             }));

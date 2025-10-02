@@ -124,7 +124,7 @@ async function authenticate() {
         // Redirige si no hay token válido
         console.log("No valid token found. Redirecting to authorize...");
 
-        const redirectUri = `${haUrl}/local/ha-tracker/index.html`;
+        const redirectUri = `${haUrl}/ha-tracker/index.html`;
         const authUrl = `${haUrl}/auth/authorize?client_id=${encodeURIComponent(`${haUrl}/`)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
         window.location.href = authUrl;
     } catch (error) {

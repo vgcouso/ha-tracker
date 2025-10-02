@@ -14,64 +14,68 @@
             "description": "逆ジオコーディングのパラメータ。"
           },
           "stops": {
-            "name": "停止判定",
+            "name": "停止検出",
             "description": "停止検出のしきい値。"
           },
           "accuracy": {
             "name": "精度",
-            "description": "位置を有効とみなすためのパラメータ。"
+            "description": "位置情報を有効とみなすためのパラメータ。"
           },
           "anti_spike": {
-            "name": "スパイク除去",
-            "description": "突発的な位置ジャンプを除去するフィルタ。"
+            "name": "スパイク抑制",
+            "description": "位置の突発的なジャンプを抑えるフィルタ。"
           },
           "sources": {
             "name": "ソース",
-            "description": "入力エンドポイントの識別子。"
+            "description": "モバイルアプリ用のコピー可能な Webhook URL。"
           }
         },
         "data": {
           "update_interval": "更新間隔（秒）",
           "enable_debug": "デバッグを有効にする",
-          "geocode_time": "ジオコーディング時間（秒）",
-          "geocode_distance": "ジオコーディングの最小距離（m）",
+          "geocode_time": "ジオコーディング間隔（秒）",
+          "geocode_distance": "ジオコーディング最小距離（m）",
           "only_admin": "管理者のみ",
           "use_imperial": "ヤード・ポンド法を使用",
-          "owntracks": "OwnTracks 識別子（小文字英数字）",
-          "gpslogger": "GPSLogger 識別子（小文字英数字）",
+          "owntracks_webhook_url": "OwnTracks Webhook URL（読み取り専用）",
+          "gpslogger_webhook_url": "GPSLogger Webhook URL（読み取り専用）",
+          "traccar_webhook_url": "Traccar Webhook URL（読み取り専用）",
           "stop_radius": "停止半径（m）",
           "stop_time": "停止時間（秒）",
-          "reentry_gap": "再進入間隔（秒）",
-          "outside_gap": "領域外間隔（秒）",
+          "reentry_gap": "再入間隔（秒）",
+          "outside_gap": "ゾーン外間隔（秒）",
           "gps_accuracy": "GPS 精度（m）",
-          "max_speed": "最大速度（km/h）",
-          "anti_spike_radius": "スパイク除去半径（m）",
-          "anti_spike_time": "スパイク除去時間（秒）"
+          "max_speed": "最高速度（km/h）",
+          "anti_spike_factor_k": "係数 K",
+          "anti_spike_detour_ratio": "迂回比（Detour Ratio）",
+          "anti_spike_radius": "スパイク抑制半径（m）",
+          "anti_spike_time": "スパイク抑制時間（秒）"
         },
         "data_description": {
-          "owntracks": "エンドポイント／スラッグとして使用します。小文字英数字のみ。",
-          "gpslogger": "エンドポイント／スラッグとして使用します。小文字英数字のみ。"
+          "owntracks_webhook_url": "この URL を OwnTracks アプリに貼り付けてください。",
+          "gpslogger_webhook_url": "この URL を GPSLogger アプリに貼り付けてください。",
+          "traccar_webhook_url": "この URL を Traccar サーバ／アプリに設定してください。"
         }
       }
     },
     "error": {
-      "invalid_identifier": "無効な識別子です（小文字英数字のみ使用できます）。",
-      "identifiers_must_differ": "識別子は互いに異なる必要があります。",
       "min_update_interval": "更新間隔は 10 秒以上である必要があります。",
-      "min_geocode_time": "ジオコーディング時間は 10 秒以上である必要があります。",
-      "min_geocode_distance": "ジオコーディングの最小距離は 20 m 以上である必要があります。",
+      "min_geocode_time": "ジオコーディング間隔は 10 秒以上である必要があります。",
+      "min_geocode_distance": "ジオコーディング最小距離は 20 m 以上である必要があります。",
       "min_stop_radius": "停止半径を負の値にはできません。",
       "min_stop_time": "停止時間を負の値にはできません。",
-      "min_reentry_gap": "再進入間隔を負の値にはできません。",
-      "min_outside_gap": "領域外間隔を負の値にはできません。",
-      "min_gps_accuracy": "GPS 精度は少なくとも 10 m である必要があります。",
-      "min_max_speed": "最大速度は少なくとも 100 km/h である必要があります。",
-      "min_anti_spike_radius": "スパイク除去半径を負の値にはできません。",
-      "min_anti_spike_time": "スパイク除去時間を負の値にはできません。"
+      "min_reentry_gap": "再入間隔を負の値にはできません。",
+      "min_outside_gap": "ゾーン外間隔を負の値にはできません。",
+      "min_gps_accuracy": "GPS 精度は 10 m 以上である必要があります。",
+      "min_max_speed": "最高速度は 100 km/h 以上である必要があります。",
+      "min_anti_spike_factor_k": "係数 K は 1.5 以上である必要があります。",
+      "min_anti_spike_detour_ratio": "迂回比（Detour Ratio）は 1.1 以上である必要があります。",
+      "min_anti_spike_radius": "スパイク抑制半径を負の値にはできません。",
+      "min_anti_spike_time": "スパイク抑制時間を負の値にはできません。"
     },
     "abort": {
       "config_entry_not_found": "設定エントリが見つかりません。",
-      "single_instance_allowed": "インスタンスは 1 つのみ許可されています。",
+      "single_instance_allowed": "インスタンスは 1 つのみ許可されます。",
       "already_configured": "この統合はすでに設定されています。"
     }
   },
@@ -95,65 +99,69 @@
             "name": "ジオコーディング",
             "description": "逆ジオコーディングのパラメータ。",
             "data": {
-              "geocode_time": "ジオコーディング時間（秒）",
-              "geocode_distance": "ジオコーディングの最小距離（m）"
+              "geocode_time": "ジオコーディング間隔（秒）",
+              "geocode_distance": "ジオコーディング最小距離（m）"
             }
           },
           "stops": {
-            "name": "停止判定",
+            "name": "停止検出",
             "description": "停止検出のしきい値。",
             "data": {
               "stop_radius": "停止半径（m）",
               "stop_time": "停止時間（秒）",
-              "reentry_gap": "再進入間隔（秒）",
-              "outside_gap": "領域外間隔（秒）"
+              "reentry_gap": "再入間隔（秒）",
+              "outside_gap": "ゾーン外間隔（秒）"
             }
           },
           "accuracy": {
             "name": "精度",
-            "description": "位置を有効とみなすためのパラメータ。",
+            "description": "位置情報を有効とみなすためのパラメータ。",
             "data": {
               "gps_accuracy": "GPS 精度（m）",
-              "max_speed": "最大速度（km/h）"
+              "max_speed": "最高速度（km/h）"
             }
           },
           "anti_spike": {
-            "name": "スパイク除去",
-            "description": "突発的な位置ジャンプを除去するフィルタ。",
+            "name": "スパイク抑制",
+            "description": "位置の突発的なジャンプを抑えるフィルタ。",
             "data": {
-              "anti_spike_radius": "スパイク除去半径（m）",
-              "anti_spike_time": "スパイク除去時間（秒）"
+              "anti_spike_factor_k": "係数 K",
+              "anti_spike_detour_ratio": "迂回比（Detour Ratio）",
+              "anti_spike_radius": "スパイク抑制半径（m）",
+              "anti_spike_time": "スパイク抑制時間（秒）"
             }
           },
           "sources": {
             "name": "ソース",
-            "description": "入力エンドポイントの識別子。",
+            "description": "モバイルアプリ用のコピー可能な Webhook URL。",
             "data": {
-              "owntracks": "OwnTracks 識別子（小文字英数字）",
-              "gpslogger": "GPSLogger 識別子（小文字英数字）"
+              "owntracks_webhook_url": "OwnTracks Webhook URL（読み取り専用）",
+              "gpslogger_webhook_url": "GPSLogger Webhook URL（読み取り専用）",
+              "traccar_webhook_url": "Traccar Webhook URL（読み取り専用）"
             },
             "data_description": {
-              "owntracks": "小文字英数字のみ。GPSLogger と異なる必要があります。",
-              "gpslogger": "小文字英数字のみ。OwnTracks と異なる必要があります。"
+              "owntracks_webhook_url": "この URL を OwnTracks アプリに貼り付けてください。",
+              "gpslogger_webhook_url": "この URL を GPSLogger アプリに貼り付けてください。",
+              "traccar_webhook_url": "この URL を Traccar サーバ／アプリに設定してください。"
             }
           }
         }
       }
     },
     "error": {
-      "invalid_identifier": "無効な識別子です（小文字英数字のみ使用できます）。",
-      "identifiers_must_differ": "識別子は互いに異なる必要があります。",
       "min_update_interval": "更新間隔は 10 秒以上である必要があります。",
-      "min_geocode_time": "ジオコーディング時間は 10 秒以上である必要があります。",
-      "min_geocode_distance": "ジオコーディングの最小距離は 20 m 以上である必要があります。",
+      "min_geocode_time": "ジオコーディング間隔は 10 秒以上である必要があります。",
+      "min_geocode_distance": "ジオコーディング最小距離は 20 m 以上である必要があります。",
       "min_stop_radius": "停止半径を負の値にはできません。",
       "min_stop_time": "停止時間を負の値にはできません。",
-      "min_reentry_gap": "再進入間隔を負の値にはできません。",
-      "min_outside_gap": "領域外間隔を負の値にはできません。",
-      "min_gps_accuracy": "GPS 精度は少なくとも 10 m である必要があります。",
-      "min_max_speed": "最大速度は少なくとも 100 km/h である必要があります。",
-      "min_anti_spike_radius": "スパイク除去半径を負の値にはできません。",
-      "min_anti_spike_time": "スパイク除去時間を負の値にはできません。"
+      "min_reentry_gap": "再入間隔を負の値にはできません。",
+      "min_outside_gap": "ゾーン外間隔を負の値にはできません。",
+      "min_gps_accuracy": "GPS 精度は 10 m 以上である必要があります。",
+      "min_max_speed": "最高速度は 100 km/h 以上である必要があります。",
+      "min_anti_spike_factor_k": "係数 K は 1.5 以上である必要があります。",
+      "min_anti_spike_detour_ratio": "迂回比（Detour Ratio）は 1.1 以上である必要があります。",
+      "min_anti_spike_radius": "スパイク抑制半径を負の値にはできません。",
+      "min_anti_spike_time": "スパイク抑制時間を負の値にはできません。"
     }
   }
 }

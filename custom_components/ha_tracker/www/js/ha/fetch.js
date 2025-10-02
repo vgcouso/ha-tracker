@@ -386,7 +386,7 @@ export async function fetchAuthCallback(code) {
             return;
         }
 
-        const newUrl = `${haUrl}/local/ha-tracker/index.html`;
+        const newUrl = `${haUrl}/ha-tracker/index.html`;
         window.history.replaceState({}, document.title, newUrl);
     } catch (error) {
         console.error("Error while obtaining token", error);

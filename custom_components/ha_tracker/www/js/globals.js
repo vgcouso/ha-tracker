@@ -10,7 +10,7 @@ export const haUrl = location.origin;
 
 export const SHOW_VISITS = false;
 export const DEFAULT_COLOR = '#008000';
-export const DEFAULT_ALPHA = 0.25
+export const DEFAULT_ALPHA = 0.3
 
 // Formateadores de números
 export const fmt0 = formatNumber({

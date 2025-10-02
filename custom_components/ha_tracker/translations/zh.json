@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "HA Tracker 配置",
-        "description": "配置此集成的基本选项。",
+        "description": "配置集成的基础选项。",
         "sections": {
           "general": {
             "name": "常规",
@@ -19,15 +19,15 @@
           },
           "accuracy": {
             "name": "精度",
-            "description": "用于判定位置的参数。"
+            "description": "判定位置的相关参数。"
           },
           "anti_spike": {
-            "name": "抗跳变",
-            "description": "用于滤除位置的偶发跳点。"
+            "name": "防跳点",
+            "description": "过滤偶发位置跳变的参数。"
           },
           "sources": {
-            "name": "数据源",
-            "description": "输入端点的标识符。"
+            "name": "来源",
+            "description": "可复制的移动应用 Webhook URL。"
           }
         },
         "data": {
@@ -35,58 +35,62 @@
           "enable_debug": "启用调试",
           "geocode_time": "地理编码时间（秒）",
           "geocode_distance": "触发地理编码的最小距离（米）",
-          "only_admin": "仅管理员",
+          "only_admin": "仅管理员可用",
           "use_imperial": "使用英制单位",
-          "owntracks": "OwnTracks 标识符（小写字母与数字）",
-          "gpslogger": "GPSLogger 标识符（小写字母与数字）",
+          "owntracks_webhook_url": "OwnTracks Webhook URL（只读）",
+          "gpslogger_webhook_url": "GPSLogger Webhook URL（只读）",
+          "traccar_webhook_url": "Traccar Webhook URL（只读）",
           "stop_radius": "停留半径（米）",
           "stop_time": "停留时间（秒）",
           "reentry_gap": "重新进入间隔（秒）",
           "outside_gap": "区域外间隔（秒）",
           "gps_accuracy": "GPS 精度（米）",
-          "max_speed": "最大速度（千米/时）",
-          "anti_spike_radius": "抗跳变半径（米）",
-          "anti_spike_time": "抗跳变时间（秒）"
+          "max_speed": "最大速度（km/h）",
+          "anti_spike_factor_k": "K 系数",
+          "anti_spike_detour_ratio": "绕行比",
+          "anti_spike_radius": "防跳点半径（米）",
+          "anti_spike_time": "防跳点时间（秒）"
         },
         "data_description": {
-          "owntracks": "将用作端点/slug；仅限小写字母与数字。",
-          "gpslogger": "将用作端点/slug；仅限小写字母与数字。"
+          "owntracks_webhook_url": "将此 URL 复制到 OwnTracks 应用中。",
+          "gpslogger_webhook_url": "将此 URL 复制到 GPSLogger 应用中。",
+          "traccar_webhook_url": "将此 URL 复制到 Traccar 服务器/应用中。"
         }
       }
     },
     "error": {
-      "invalid_identifier": "标识符无效（仅限小写字母与数字）。",
-      "identifiers_must_differ": "标识符必须不同。",
       "min_update_interval": "更新间隔至少为 10 秒。",
       "min_geocode_time": "地理编码时间至少为 10 秒。",
       "min_geocode_distance": "触发地理编码的最小距离至少为 20 米。",
-      "min_stop_radius": "停留半径不能为负。",
-      "min_stop_time": "停留时间不能为负。",
-      "min_reentry_gap": "重新进入间隔不能为负。",
-      "min_outside_gap": "区域外间隔不能为负。",
+      "min_stop_radius": "停留半径不能为负数。",
+      "min_stop_time": "停留时间不能为负数。",
+      "min_reentry_gap": "重新进入间隔不能为负数。",
+      "min_outside_gap": "区域外间隔不能为负数。",
       "min_gps_accuracy": "GPS 精度至少为 10 米。",
-      "min_max_speed": "最大速度至少为 100 千米/时。",
-      "min_anti_spike_radius": "抗跳变半径不能为负。",
-      "min_anti_spike_time": "抗跳变时间不能为负。"
+      "min_max_speed": "最大速度至少为 100 km/h。",
+      "min_anti_spike_factor_k": "K 系数至少为 1.5。",
+      "min_anti_spike_detour_ratio": "绕行比至少为 1.1。",
+      "min_anti_spike_radius": "防跳点半径不能为负数。",
+      "min_anti_spike_time": "防跳点时间不能为负数。"
     },
     "abort": {
-      "config_entry_not_found": "未找到配置条目。",
-      "single_instance_allowed": "只允许一个实例。",
-      "already_configured": "此集成已配置。"
+      "config_entry_not_found": "未找到配置项。",
+      "single_instance_allowed": "只允许创建一个实例。",
+      "already_configured": "该集成已配置。"
     }
   },
   "options": {
     "step": {
       "init": {
         "title": "HA Tracker 选项",
-        "description": "配置此集成的高级选项。",
+        "description": "配置集成的高级选项。",
         "sections": {
           "general": {
             "name": "常规",
             "description": "核心行为与单位。",
             "data": {
               "update_interval": "更新间隔（秒）",
-              "only_admin": "仅管理员",
+              "only_admin": "仅管理员可用",
               "enable_debug": "启用调试",
               "use_imperial": "使用英制单位"
             }
@@ -111,49 +115,53 @@
           },
           "accuracy": {
             "name": "精度",
-            "description": "用于判定位置的参数。",
+            "description": "判定位置的相关参数。",
             "data": {
               "gps_accuracy": "GPS 精度（米）",
-              "max_speed": "最大速度（千米/时）"
+              "max_speed": "最大速度（km/h）"
             }
           },
           "anti_spike": {
-            "name": "抗跳变",
-            "description": "用于滤除位置的偶发跳点。",
+            "name": "防跳点",
+            "description": "过滤偶发位置跳变的参数。",
             "data": {
-              "anti_spike_radius": "抗跳变半径（米）",
-              "anti_spike_time": "抗跳变时间（秒）"
+              "anti_spike_factor_k": "K 系数",
+              "anti_spike_detour_ratio": "绕行比",
+              "anti_spike_radius": "防跳点半径（米）",
+              "anti_spike_time": "防跳点时间（秒）"
             }
           },
           "sources": {
-            "name": "数据源",
-            "description": "输入端点的标识符。",
+            "name": "来源",
+            "description": "可复制的移动应用 Webhook URL。",
             "data": {
-              "owntracks": "OwnTracks 标识符（小写字母与数字）",
-              "gpslogger": "GPSLogger 标识符（小写字母与数字）"
+              "owntracks_webhook_url": "OwnTracks Webhook URL（只读）",
+              "gpslogger_webhook_url": "GPSLogger Webhook URL（只读）",
+              "traccar_webhook_url": "Traccar Webhook URL（只读）"
             },
             "data_description": {
-              "owntracks": "仅限小写字母与数字。必须与 GPSLogger 不同。",
-              "gpslogger": "仅限小写字母与数字。必须与 OwnTracks 不同。"
+              "owntracks_webhook_url": "将此 URL 复制到 OwnTracks 应用中。",
+              "gpslogger_webhook_url": "将此 URL 复制到 GPSLogger 应用中。",
+              "traccar_webhook_url": "将此 URL 复制到 Traccar 服务器/应用中。"
             }
           }
         }
       }
     },
     "error": {
-      "invalid_identifier": "标识符无效（仅限小写字母与数字）。",
-      "identifiers_must_differ": "标识符必须不同。",
       "min_update_interval": "更新间隔至少为 10 秒。",
       "min_geocode_time": "地理编码时间至少为 10 秒。",
       "min_geocode_distance": "触发地理编码的最小距离至少为 20 米。",
-      "min_stop_radius": "停留半径不能为负。",
-      "min_stop_time": "停留时间不能为负。",
-      "min_reentry_gap": "重新进入间隔不能为负。",
-      "min_outside_gap": "区域外间隔不能为负。",
+      "min_stop_radius": "停留半径不能为负数。",
+      "min_stop_time": "停留时间不能为负数。",
+      "min_reentry_gap": "重新进入间隔不能为负数。",
+      "min_outside_gap": "区域外间隔不能为负数。",
       "min_gps_accuracy": "GPS 精度至少为 10 米。",
-      "min_max_speed": "最大速度至少为 100 千米/时。",
-      "min_anti_spike_radius": "抗跳变半径不能为负。",
-      "min_anti_spike_time": "抗跳变时间不能为负。"
+      "min_max_speed": "最大速度至少为 100 km/h。",
+      "min_anti_spike_factor_k": "K 系数至少为 1.5。",
+      "min_anti_spike_detour_ratio": "绕行比至少为 1.1。",
+      "min_anti_spike_radius": "防跳点半径不能为负数。",
+      "min_anti_spike_time": "防跳点时间不能为负数。"
     }
   }
 }

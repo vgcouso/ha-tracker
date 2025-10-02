@@ -15,19 +15,19 @@
           },
           "stops": {
             "name": "Soste",
-            "description": "Soglie per il rilevamento delle soste."
+            "description": "Soglie di rilevamento delle soste."
           },
           "accuracy": {
-            "name": "Precisione",
+            "name": "Accuratezza",
             "description": "Parametri per considerare le posizioni."
           },
           "anti_spike": {
             "name": "Anti-spike",
-            "description": "Filtri per salti sporadici di posizione."
+            "description": "Filtri per salti di posizione sporadici."
           },
           "sources": {
             "name": "Sorgenti",
-            "description": "Identificatori per gli endpoint di input."
+            "description": "URL di webhook per app mobili (copiabili)."
           }
         },
         "data": {
@@ -37,26 +37,28 @@
           "geocode_distance": "Distanza minima per geocodificare (metri)",
           "only_admin": "Solo amministratori",
           "use_imperial": "Usa unità imperiali",
-          "owntracks": "Identificatore OwnTracks (solo minuscole e cifre)",
-          "gpslogger": "Identificatore GPSLogger (solo minuscole e cifre)",
+          "owntracks_webhook_url": "URL webhook OwnTracks (sola lettura)",
+          "gpslogger_webhook_url": "URL webhook GPSLogger (sola lettura)",
+          "traccar_webhook_url": "URL webhook Traccar (sola lettura)",
           "stop_radius": "Raggio di sosta (metri)",
           "stop_time": "Tempo di sosta (secondi)",
           "reentry_gap": "Intervallo di rientro (secondi)",
           "outside_gap": "Intervallo fuori area (secondi)",
-          "gps_accuracy": "Precisione GPS (metri)",
+          "gps_accuracy": "Accuratezza GPS (metri)",
           "max_speed": "Velocità massima (km/h)",
+          "anti_spike_factor_k": "Fattore K",
+          "anti_spike_detour_ratio": "Rapporto di deviazione",
           "anti_spike_radius": "Raggio anti-spike (metri)",
           "anti_spike_time": "Tempo anti-spike (secondi)"
         },
         "data_description": {
-          "owntracks": "Sarà usato come endpoint/slug; solo lettere minuscole e cifre.",
-          "gpslogger": "Sarà usato come endpoint/slug; solo lettere minuscole e cifre."
+          "owntracks_webhook_url": "Copia questo URL nell'app OwnTracks.",
+          "gpslogger_webhook_url": "Copia questo URL nell'app GPSLogger.",
+          "traccar_webhook_url": "Copia questo URL nel server/app Traccar."
         }
       }
     },
     "error": {
-      "invalid_identifier": "Identificatore non valido (usa solo lettere minuscole e cifre).",
-      "identifiers_must_differ": "Gli identificatori devono essere diversi.",
       "min_update_interval": "L'intervallo di aggiornamento deve essere almeno 10 secondi.",
       "min_geocode_time": "Il tempo di geocodifica deve essere almeno 10 secondi.",
       "min_geocode_distance": "La distanza minima per geocodificare deve essere almeno 20 metri.",
@@ -64,8 +66,10 @@
       "min_stop_time": "Il tempo di sosta non può essere negativo.",
       "min_reentry_gap": "L'intervallo di rientro non può essere negativo.",
       "min_outside_gap": "L'intervallo fuori area non può essere negativo.",
-      "min_gps_accuracy": "La precisione GPS deve essere almeno 10 metri.",
+      "min_gps_accuracy": "L'accuratezza del GPS deve essere almeno 10 metri.",
       "min_max_speed": "La velocità massima deve essere almeno 100 km/h.",
+      "min_anti_spike_factor_k": "Il Fattore K deve essere almeno 1,5.",
+      "min_anti_spike_detour_ratio": "Il Rapporto di deviazione deve essere almeno 1,1.",
       "min_anti_spike_radius": "Il raggio anti-spike non può essere negativo.",
       "min_anti_spike_time": "Il tempo anti-spike non può essere negativo."
     },
@@ -101,7 +105,7 @@
           },
           "stops": {
             "name": "Soste",
-            "description": "Soglie per il rilevamento delle soste.",
+            "description": "Soglie di rilevamento delle soste.",
             "data": {
               "stop_radius": "Raggio di sosta (metri)",
               "stop_time": "Tempo di sosta (secondi)",
@@ -110,39 +114,41 @@
             }
           },
           "accuracy": {
-            "name": "Precisione",
+            "name": "Accuratezza",
             "description": "Parametri per considerare le posizioni.",
             "data": {
-              "gps_accuracy": "Precisione GPS (metri)",
+              "gps_accuracy": "Accuratezza GPS (metri)",
               "max_speed": "Velocità massima (km/h)"
             }
           },
           "anti_spike": {
             "name": "Anti-spike",
-            "description": "Filtri per salti sporadici di posizione.",
+            "description": "Filtri per salti di posizione sporadici.",
             "data": {
+              "anti_spike_factor_k": "Fattore K",
+              "anti_spike_detour_ratio": "Rapporto di deviazione",
               "anti_spike_radius": "Raggio anti-spike (metri)",
               "anti_spike_time": "Tempo anti-spike (secondi)"
             }
           },
           "sources": {
             "name": "Sorgenti",
-            "description": "Identificatori per gli endpoint di input.",
+            "description": "URL di webhook per app mobili (copiabili).",
             "data": {
-              "owntracks": "Identificatore OwnTracks (solo minuscole e cifre)",
-              "gpslogger": "Identificatore GPSLogger (solo minuscole e cifre)"
+              "owntracks_webhook_url": "URL webhook OwnTracks (sola lettura)",
+              "gpslogger_webhook_url": "URL webhook GPSLogger (sola lettura)",
+              "traccar_webhook_url": "URL webhook Traccar (sola lettura)"
             },
             "data_description": {
-              "owntracks": "Solo lettere minuscole e cifre. Deve differire da GPSLogger.",
-              "gpslogger": "Solo lettere minuscole e cifre. Deve differire da OwnTracks."
+              "owntracks_webhook_url": "Copia questo URL nell'app OwnTracks.",
+              "gpslogger_webhook_url": "Copia questo URL nell'app GPSLogger.",
+              "traccar_webhook_url": "Copia questo URL nel server/app Traccar."
             }
           }
         }
       }
     },
     "error": {
-      "invalid_identifier": "Identificatore non valido (usa solo lettere minuscole e cifre).",
-      "identifiers_must_differ": "Gli identificatori devono essere diversi.",
       "min_update_interval": "L'intervallo di aggiornamento deve essere almeno 10 secondi.",
       "min_geocode_time": "Il tempo di geocodifica deve essere almeno 10 secondi.",
       "min_geocode_distance": "La distanza minima per geocodificare deve essere almeno 20 metri.",
@@ -150,8 +156,10 @@
       "min_stop_time": "Il tempo di sosta non può essere negativo.",
       "min_reentry_gap": "L'intervallo di rientro non può essere negativo.",
       "min_outside_gap": "L'intervallo fuori area non può essere negativo.",
-      "min_gps_accuracy": "La precisione GPS deve essere almeno 10 metri.",
+      "min_gps_accuracy": "L'accuratezza del GPS deve essere almeno 10 metri.",
       "min_max_speed": "La velocità massima deve essere almeno 100 km/h.",
+      "min_anti_spike_factor_k": "Il Fattore K deve essere almeno 1,5.",
+      "min_anti_spike_detour_ratio": "Il Rapporto di deviazione deve essere almeno 1,1.",
       "min_anti_spike_radius": "Il raggio anti-spike non può essere negativo.",
       "min_anti_spike_time": "Il tempo anti-spike non può essere negativo."
     }

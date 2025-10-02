@@ -57,6 +57,7 @@ import math
 import random
 import re
 import time
+
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
@@ -72,7 +73,7 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_STARTED,
 )
 
-from ..const import DOMAIN
+DOMAIN = __package__.split(".")[-2]
 
 # --- Logger / timeouts ---
 _LOGGER = logging.getLogger(__name__)

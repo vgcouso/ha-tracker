@@ -7,7 +7,7 @@
         "sections": {
           "general": {
             "name": "Général",
-            "description": "Comportement de base et unités."
+            "description": "Comportement principal et unités."
           },
           "geocoding": {
             "name": "Géocodage",
@@ -15,19 +15,19 @@
           },
           "stops": {
             "name": "Arrêts",
-            "description": "Seuils de détection des arrêts."
+            "description": "Seuils de détection d’arrêt."
           },
           "accuracy": {
             "name": "Précision",
             "description": "Paramètres pour considérer les positions."
           },
           "anti_spike": {
-            "name": "Anti-pics",
-            "description": "Filtres pour les sauts de position sporadiques."
+            "name": "Anti-sauts",
+            "description": "Filtres pour les sauts sporadiques de position."
           },
           "sources": {
             "name": "Sources",
-            "description": "Identifiants pour les points d’entrée."
+            "description": "URLs de webhook copiables pour applications mobiles."
           }
         },
         "data": {
@@ -35,28 +35,30 @@
           "enable_debug": "Activer le débogage",
           "geocode_time": "Temps de géocodage (secondes)",
           "geocode_distance": "Distance minimale pour géocoder (mètres)",
-          "only_admin": "Uniquement administrateurs",
+          "only_admin": "Réservé aux administrateurs",
           "use_imperial": "Utiliser les unités impériales",
-          "owntracks": "Identifiant OwnTracks (lettres minuscules et chiffres)",
-          "gpslogger": "Identifiant GPSLogger (lettres minuscules et chiffres)",
+          "owntracks_webhook_url": "URL webhook OwnTracks (lecture seule)",
+          "gpslogger_webhook_url": "URL webhook GPSLogger (lecture seule)",
+          "traccar_webhook_url": "URL webhook Traccar (lecture seule)",
           "stop_radius": "Rayon d’arrêt (mètres)",
           "stop_time": "Temps d’arrêt (secondes)",
           "reentry_gap": "Intervalle de ré-entrée (secondes)",
           "outside_gap": "Intervalle hors zone (secondes)",
           "gps_accuracy": "Précision GPS (mètres)",
           "max_speed": "Vitesse maximale (km/h)",
-          "anti_spike_radius": "Rayon anti-pics (mètres)",
-          "anti_spike_time": "Temps anti-pics (secondes)"
+          "anti_spike_factor_k": "Facteur K",
+          "anti_spike_detour_ratio": "Ratio de détour",
+          "anti_spike_radius": "Rayon anti-saut (mètres)",
+          "anti_spike_time": "Temps anti-saut (secondes)"
         },
         "data_description": {
-          "owntracks": "Sera utilisé comme endpoint/slug ; uniquement lettres minuscules et chiffres.",
-          "gpslogger": "Sera utilisé comme endpoint/slug ; uniquement lettres minuscules et chiffres."
+          "owntracks_webhook_url": "Copiez cette URL dans l’application OwnTracks.",
+          "gpslogger_webhook_url": "Copiez cette URL dans l’application GPSLogger.",
+          "traccar_webhook_url": "Copiez cette URL dans le serveur/l’application Traccar."
         }
       }
     },
     "error": {
-      "invalid_identifier": "Identifiant non valide (utilisez uniquement des lettres minuscules et des chiffres).",
-      "identifiers_must_differ": "Les identifiants doivent être différents.",
       "min_update_interval": "L’intervalle de mise à jour doit être d’au moins 10 secondes.",
       "min_geocode_time": "Le temps de géocodage doit être d’au moins 10 secondes.",
       "min_geocode_distance": "La distance minimale pour géocoder doit être d’au moins 20 mètres.",
@@ -66,8 +68,10 @@
       "min_outside_gap": "L’intervalle hors zone ne peut pas être négatif.",
       "min_gps_accuracy": "La précision GPS doit être d’au moins 10 mètres.",
       "min_max_speed": "La vitesse maximale doit être d’au moins 100 km/h.",
-      "min_anti_spike_radius": "Le rayon anti-pics ne peut pas être négatif.",
-      "min_anti_spike_time": "Le temps anti-pics ne peut pas être négatif."
+      "min_anti_spike_factor_k": "Le facteur K doit être au minimum 1,5.",
+      "min_anti_spike_detour_ratio": "Le ratio de détour doit être au minimum 1,1.",
+      "min_anti_spike_radius": "Le rayon anti-saut ne peut pas être négatif.",
+      "min_anti_spike_time": "Le temps anti-saut ne peut pas être négatif."
     },
     "abort": {
       "config_entry_not_found": "Entrée de configuration introuvable.",
@@ -83,10 +87,10 @@
         "sections": {
           "general": {
             "name": "Général",
-            "description": "Comportement de base et unités.",
+            "description": "Comportement principal et unités.",
             "data": {
               "update_interval": "Intervalle de mise à jour (secondes)",
-              "only_admin": "Uniquement administrateurs",
+              "only_admin": "Réservé aux administrateurs",
               "enable_debug": "Activer le débogage",
               "use_imperial": "Utiliser les unités impériales"
             }
@@ -101,7 +105,7 @@
           },
           "stops": {
             "name": "Arrêts",
-            "description": "Seuils de détection des arrêts.",
+            "description": "Seuils de détection d’arrêt.",
             "data": {
               "stop_radius": "Rayon d’arrêt (mètres)",
               "stop_time": "Temps d’arrêt (secondes)",
@@ -118,31 +122,33 @@
             }
           },
           "anti_spike": {
-            "name": "Anti-pics",
-            "description": "Filtres pour les sauts de position sporadiques.",
+            "name": "Anti-sauts",
+            "description": "Filtres pour les sauts sporadiques de position.",
             "data": {
-              "anti_spike_radius": "Rayon anti-pics (mètres)",
-              "anti_spike_time": "Temps anti-pics (secondes)"
+              "anti_spike_factor_k": "Facteur K",
+              "anti_spike_detour_ratio": "Ratio de détour",
+              "anti_spike_radius": "Rayon anti-saut (mètres)",
+              "anti_spike_time": "Temps anti-saut (secondes)"
             }
           },
           "sources": {
             "name": "Sources",
-            "description": "Identifiants pour les points d’entrée.",
+            "description": "URLs de webhook copiables pour applications mobiles.",
             "data": {
-              "owntracks": "Identifiant OwnTracks (lettres minuscules et chiffres)",
-              "gpslogger": "Identifiant GPSLogger (lettres minuscules et chiffres)"
+              "owntracks_webhook_url": "URL webhook OwnTracks (lecture seule)",
+              "gpslogger_webhook_url": "URL webhook GPSLogger (lecture seule)",
+              "traccar_webhook_url": "URL webhook Traccar (lecture seule)"
             },
             "data_description": {
-              "owntracks": "Uniquement lettres minuscules et chiffres. Doit différer de GPSLogger.",
-              "gpslogger": "Uniquement lettres minuscules et chiffres. Doit différer de OwnTracks."
+              "owntracks_webhook_url": "Copiez cette URL dans l’application OwnTracks.",
+              "gpslogger_webhook_url": "Copiez cette URL dans l’application GPSLogger.",
+              "traccar_webhook_url": "Copiez cette URL dans le serveur/l’application Traccar."
             }
           }
         }
       }
     },
     "error": {
-      "invalid_identifier": "Identifiant non valide (utilisez uniquement des lettres minuscules et des chiffres).",
-      "identifiers_must_differ": "Les identifiants doivent être différents.",
       "min_update_interval": "L’intervalle de mise à jour doit être d’au moins 10 secondes.",
       "min_geocode_time": "Le temps de géocodage doit être d’au moins 10 secondes.",
       "min_geocode_distance": "La distance minimale pour géocoder doit être d’au moins 20 mètres.",
@@ -152,8 +158,10 @@
       "min_outside_gap": "L’intervalle hors zone ne peut pas être négatif.",
       "min_gps_accuracy": "La précision GPS doit être d’au moins 10 mètres.",
       "min_max_speed": "La vitesse maximale doit être d’au moins 100 km/h.",
-      "min_anti_spike_radius": "Le rayon anti-pics ne peut pas être négatif.",
-      "min_anti_spike_time": "Le temps anti-pics ne peut pas être négatif."
+      "min_anti_spike_factor_k": "Le facteur K doit être au minimum 1,5.",
+      "min_anti_spike_detour_ratio": "Le ratio de détour doit être au minimum 1,1.",
+      "min_anti_spike_radius": "Le rayon anti-saut ne peut pas être négatif.",
+      "min_anti_spike_time": "Le temps anti-saut ne peut pas être négatif."
     }
   }
 }

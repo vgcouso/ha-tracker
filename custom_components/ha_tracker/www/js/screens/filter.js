@@ -15,6 +15,7 @@ import { exportPositionsToKml } from '../export/kml.js';
 import { exportPositionsToCsv } from '../export/csv.js';
 import { exportPositionsToXlsx } from '../export/xlsx.js';
 import { exportPositionsToPdf, blendedFill, reducePositionsForPdf } from '../export/pdf.js';
+import { initPositionsChart, renderPositionsChart, clearPositionsChart, setPositionsMarker } from '../charts/positions.js';
 
 let filterMarkers = [];
 let currentPopup = null;
@@ -23,16 +24,19 @@ let summaryZonesSortColumn = "zone";
 let summaryZonesSortAscending = true;
 
 const MIN_ZOOM_TO_SHOW = 16;
-const FILTER_ICON = '/local/ha-tracker/images/filter.png';
-const STOP_ICON_16_16 = '/local/ha-tracker/images/stop16x16.png';
-const STOP_ICON_24_24 = '/local/ha-tracker/images/stop24x24.png';
+const FILTER_ICON = '/ha-tracker/images/filter.png';
+const STOP_ICON_16_16 = '/ha-tracker/images/stop16x16.png';
+const STOP_ICON_24_24 = '/ha-tracker/images/stop24x24.png';
 
 const pad = n => String(n).padStart(2, '0');
 
 const combo = document.getElementById('combo-select');
-if (combo)
-    combo.addEventListener('change', () => resetFilter());
-
+if (combo) 
+    combo.addEventListener('change', () => {
+		resetFilter();
+		showPositionsTab();
+	});
+	
 function showPositionsTab() {
     const positionsTabButton = document.querySelector('.tab-button[data-tab="positions"]');
     if (positionsTabButton) {
@@ -46,7 +50,8 @@ function openTab(event, tabId) {
     document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
-    if (event?.currentTarget) event.currentTarget.classList.add('active');
+    if (event?.currentTarget)
+        event.currentTarget.classList.add('active');
 }
 
 export async function initFilter() {
@@ -68,8 +73,6 @@ export async function initFilter() {
             try {
                 resetFilter(true, false);
                 handlePersonsSelection(personSelect.value);
-                updateDaterangeVisibility();
-                updateExportFilterVisibility(false);
             } catch (e) {
                 console.error(e);
             }
@@ -91,6 +94,19 @@ export async function initFilter() {
     await initRangePicker({
         onApplyFilter: () => applyFilter().catch(console.error)
     });
+	
+	document.addEventListener('positions:select-by-id', (ev) => {
+	  const id = ev?.detail?.uniqueId;
+	  if (id) {
+		try {
+		  handleFilterRowSelection(id);
+		} catch (e) {
+		  console.error('No se pudo seleccionar la fila desde el gráfico:', e);
+		}
+	  }
+	});
+	
+	initPositionsChart();
 }
 
 function retintFilterList() {
@@ -111,21 +127,26 @@ function retintFilterList() {
 
 export async function setFilter(payload) {
     try {
-        // Back-compat: si payload es array, actúa como antes
+        showPositionsTab();
+		
+		// Back-compat: si payload es array, actúa como antes
         const positions = Array.isArray(payload) ? payload : (payload?.positions || []);
         const summary = Array.isArray(payload) ? null : (payload?.summary || null);
         const zones = Array.isArray(payload) ? null : (payload?.zones || null);
-
+		
         if (positions.length > 0) {
             console.log("Positions:", positions);
 
             await resetFilter(false, false);
+			
+			renderPositionsChart(positions);
+			
             // Primero cacheamos zonas para tener los colores listos al pintar
             if (zones) {
                 setCachedZoneStatsFromServer(zones);
             }
 
-            // Ahora sí, pintamos la tabla de posiciones con los colores correctos
+            // pintamos la tabla de posiciones con los colores correctos
             await updatePositionsTable(positions);
 
             // Resumen del servidor (si viene)
@@ -144,11 +165,12 @@ export async function setFilter(payload) {
                 subdivisions: 6,
                 alpha: 0.5
             });
+						
 
             updateExportFilterVisibility(true);
         } else {
             resetFilter(true, false);
-            updateExportFilterVisibility(false);
+            //updateExportFilterVisibility(false);
             uiAlert(t('no_positions'), {
                 title: t('filter')
             });
@@ -243,9 +265,8 @@ async function updatePositionsTable(positions) {
             const range = groupRanges[groupClassIndex - 1];
             const startDate = new Date(positions[range.start].last_updated);
             const endDate = new Date(positions[range.end].last_updated);
-            const endDateInclusive = new Date(endDate.getTime() + 1000);
             const startStr = formatForDatetimeLocal(startDate);
-            const endStr = formatForDatetimeLocal(endDateInclusive);
+            const endStr = formatForDatetimeLocal(endDate);
 
             row.classList.add('group-header');
             row.innerHTML = `
@@ -427,9 +448,9 @@ function applyServerSummary(summary) {
 
     document.getElementById('positions-count').textContent = fmt0(summary.positions_count);
     document.getElementById('total-time').textContent = fmtTime(summary.total_time_s);
-    document.getElementById('distance').textContent = `${fmt2(distValue)} ${t(use_imperial ? 'miles' : 'kilometres')}`;
+    document.getElementById('distance').textContent = `${fmt0(distValue)} ${t(use_imperial ? 'miles' : 'kilometres')}`;
     document.getElementById('max-speed').textContent = `${fmt0(summary.max_speed_mps * factor)} ${t(use_imperial ? 'mi_per_hour' : 'km_per_hour')}`;
-    document.getElementById('average-speed').textContent = `${fmt2(summary.average_speed_mps * factor)} ${t(use_imperial ? 'mi_per_hour' : 'km_per_hour')}`;
+    document.getElementById('average-speed').textContent = `${fmt0(summary.average_speed_mps * factor)} ${t(use_imperial ? 'mi_per_hour' : 'km_per_hour')}`;
     document.getElementById('stops-count').textContent = fmt0(summary.stops_count);
     document.getElementById('stopped-time').textContent = fmtTime(summary.stopped_time_s);
 
@@ -437,7 +458,6 @@ function applyServerSummary(summary) {
     const maxSpeedRow = document.querySelector('#summary table tbody tr:nth-child(4)');
     if (maxSpeedRow) {
         maxSpeedRow.style.cursor = "pointer";
-        maxSpeedRow.title = t('go_to_max_speed') || 'Ir a la posición de velocidad máxima';
         maxSpeedRow.onclick = gotoMaxSpeedPosition;
     }
 }
@@ -559,9 +579,12 @@ async function applyFilter() {
         return;
     }
 
+    // sumar 1 segundo al fin (rango inclusivo)
+    const endUTCPlus1s = new Date(Date.parse(endUTC) + 1000).toISOString();
+
     const startMs = Date.parse(startUTC);
-    const endMs = Date.parse(endUTC);
-    if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs >= endMs) {
+    const endMsPlus1s = Date.parse(endUTCPlus1s);
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMsPlus1s) || startMs >= endMsPlus1s) {
         uiAlert(t('invalid_dates'), {
             title: t('filter')
         });
@@ -570,7 +593,7 @@ async function applyFilter() {
     }
 
     const maxDifferenceMs = 31 * 24 * 60 * 60 * 1000;
-    if (endMs - startMs > maxDifferenceMs) {
+    if (endMsPlus1s - startMs > maxDifferenceMs) {
         uiAlert(t('date_range'), {
             title: t('filter')
         });
@@ -578,14 +601,14 @@ async function applyFilter() {
         return;
     }
 
-    showWindowOverlay(t('running_filter'));
     try {
-
+		showWindowOverlay(t('running_filter'));
+		
         // PRUEBAS
         //await fetchResetReverseGeocodeCache();
         //console.log("***************** fetchResetReverseGeocodeCache ****************");
-
-        await fetchFilteredPositions(selectedPersonId, startUTC, endUTC);
+		
+        await fetchFilteredPositions(selectedPersonId, startUTC, endUTCPlus1s);
     } catch (error) {
         console.error("Error during filter:", error);
         uiAlert(t('filter_error'), {
@@ -599,16 +622,18 @@ async function applyFilter() {
 export async function resetFilter(resetCalendar = true, resetUsers = true) {
     if (resetCalendar)
         clearRangeTextbox();
+	
     if (resetUsers) {
         const sel = document.getElementById('person-select');
         if (sel) {
-          sel.value = '';
-          sel.dispatchEvent(new Event('change', { bubbles: true }));
+            sel.value = '';
+            sel.dispatchEvent(new Event('change', {
+                    bubbles: true
+                }));
         }
     }
 
-    closeInfoPopup();
-    showPositionsTab();
+    closeInfoPopup();    
 
     // Reiniciar posiciones
     document.getElementById('filter-table-body').innerHTML = '';
@@ -622,6 +647,12 @@ export async function resetFilter(resetCalendar = true, resetUsers = true) {
     document.getElementById('stops-count').textContent = '--';
     document.getElementById('stopped-time').textContent = '--';
     document.getElementById('summary-zones-table-body').innerHTML = '';
+
+    const maxSpeedRow = document.querySelector('#summary table tbody tr:nth-child(4)');
+    if (maxSpeedRow) {
+        maxSpeedRow.style.cursor = ''; // o 'default'
+        maxSpeedRow.onclick = null;
+    }
 
     // Marcadores
     filterMarkers.forEach(marker => {
@@ -662,6 +693,8 @@ export async function resetFilter(resetCalendar = true, resetUsers = true) {
     // recalcula visibilidad del rango de fechas y oculta export SIEMPRE tras un reset
     updateDaterangeVisibility();
     updateExportFilterVisibility(false);
+	
+	clearPositionsChart();
 }
 
 async function toggleGroup(groupClass, btn) {
@@ -696,7 +729,7 @@ async function toggleGroup(groupClass, btn) {
     }
 }
 
-async function selectRow(row) {
+async function selectRow(row) {	
     const rows = document.querySelectorAll('#filter-table-body tr');
     rows.forEach(r => r.classList.remove('selected'));
     row.classList.add('selected');
@@ -712,6 +745,8 @@ async function selectRow(row) {
     const isStop = row.dataset.isStop === '1';
 
     openInfoPopup(latitude, longitude, lastUpdated, speed, isStop);
+	
+	setPositionsMarker(lastUpdated);
 }
 
 function openInfoPopup(lat, lon, lastUpdated, speed, isStop = false) {
@@ -995,8 +1030,8 @@ async function updateSummaryZonesTable() {
         const distText = `${fmt0(distValue)}`;
         const pretty = zoneName;
 
-		const row = document.createElement('tr');
-		row.innerHTML = `
+        const row = document.createElement('tr');
+        row.innerHTML = `
 		  <td>${pretty}</td>
 		  <td>${formatTotalTime(duration)}</td>
 		  <td>${fmt0(visits)}</td>
@@ -1004,16 +1039,15 @@ async function updateSummaryZonesTable() {
 		  <td>${distText}</td>
 		`;
 
-		// Solo hacer clic y mostrar puntero si existe id de zona
-		const zoneData = zonePositions[zoneName];
-		if (zoneData && zoneData.id != null) {
-		  row.style.cursor = 'pointer';
-		  row.title = t('show_zone') || '';
-		  row.addEventListener('click', () => showZone(zoneData.id));
-		} else {
-		  // sin id: sin puntero ni click
-		  row.style.cursor = ''; // o 'default'
-		}
+        // Solo hacer clic y mostrar puntero si existe id de zona
+        const zoneData = zonePositions[zoneName];
+        if (zoneData && zoneData.id != null) {
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', () => showZone(zoneData.id));
+        } else {
+            // sin id: sin puntero ni click
+            row.style.cursor = ''; // o 'default'
+        }
 
         row.addEventListener('click', () => {
             const zoneData = zonePositions[zoneName];
@@ -1154,7 +1188,7 @@ function formatTotalTime(totalTimeMs) {
     // Condicional para incluir "día" o "días"
     const daysText = days > 0 ? `${days} ${days === 1 ? t('day') : t('days')} ` : '';
 
-    return `${daysText}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    return `${daysText}${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
 function formatForDatetimeLocal(d) {
@@ -1542,7 +1576,7 @@ async function doExportPdf() {
         summaryRows,
         zonesRows,
         positionsRows,
-        stopIconUrl: new URL('/local/ha-tracker/images/stop16x16.png', window.location.origin).href,
+        stopIconUrl: new URL('/ha-tracker/images/stop16x16.png', window.location.origin).href,
         header,
     });
 }

@@ -19,8 +19,8 @@ const editingZones = {};
 const MAX_ZONE_NAME_LENGTH = 30;
 const DIACRITICS_RE = /\p{Diacritic}/gu;
 
-const HA_TRACKER_ICON_16_16 = '/local/ha-tracker/images/ha-tracker16x16.png';
-const HA_ICON_16_16 = '/local/ha-tracker/images/ha16x16.png';
+const HA_TRACKER_ICON_16_16 = '/ha-tracker/images/ha-tracker16x16.png';
+const HA_ICON_16_16 = '/ha-tracker/images/ha16x16.png';
 
 export async function initZones() {
     const addZoneButton = document.getElementById("add-zone-button");

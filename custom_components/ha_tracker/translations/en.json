@@ -27,7 +27,7 @@
           },
           "sources": {
             "name": "Sources",
-            "description": "Identifiers for input endpoints."
+            "description": "Copyable mobile app webhook URLs."
           }
         },
         "data": {
@@ -37,26 +37,28 @@
           "geocode_distance": "Minimum distance to geocode (meters)",
           "only_admin": "Admins only",
           "use_imperial": "Use imperial units",
-          "owntracks": "OwnTracks identifier (lowercase letters and digits)",
-          "gpslogger": "GPSLogger identifier (lowercase letters and digits)",
+          "owntracks_webhook_url": "OwnTracks webhook URL (read-only)",
+          "gpslogger_webhook_url": "GPSLogger webhook URL (read-only)",
+          "traccar_webhook_url": "Traccar webhook URL (read-only)",
           "stop_radius": "Stop radius (meters)",
           "stop_time": "Stop time (seconds)",
           "reentry_gap": "Re-entry interval (seconds)",
           "outside_gap": "Outside-area interval (seconds)",
           "gps_accuracy": "GPS accuracy (meters)",
           "max_speed": "Maximum speed (km/h)",
+          "anti_spike_factor_k": "Factor K",
+          "anti_spike_detour_ratio": "Detour Ratio",
           "anti_spike_radius": "Anti-spike radius (meters)",
           "anti_spike_time": "Anti-spike time (seconds)"
         },
         "data_description": {
-          "owntracks": "Will be used as endpoint/slug; lowercase letters and digits only.",
-          "gpslogger": "Will be used as endpoint/slug; lowercase letters and digits only."
+          "owntracks_webhook_url": "Copy this URL into the OwnTracks app.",
+          "gpslogger_webhook_url": "Copy this URL into the GPSLogger app.",
+          "traccar_webhook_url": "Copy this URL into the Traccar server/app."
         }
       }
     },
     "error": {
-      "invalid_identifier": "Invalid identifier (use lowercase letters and digits only).",
-      "identifiers_must_differ": "Identifiers must be different.",
       "min_update_interval": "Update interval must be at least 10 seconds.",
       "min_geocode_time": "Geocoding time must be at least 10 seconds.",
       "min_geocode_distance": "Minimum distance to geocode must be at least 20 meters.",
@@ -66,6 +68,8 @@
       "min_outside_gap": "Outside-area interval cannot be negative.",
       "min_gps_accuracy": "GPS accuracy must be at least 10 meters.",
       "min_max_speed": "Maximum speed must be at least 100 km/h.",
+      "min_anti_spike_factor_k": "Anti-spike Factor K must be at least 1.5",
+      "min_anti_spike_detour_ratio": "Anti-spike Detour Ratio must be at least 1.1",
       "min_anti_spike_radius": "Anti-spike radius cannot be negative.",
       "min_anti_spike_time": "Anti-spike time cannot be negative."
     },
@@ -121,28 +125,30 @@
             "name": "Anti-spike",
             "description": "Filters for sporadic position jumps.",
             "data": {
+              "anti_spike_factor_k": "Factor K",
+              "anti_spike_detour_ratio": "Detour Ratio",
               "anti_spike_radius": "Anti-spike radius (meters)",
               "anti_spike_time": "Anti-spike time (seconds)"
             }
           },
           "sources": {
             "name": "Sources",
-            "description": "Identifiers for input endpoints.",
+            "description": "Copyable mobile app webhook URLs.",
             "data": {
-              "owntracks": "OwnTracks identifier (lowercase letters and digits)",
-              "gpslogger": "GPSLogger identifier (lowercase letters and digits)"
+              "owntracks_webhook_url": "OwnTracks webhook URL (read-only)",
+              "gpslogger_webhook_url": "GPSLogger webhook URL (read-only)",
+              "traccar_webhook_url": "Traccar webhook URL (read-only)"
             },
             "data_description": {
-              "owntracks": "Lowercase letters and digits only. Must differ from GPSLogger.",
-              "gpslogger": "Lowercase letters and digits only. Must differ from OwnTracks."
+              "owntracks_webhook_url": "Copy this URL into the OwnTracks app.",
+              "gpslogger_webhook_url": "Copy this URL into the GPSLogger app.",
+              "traccar_webhook_url": "Copy this URL into the Traccar server/app."
             }
           }
         }
       }
     },
     "error": {
-      "invalid_identifier": "Invalid identifier (use lowercase letters and digits only).",
-      "identifiers_must_differ": "Identifiers must be different.",
       "min_update_interval": "Update interval must be at least 10 seconds.",
       "min_geocode_time": "Geocoding time must be at least 10 seconds.",
       "min_geocode_distance": "Minimum distance to geocode must be at least 20 meters.",
@@ -152,6 +158,8 @@
       "min_outside_gap": "Outside-area interval cannot be negative.",
       "min_gps_accuracy": "GPS accuracy must be at least 10 meters.",
       "min_max_speed": "Maximum speed must be at least 100 km/h.",
+      "min_anti_spike_factor_k": "Anti-spike Factor K must be at least 1.5",
+      "min_anti_spike_detour_ratio": "Anti-spike Detour Ratio must be at least 1.1",
       "min_anti_spike_radius": "Anti-spike radius cannot be negative.",
       "min_anti_spike_time": "Anti-spike time cannot be negative."
     }

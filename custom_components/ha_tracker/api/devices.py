@@ -6,7 +6,7 @@ import unicodedata
 
 from homeassistant.components.http import HomeAssistantView
 
-from ..const import DOMAIN
+DOMAIN = __package__.split(".")[-2]
 
 _LOGGER = logging.getLogger(__name__)
 

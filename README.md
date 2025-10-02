@@ -68,7 +68,7 @@ The steps to install this integration are as follows:
 
 You can access the application by opening the panel from the menu on the left or also from a web browser at the address:
 
-   `https://<HOST>/local/ha-tracker/index.html`
+   `https://<HOST>/ha-tracker/index.html`
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/install.png" alt="Install screen" style="width: 80%; max-width: 100%; height: auto;" />
@@ -103,6 +103,7 @@ By default, Home Assistant stores **10 days**. You can increase this time, but k
 ## Options
 
 - **General:**
+  Core behavior and units.
   - **Refresh Interval (in seconds):** (Minimum value: 10 seconds) 
     - The time the client uses to update its information from the server
   - **Admin only** 
@@ -113,12 +114,14 @@ By default, Home Assistant stores **10 days**. You can increase this time, but k
     - Using Imperial Units in HA Tracker	
 	
 - **Geocoding:**	
+  Reverse geocoding parameters.
   - **Geocoding Time (in seconds):** (Minimum value: 10 seconds) 
     - Time between positions to request a person's address from the server
   - **Minimum Distance for Geocoding (in meters):** (Minimum value: 20 meters) 
     - Distance between positions to request a person's address from the server 
 		
 - **Stops:**
+  Stop detection thresholds.
   - **Stop radius (in meters):** (Minimum value: 0 meters) 
     - Radius around which positions are considered stopped. 
 	- If the value is 0, stops are not calculated.
@@ -127,14 +130,15 @@ By default, Home Assistant stores **10 days**. You can increase this time, but k
 	- If the value is 0, stops are not calculated.
   - **Reentry gap (in seconds):** (Minimum value: 0 seconds) 
 	- If you leave for a moment and return to the same place immediately, it counts as the same stop.
-	- If the value is 0, it is not calculated.
+	- If the value is 0, stops are not calculated.
   - **Outside gap (in seconds):** (Minimum value: 0 seconds) 
 	- The stop is not closed for an exit less than this time.
-	- If the value is 0, it is not calculated.
+	- If the value is 0, stops are not calculated.
 
   You must adjust these two parameters according to the application used to send the positions and the device on which it is installed.
 
 - **Accuracy:**
+  Parameters for considering positions.
   - **GPS accuracy (meters):** (Minimum value: 10 meters) 
     - Positions with a GPS accuracy value greater than this parameter are discarded.
   - **Maximum speed (km/h):** (Minimum value: 100 km/h) 
@@ -142,15 +146,29 @@ By default, Home Assistant stores **10 days**. You can increase this time, but k
 	
   You must adjust these two parameters according to the application used to send the positions and the device on which it is installed.
 
+- **Anti-spike:**
+  It filters out sporadic jumps in positions and uses the five points A->B->C->D->E for its calculation. C is eliminated if, based on the following parameters, it offers a significant change in its position with respect to A->B and D->E.
+  - **Factor k:** (Minimum value: 1.5)
+    - Detour speed threshold. C is cleared if the speed of section B->C->D is greater than speeds A->B and D->E. The higher the threshold, the fewer peaks are cleared.
+  - **Detour ratio:** (Minimum value: 1.1)
+    - Generic deviation threshold: (dBC + dCD)/dBD > R. This implies a clear "two-way" response. The higher the threshold, the fewer cases are considered peaks.
+  - **Radius (meters):** (Minimum value: 0 meters)
+    - Minimum lengths B->C and C->D in meters. Avoid erasing micro-oscillations below the noise level. The higher the value, the fewer peaks are erased.  
+    - If the value is 0, Anti-spike is not calculated.
+  - **Time (seconds):** (Minimum value: 0 seconds) 
+    - Maximum time window in seconds for B->D to be fast. If it takes longer, it's not a spike. The lower the window, the faster the spikes.
+    - If the value is 0, Anti-spike is not calculated.
+
+  You must adjust these two parameters according to the application used to send the positions and the device on which it is installed.
+
 - **Sources:**
-  - **OwnTracks URL** 
-    - Only lowercase letters and numbers are accepted. 
-  - **GPSLogger URL** 
-    - Only lowercase letters and numbers are accepted. 
-  
-  The values ​​of both must be different.
-  
-  **Important:** For **security** reasons, you must **change** the value of these two fields.
+  Copyable mobile app webhook URLs
+  - **OwnTracks webhook URL** 
+    - Copy this URL into the OwnTracks app
+  - **GPSLogger webhook URL** 
+    - Copy this URL into the GPSLogger app
+  - **Traccar webhook URL** 
+    - Copy this URL into the Traccar app
 
 <br>
 
@@ -219,43 +237,21 @@ In **Android** make sure in the **"Settings &rarr; Companion app"** that:
 
 The first thing you need to do is install the **OwnTracks integration**:
  - Go to: **"Settings &rarr; Devices and Services &rarr; Add Integration"**
- - Search for **OwnTracks**, select it. The **configuration screen** will open.
- - If you want to manually configure the application on your mobile, write down the information provided on this screen in a safe place. The **webhook** is required to configure the application on the smartphone.
+ - Search for **OwnTracks**, select it. The **configuration screen** will open
  - Press **Send** button and integration will be created
- 
-Before installing OwnTracks on your devices, you can download the properties file called **"ha-tracker.otrc"** to them (if you want to make it automatic) from:
-
-   `https://<HOST>/api/ha-tracker/<OwnTracks URL in options of HA Tracker>`
 
 Then you can then install OwnTracks on your devices from **[iOS](https://apps.apple.com/us/app/owntracks/id692424691)** and **[Android](https://play.google.com/store/apps/details?id=org.owntracks.android)**. Then:
+  - Allow the permissions that the application requests for its correct operation.
+  - On some **Android** versions, restarting your phone requires you to open the app to send positions. Sometimes setting the app to use the **battery without restrictions**, **always allow location** and **allow notifications** fixes it.
+  - On some devices you must enable the option to run in the background
+
+To configure the application: [here's a link](https://www.home-assistant.io/integrations/owntracks/)
   - Set a unique **Device ID** and **Tracker ID** for each phone
-  - To make the installation on the smartphone: 
-    - **Automatic:** 
-      In **Preferences &rarr; Configuration management &rarr; Import (top right menu)** open the previously downloaded file (ha-tracker.otrc) with the properties and accept (top right check). 
-    - **Manual:** 
-      To configure the application: [here's a link](https://www.home-assistant.io/integrations/owntracks/)
+  - The URL provided to you when setting up the integration can also be found under **"Settings &rarr; Devices & services &rarr; HA TRacker &rarr; Configuration &rarr; Sources"**
 
-In sending positions it is configured at 30 seconds but if you have many devices it would be convenient to increase this time in: **Menu &rarr; Preferences &rarr; location interval**
-
-- Finally, assign the device to a person in Home Assistant: **"Settings &rarr; People"**
 - In Home Assistant, you'll find connected devices under **"Settings &rarr; Devices & services &rarr; OwnTracks"**
-
-On some **Android** versions, restarting your phone requires you to open the app to send positions. 
-- Sometimes setting the app to use the **battery without restrictions**, **always allow location** and **allow notifications** fixes it.
-- You can also try the **MacroDroid** app after installing OwnTracks to resolve this. In the app you can download the file **"owntracks.macro"** with the macro that solves it from:
-
-   `https://<HOST>/api/ha-tracker/macrodroid`
-   
-You can also configure the macro yourself manually: 
-- Starts when the phone is turned on
-- Pauses for one second when you turn on your phone
-- Launches OwnTracks
-- Pauses for another second
-- Press the back key to hide OwnTracks
-
-To send positions, on the map screen, in the top left icon, you can select between:
-- **Significant Changes:** which saves battery but sends positions less frequently.
-- **Travel:** which uses more battery but sends positions more often.
+  - There you can change its name in Home Assistant
+- Finally, assign the device to a person in Home Assistant: **"Settings &rarr; People"**
 
 ---
 
@@ -272,7 +268,6 @@ To send positions, on the map screen, in the top left icon, you can select betwe
 The first thing you need to do is install the **GPSLogger integration**:
  - Go to: **"Settings &rarr; Devices and Services &rarr; Add Integration"**
  - Search for **GPSLogger**, select it. The **configuration screen** will open.
- - If you want to manually configure the application on your mobile, write down the information provided on this screen in a safe place. The **webhook** is required to configure the application on the smartphone.
  - Press **Send** button and integration will be created
  
 Then you can then install GPSLogger on your devices through the **F-Droid** Android app store.
@@ -287,16 +282,17 @@ Then you can then install GPSLogger on your devices through the **F-Droid** Andr
   </a>
 </p>
 
-Allow the permissions that the application requests for its correct operation.
+To install GpsLogger:
+  - Allow the permissions that the application requests for its correct operation.
+  - On some **Android** versions, restarting your phone requires you to open the app to send positions. Sometimes setting the app to use the **battery without restrictions**, **always allow location** and **allow notifications** fixes it.
+  - On some devices you must enable the option to run in the background
+  
+To configure the application: [here's a link](https://www.home-assistant.io/integrations/gpslogger/)
+  - The URL provided to you when setting up the integration can also be found under **"Settings &rarr; Devices & services &rarr; HA TRacker &rarr; Configuration &rarr; Sources"**
 
-In the phone app, if you tap in the top left corner: **"Open Menu &rarr; Click on the profile name &rarr; Select From the URL address"**, the default settings for GPSLogger to connect to Home Assistant (if you want to make it automatic) will be available at the URL:
-
-   `https://<HOST>/api/ha-tracker/<GPSLogger URL in options of HA Tracker>`
-
-- If you do not want to import the properties, you can do so manually using the data provided during the integration installation. To configure the application: [here's a link](https://www.home-assistant.io/integrations/gpslogger/)
-- In sending positions it is configured at 30 seconds but if you have many devices it would be convenient to increase this time in: **Menu &rarr; Performance &rarr; Logging interval**
-
-On some devices you must enable the option to run in the background
+- In Home Assistant, you'll find connected devices under **"Settings &rarr; Devices & services &rarr; GPSLogger"**
+  - There you can change its name in Home Assistant
+- Finally, assign the device to a person in Home Assistant: **"Settings &rarr; People"**
 
 ### Traccar
 
@@ -305,16 +301,21 @@ On some devices you must enable the option to run in the background
 The first thing you need to do is install the **Traccar Client integration**:
  - Go to: **"Settings &rarr; Devices and Services &rarr; Add Integration"**
  - Search for **Traccar Client**, select it. The **configuration screen** will open.
- - Write down the information provided on this screen in a safe place. The **webhook** is required to configure the application on the smartphone.
  - Press **Send** button and integration will be created
  
-Install the client on the smartphone: 
-- To configure Traccar on your smartphone, you must provide the server URL. 
-- This is the Webhook that was displayed during the integration setup. 
-- The easiest way to enter this URL is to search the internet for a service that allows you to convert web addresses to QR codes. 
-- On your mobile device, go to Settings and scan the QR code in the top right corner.
-- To configure the rest of the parameters: [here's a link](https://www.traccar.org/client-configuration/)
-  
+Then you can then install OwnTracks on your devices from **[iOS](https://apps.apple.com/us/app/traccar-client/id843156974))** and **[Android](https://play.google.com/store/apps/details?id=org.traccar.client)**. Then:
+  - Allow the permissions that the application requests for its correct operation.
+  - On some **Android** versions, restarting your phone requires you to open the app to send positions. Sometimes setting the app to use the **battery without restrictions**, **always allow location** and **allow notifications** fixes it.
+  - On some devices you must enable the option to run in the background
+
+To configure the application: [here's a link](https://www.traccar.org/client-configuration/)
+  - Set a unique **Device identifier**
+  - The URL provided to you when setting up the integration can also be found under **"Settings &rarr; Devices & services &rarr; HA TRacker &rarr; Configuration &rarr; Sources"**
+
+- In Home Assistant, you'll find connected devices under **"Settings &rarr; Devices & services &rarr; OwnTracks"**
+  - There you can change its name in Home Assistant
+- Finally, assign the device to a person in Home Assistant: **"Settings &rarr; People"**
+
 ---  
 	
 # QUICK START
@@ -370,7 +371,8 @@ There are **two tabs** on this screen:
   - In the table with the positions they are grouped by the name of the zone in which they are located and can be expanded by clicking on the triangle icon on the left. 
   - You can filter the positions of a group by clicking on the filter icon to the right of the table. 
   - In this table, you'll also see the **stops** made. To correctly identify them, it's **very important** to adjust the **Speed ​​for stop** value in the server options.
-- The **second tab** contains a **summary** of the most relevant **statistics** for the filter.
+  - Below the table with the positions is a **graph** that runs through the filter from start to finish, showing the zones visited by color, movement (green)/stationary (red), and speed. It also shows the selected row with a vertical blue line. If you click on the graph, the table of positions shows the selected row.
+- The **second tab** contains a **summary** of the most relevant **statistics** for the filter and for each zone visited.
 
 On the **map**, the filter is represented by:
 - The route with the filter positions on the map appears in green at the start and blue at the end.  

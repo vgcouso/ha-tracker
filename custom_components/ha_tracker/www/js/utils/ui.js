@@ -199,20 +199,29 @@ async function toggleContainer() {
 }
 
 async function adjustTableContainerHeight(container) {
-    try {
-        const viewportHeight = window.innerHeight;
-        const containerTop = container.getBoundingClientRect().top;
-        const newHeight = Math.max(viewportHeight - containerTop - 20, 150); // Altura mínima de 150px
+  try {
+    // Evita tocar alturas si el contenedor está oculto
+    const style = getComputedStyle(container);
+    const isHidden = style.display === 'none' || container.offsetParent === null;
+    if (isHidden) return;
 
-        // Reducido el umbral a 2px para minimizar parpadeo sin causar loops
-        if (Math.abs(container.clientHeight - newHeight) > 2) {
-            requestAnimationFrame(() => {
-                container.style.height = `${newHeight}px`;
-            });
-        }
-    } catch (error) {
-        console.error("Error adjusting table height:", error);
+    const viewportHeight = window.innerHeight;
+    const containerTop = container.getBoundingClientRect().top;
+
+    // Reserva espacio para el gráfico solo en Positions
+    let reserved = 0;
+    if (container.closest('#positions')) {
+      const chart = document.getElementById('positions-chart');
+      if (chart) reserved = (chart.offsetHeight || 50) + 10;
     }
+
+    const newHeight = Math.max(viewportHeight - containerTop - 20 - reserved, 150);
+    if (Math.abs(container.clientHeight - newHeight) > 2) {
+      requestAnimationFrame(() => { container.style.height = `${newHeight}px`; });
+    }
+  } catch (error) {
+    console.error("Error adjusting table height:", error);
+  }
 }
 
 async function observeTableContainers() {

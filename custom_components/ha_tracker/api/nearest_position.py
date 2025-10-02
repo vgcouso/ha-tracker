@@ -1,4 +1,5 @@
 import logging
+
 from datetime import timedelta
 from functools import partial
 from homeassistant.components.http import HomeAssistantView
@@ -7,7 +8,8 @@ from homeassistant.components.recorder.history import (
     get_significant_states,
 )
 from homeassistant.util import dt as dt_util
-from ..const import DOMAIN
+
+DOMAIN = __package__.split(".")[-2]
 
 _LOGGER = logging.getLogger(__name__)
 
