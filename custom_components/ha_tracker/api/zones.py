@@ -1,21 +1,25 @@
-"""Manejo de las zonas de HA Tracker"""
+"""Manejo de las zonas de HA Tracker."""
 
-import json
 import logging
-import os
 import re
 import unicodedata
-import aiofiles
 
 from datetime import datetime
 
 from homeassistant.components.http import HomeAssistantView
+from homeassistant.components import zone as zone_component
+from homeassistant.helpers.storage import Store
 
 DOMAIN = __package__.split(".")[-2]
 
 _LOGGER = logging.getLogger(__name__)
 
-ZONES_FILE = "ha_tracker_zones.json"
+STORAGE_KEY = "ha_tracker.zones"
+STORAGE_VERSION = 1
+DATA_STORE = "zones_store"
+DATA_REGISTERED = "registered_zone_entity_ids"
+HA_ASYNC_SET_ZONE = getattr(zone_component, "async_set_zone", None)
+HA_ASYNC_REMOVE_ZONE = getattr(zone_component, "async_remove_zone", None)
 
 DEFAULT_COLOR = "#008000"  # verde por defecto (CSS 'green')
 MAX_ZONE_NAME_LEN = 30     # longitud máxima del nombre de la zona
@@ -47,9 +51,8 @@ class ZonesAPI(HomeAssistantView):
         if only_admin and (user is None or not user.is_admin):
             return self.json([])
 
-        zones_path = os.path.join(hass.config.path(), ZONES_FILE)
-        store = await _read_store(zones_path)
-        custom_zones = store["zones"]
+        store = await _async_load_store(hass)
+        custom_zones = [dict(z) for z in store["zones"]]
 
         # Obtener zonas de Home Assistant
         ha_zones = [
@@ -85,7 +88,7 @@ class ZonesAPI(HomeAssistantView):
         if stale:
             for k in stale:
                 overrides.pop(k, None)
-            await _write_store(zones_path, store)
+            await _async_save_store(hass, store)
         
 
         # Agregar solo zonas de HA que no estén ya (comparando IDs sanitizados)
@@ -139,8 +142,7 @@ class ZonesAPI(HomeAssistantView):
                 status_code=400,
             )
 
-        zones_path = os.path.join(hass.config.path(), ZONES_FILE)
-        store = await _read_store(zones_path)
+        store = await _async_load_store(hass)
         zones = store["zones"]
 
         # Evitar duplicados de ID (comparando IDs sanitizados)
@@ -160,7 +162,7 @@ class ZonesAPI(HomeAssistantView):
 
         # Guardar en el archivo
         store["zones"] = zones
-        await _write_store(zones_path, store)
+        await _async_save_store(hass, store)
 
         await register_zones(hass)
 
@@ -184,8 +186,7 @@ class ZonesAPI(HomeAssistantView):
 
         zone_id_s = sanitize_id(zone_id)
 
-        zones_path = os.path.join(hass.config.path(), ZONES_FILE)
-        store = await _read_store(zones_path)
+        store = await _async_load_store(hass)
         zones = store["zones"]
 
         # Buscar zona objetivo por ID sanitizado
@@ -202,7 +203,7 @@ class ZonesAPI(HomeAssistantView):
         # Eliminar y guardar
         del zones[target_idx]
         store["zones"] = zones
-        await _write_store(zones_path, store)
+        await _async_save_store(hass, store)
         await register_zones(hass)
 
         return self.json({"success": True, "message": "Zone deleted successfully"})
@@ -231,8 +232,7 @@ class ZonesAPI(HomeAssistantView):
 
         zone_id_s = sanitize_id(zone_id)
 
-        zones_path = os.path.join(hass.config.path(), ZONES_FILE)
-        store = await _read_store(zones_path)
+        store = await _async_load_store(hass)
         zones = store["zones"]
         
         # Localizar zona por ID sanitizado
@@ -260,11 +260,12 @@ class ZonesAPI(HomeAssistantView):
             if not allowed:
                 return self.json({"error": "Nothing to update"}, status_code=400)
 
+            store.setdefault("ha_overrides", {})
             store["ha_overrides"][zone_id_s] = {
                 **store["ha_overrides"].get(zone_id_s, {}),
                 **allowed,
             }
-            await _write_store(zones_path, store)
+            await _async_save_store(hass, store)
             return self.json({"success": True, "message": "Zone updated successfully"})
 
         current = zones[target_idx].copy()
@@ -302,8 +303,8 @@ class ZonesAPI(HomeAssistantView):
 
         zones[target_idx] = merged
         store["zones"] = zones
-        await _write_store(zones_path, store)
-        
+        await _async_save_store(hass, store)
+
         await register_zones(hass)
 
         return self.json({"success": True, "message": "Zone updated successfully"})
@@ -311,70 +312,71 @@ class ZonesAPI(HomeAssistantView):
 
 async def unregister_zones(hass):
     """Eliminar zonas personalizadas registradas en Home Assistant."""
-    try:
-        for state in hass.states.async_all():
-            if state.entity_id.startswith("zone.") and state.attributes.get("custom", False):
-                hass.states.async_remove(state.entity_id)
-    except Exception as e:  # noqa: BLE001
-        _LOGGER.error("Error unregistering zones: %s", e)
+
+    registered = _get_registered_zone_ids(hass)
+    if not registered:
+        return
+
+    to_remove = list(registered)
+    for entity_id in to_remove:
+        try:
+            await _async_remove_zone(hass, entity_id)
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.error("Error unregistering zone %s: %s", entity_id, err)
+        else:
+            registered.discard(entity_id)
 
 
 async def register_zones(hass):
     """Registrar zonas en Home Assistant."""
 
-    zones_path = os.path.join(hass.config.path(), ZONES_FILE)
+    store = await _async_load_store(hass)
+    zones = store["zones"]
 
-    if not os.path.exists(zones_path):
-        _LOGGER.warning("Zones file not found, creating empty zones file.")
-        await write_zones_file(zones_path, [])
-        return
+    registered = _get_registered_zone_ids(hass)
+    existing = set(registered)
+    desired: set[str] = set()
 
-    try:
-        store = await _read_store(zones_path)
-        zones = store["zones"]
+    for zone in zones:
+        if not zone.get("custom", False):
+            continue
 
-        # Desregistrar zonas antes de volver a registrarlas
-        await unregister_zones(hass)
+        candidate = dict(zone)
+        is_valid, error = validate_zone(candidate)
+        if not is_valid:
+            _LOGGER.warning("Invalid zone '%s'", zone.get("id", "unknown"))
+            _LOGGER.warning("Error details: %s", error)
+            continue
 
-        for zone in zones:
-            is_valid, error = validate_zone(zone)
-            if not is_valid:
-                _LOGGER.warning("Invalid zone '%s'", zone.get("id", "unknown"))
-                _LOGGER.warning("Error details: %s", error)
-                continue
+        entity_id = await _async_set_zone(hass, candidate)
+        if entity_id:
+            desired.add(entity_id)
 
-            try:
-                entity_object_id = sanitize_id(zone["id"])
-                hass.states.async_set(
-                    f"zone.{entity_object_id}",
-                    "active",
-                    {
-                        "friendly_name": zone["name"],
-                        "latitude": zone["latitude"],
-                        "longitude": zone["longitude"],
-                        "radius": zone["radius"],
-                        "icon": zone.get("icon", "mdi:map-marker"),
-                        "passive": zone.get("passive", False),
-                        "custom": True,
-                        "color": normalize_color(zone.get("color", DEFAULT_COLOR)),
-                        "visible": bool(zone.get("visible", True)),
-                    },
-                )
-            except Exception as e:  # noqa: BLE001
-                _LOGGER.exception("Failed to register %s: %s", zone.get("id"), e)
+    # Remove zones that are no longer desired
+    for entity_id in existing - desired:
+        try:
+            await _async_remove_zone(hass, entity_id)
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.error("Error unregistering zone %s: %s", entity_id, err)
 
-    except Exception as e:  # noqa: BLE001
-        _LOGGER.error("Error registering zones: %s", e)
+    registered.clear()
+    registered.update(desired)
 
 
 # ---------- helpers de almacenamiento unificado ----------
-async def _read_store(zones_path):
-    """
-    Devuelve dict con forma:
-      { "zones": [ ...custom... ], "ha_overrides": { "<id>": {"color":"#rrggbb","visible": true/false}, ... } }
-    Acepta también el formato antiguo (lista) y lo adapta.
-    """
-    data = await read_zones_file(zones_path)
+async def _async_get_store(hass) -> Store:
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    store: Store | None = domain_data.get(DATA_STORE)
+    if store is None:
+        store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
+        domain_data[DATA_STORE] = store
+    return store
+
+
+async def _async_load_store(hass) -> dict:
+    store = await _async_get_store(hass)
+    data = await store.async_load()
+
     if isinstance(data, list):
         return {"zones": data, "ha_overrides": {}}
     if isinstance(data, dict):
@@ -385,41 +387,69 @@ async def _read_store(zones_path):
     return {"zones": [], "ha_overrides": {}}
 
 
-async def _write_store(zones_path, store):
-    # Asegura claves mínimas
+async def _async_save_store(hass, store_data: dict) -> None:
+    store = await _async_get_store(hass)
     payload = {
-        "zones": store.get("zones", []) or [],
-        "ha_overrides": store.get("ha_overrides", {}) or {},
+        "zones": store_data.get("zones", []) or [],
+        "ha_overrides": store_data.get("ha_overrides", {}) or {},
     }
-    await write_zones_file(zones_path, payload)
+    await store.async_save(payload)
 
 
-async def read_zones_file(zones_path):
-    """Leer y parsear archivo JSON de zonas."""
-    if not os.path.exists(zones_path):
-        return []
+def _get_registered_zone_ids(hass) -> set[str]:
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    registered: set[str] = domain_data.setdefault(DATA_REGISTERED, set())
+    return registered
+
+
+async def _async_set_zone(hass, zone: dict) -> str | None:
+    """Crear o actualizar una zona personalizada mediante los helpers oficiales."""
+
+    zone_object_id = sanitize_id(zone["id"])
+    entity_id = f"zone.{zone_object_id}"
+
+    if HA_ASYNC_SET_ZONE is None:
+        _LOGGER.error(
+            "homeassistant.components.zone.async_set_zone no está disponible; "
+            "no se puede registrar la zona %s",
+            zone.get("id"),
+        )
+        return None
+
+    kwargs = {
+        "entity_id": entity_id,
+        "name": zone["name"],
+        "latitude": zone["latitude"],
+        "longitude": zone["longitude"],
+        "radius": zone["radius"],
+        "icon": zone.get("icon"),
+        "passive": zone.get("passive", False),
+    }
 
     try:
-        async with aiofiles.open(zones_path, mode="r") as f:
-            content = await f.read()
-            return json.loads(content) or []
-    except json.JSONDecodeError:
-        _LOGGER.error("Zones file is not valid JSON. Returning empty list.")
-        return []
-    except Exception as e:  # noqa: BLE001
-        _LOGGER.error("Error reading zones file: %s", e)
-        return []
+        await HA_ASYNC_SET_ZONE(hass, **kwargs)
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.exception("Failed to register %s: %s", zone.get("id"), err)
+        return None
+
+    return entity_id
 
 
-async def write_zones_file(zones_path, data):
-    """Escribir en el archivo de zonas."""
+async def _async_remove_zone(hass, entity_id: str) -> None:
+    """Eliminar una zona personalizada mediante los helpers oficiales."""
+
+    if HA_ASYNC_REMOVE_ZONE is None:
+        _LOGGER.error(
+            "homeassistant.components.zone.async_remove_zone no está disponible; "
+            "no se puede eliminar la zona %s",
+            entity_id,
+        )
+        return
+
     try:
-        # Asegurar directorio existente
-        os.makedirs(os.path.dirname(zones_path), exist_ok=True)
-        async with aiofiles.open(zones_path, mode="w") as f:
-            await f.write(json.dumps(data, indent=4))
-    except Exception as e:  # noqa: BLE001
-        _LOGGER.error("Error writing zones file: %s", e)
+        await HA_ASYNC_REMOVE_ZONE(hass, entity_id)
+    except Exception as err:  # noqa: BLE001
+        _LOGGER.exception("Failed to unregister %s: %s", entity_id, err)
         raise
 
 
