@@ -10,14 +10,19 @@ import { t } from './i18n.js';
 const MAPLIBRE_VERSION = '3.5.2';
 const GEOCODER_ENDPOINT = 'https://nominatim.openstreetmap.org/search';
 
-const CDN = {
-    mapLibreCSS: `https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.css`,
-    mapLibreJS: `https://unpkg.com/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.js`,
+const LOCAL_LIB_PATH = '/ha-tracker/vendor/maplibre';
+
+const RESOURCES = {
+    mapLibreCSS: `${LOCAL_LIB_PATH}/maplibre-gl.css?v=${MAPLIBRE_VERSION}`,
+    mapLibreJS: `${LOCAL_LIB_PATH}/maplibre-gl.js?v=${MAPLIBRE_VERSION}`,
 };
 
+const TERRAIN_SOURCE_URL = 'https://demotiles.maplibre.org/terrain/source.json';
+
 async function ensureMapLibreLoaded() {
-    await loadCSSOnce(CDN.mapLibreCSS);
-    await loadScriptOnce(CDN.mapLibreJS, {
+    await loadCSSOnce(RESOURCES.mapLibreCSS, { matchPrefix: false });
+    await loadScriptOnce(RESOURCES.mapLibreJS, {
+        matchPrefix: false,
         test: () => typeof window.maplibregl !== 'undefined',
     });
 }
@@ -38,17 +43,11 @@ const BASE_STYLE_KEYS = {
     esri: 'esri',
 };
 
-const TERRAIN_SOURCE_URL = 'https://demotiles.maplibre.org/terrain/source.json';
-
-function createRasterStyle({ id, tiles, tileSize = 256, attribution, maxZoom = 19 }) {
+function createRasterStyle({ id, tiles, tileSize = 256, attribution, maxZoom = 19, useTerrain = false }) {
     return {
         version: 8,
         name: id,
         pitch: 0,
-        light: {
-            anchor: 'viewport',
-            intensity: 0.2,
-        },
         sources: {
             base: {
                 type: 'raster',
@@ -57,11 +56,15 @@ function createRasterStyle({ id, tiles, tileSize = 256, attribution, maxZoom = 1
                 maxzoom: maxZoom,
                 attribution,
             },
-            terrain: {
-                type: 'raster-dem',
-                url: TERRAIN_SOURCE_URL,
-                tileSize: 512,
-            },
+            ...(useTerrain
+                ? {
+                    terrain: {
+                        type: 'raster-dem',
+                        url: TERRAIN_SOURCE_URL,
+                        tileSize: 512,
+                    },
+                }
+                : {}),
         },
         layers: [
             {
@@ -76,22 +79,28 @@ function createRasterStyle({ id, tiles, tileSize = 256, attribution, maxZoom = 1
                 type: 'raster',
                 source: 'base',
             },
-            {
-                id: 'hillshade-layer',
-                type: 'hillshade',
-                source: 'terrain',
-                paint: {
-                    'hillshade-illumination-direction': 315,
-                    'hillshade-highlight-color': '#ffffff',
-                    'hillshade-shadow-color': '#44516c',
-                    'hillshade-exaggeration': 0.4,
-                },
-            },
+            ...(useTerrain
+                ? [
+                    {
+                        id: 'hillshade-layer',
+                        type: 'hillshade',
+                        source: 'terrain',
+                        paint: {
+                            'hillshade-illumination-direction': 315,
+                            'hillshade-highlight-color': '#ffffff',
+                            'hillshade-shadow-color': '#44516c',
+                            'hillshade-exaggeration': 0.4,
+                        },
+                    },
+                ]
+                : []),
         ],
-        terrain: {
-            source: 'terrain',
-            exaggeration: 1.2,
-        },
+        terrain: useTerrain
+            ? {
+                source: 'terrain',
+                exaggeration: 1.2,
+            }
+            : undefined,
         glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
     };
 }
@@ -114,6 +123,7 @@ const BASE_STYLES = {
                 'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
             ],
             attribution: '© OpenStreetMap contributors',
+            useTerrain: true,
         }),
         supportsTerrain: true,
     },
@@ -127,6 +137,7 @@ const BASE_STYLES = {
             ],
             attribution: '© Esri, Maxar, Earthstar Geographics',
             maxZoom: 19,
+            useTerrain: true,
         }),
         supportsTerrain: true,
     },
@@ -367,8 +378,8 @@ class MarkerAdapter {
         this.pane = options.pane ?? null;
         this.element = document.createElement('div');
         this.element.className = options.className || 'map-marker';
-        this.element.style.position = 'relative';
         this.element.style.pointerEvents = 'auto';
+        this.element.style.cursor = options.cursor || 'pointer';
         if (this.pane) {
             const paneStyle = getPaneStyle(this.pane);
             if (paneStyle?.pointerEvents)
@@ -1188,11 +1199,33 @@ export async function initMap() {
         map.setInstance(mapInstance);
 
         mapInstance.on('error', (event) => {
+            const error = event?.error ?? event ?? {};
+            const sourceId = error?.sourceId ?? event?.sourceId ?? event?.source?.id ?? '';
+            if (sourceId === 'terrain') {
+                console.warn('Terrain tiles failed to load, disabling relief layers', error);
+                try {
+                    if (mapInstance.getLayer('hillshade-layer'))
+                        mapInstance.removeLayer('hillshade-layer');
+                } catch (err) {
+                    console.debug('Unable to remove hillshade layer', err);
+                }
+                try {
+                    if (mapInstance.getSource('terrain'))
+                        mapInstance.removeSource('terrain');
+                } catch (err) {
+                    console.debug('Unable to remove terrain source', err);
+                }
+                try {
+                    mapInstance.setTerrain(null);
+                } catch (err) {
+                    console.debug('Unable to reset terrain configuration', err);
+                }
+                return;
+            }
             if (currentBaseKey === BASE_STYLE_KEYS.osm)
                 return;
-            const error = event?.error ?? event;
             const status = error?.status ?? error?.statusCode ?? error?.cause?.status ?? null;
-            const isStyleResource = error?.resourceType === 'style' || error?.sourceId === 'base';
+            const isStyleResource = error?.resourceType === 'style' || sourceId === 'base';
             const failedRequest = typeof error?.message === 'string' &&
                 /Failed to fetch|HTTP/.test(error.message);
             if (!isStyleResource && !failedRequest && ![401, 403, 404].includes(status))
