@@ -8,11 +8,12 @@ export let map;
 const v = '1.9.4';
 
 const CDN = {
-	leafletCSS: '/ha-tracker/vendor/leaflet/leaflet.css?v='+v,
-	leafletJS:  '/ha-tracker/vendor/leaflet/leaflet.js?v='+v,
-	geocoderCSS:'/ha-tracker/vendor/leaflet-control-geocoder/Control.Geocoder.css?v='+v,
-	geocoderJS: '/ha-tracker/vendor/leaflet-control-geocoder/Control.Geocoder.js?v='+v,
-	editableJS: '/ha-tracker/vendor/leaflet-editable/Leaflet.Editable.min.js?v='+v,
+        leafletCSS: '/ha-tracker/vendor/leaflet/leaflet.css?v='+v,
+        leafletJS:  '/ha-tracker/vendor/leaflet/leaflet.js?v='+v,
+        geocoderCSS:'/ha-tracker/vendor/leaflet-control-geocoder/Control.Geocoder.css?v='+v,
+        geocoderJS: '/ha-tracker/vendor/leaflet-control-geocoder/Control.Geocoder.js?v='+v,
+        editableJS: '/ha-tracker/vendor/leaflet-editable/Leaflet.Editable.min.js?v='+v,
+        mapLibreLeafletJS: 'https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.3/leaflet-maplibre-gl.js',
 };
 
 async function ensureLeafletLoaded() {
