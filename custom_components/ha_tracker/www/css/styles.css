@@ -463,7 +463,7 @@ td {
 
 .geocoder-control form {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 6px;
 }
 
@@ -472,6 +472,15 @@ td {
   border-radius: 6px;
   padding: 6px 8px;
   font: inherit;
+  flex: 1;
+}
+
+.geocoder-control .geocoder-submit {
+  min-width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
 }
 
 .geocoder-results {

@@ -155,9 +155,20 @@ function lngLatFromLatLng([lat, lng]) {
 function latLngFromLngLat(lngLat) {
     if (!lngLat)
         return { lat: 0, lng: 0 };
-    if (Array.isArray(lngLat))
-        return { lat: lngLat[1], lng: lngLat[0] };
-    return { lat: lngLat.lat, lng: lngLat.lng };
+    if (Array.isArray(lngLat)) {
+        const lat = Number(lngLat[1]);
+        const lng = Number(lngLat[0]);
+        return {
+            lat: Number.isFinite(lat) ? lat : 0,
+            lng: Number.isFinite(lng) ? lng : 0,
+        };
+    }
+    const lat = Number(lngLat.lat);
+    const lng = Number(lngLat.lng);
+    return {
+        lat: Number.isFinite(lat) ? lat : 0,
+        lng: Number.isFinite(lng) ? lng : 0,
+    };
 }
 
 function clampPitch(value) {
@@ -165,11 +176,24 @@ function clampPitch(value) {
 }
 
 function createCirclePolygon([lat, lng], radiusMeters, steps = 64) {
+    const latNum = Number(lat);
+    const lngNum = Number(lng);
+    const radius = Number(radiusMeters);
+    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum) || !Number.isFinite(radius))
+        return {
+            type: 'Feature',
+            geometry: {
+                type: 'Polygon',
+                coordinates: [],
+            },
+            properties: {},
+        };
+
     const coordinates = [];
     const earthRadius = 6378137;
-    const angularDistance = radiusMeters / earthRadius;
-    const latRad = lat * Math.PI / 180;
-    const lngRad = lng * Math.PI / 180;
+    const angularDistance = radius / earthRadius;
+    const latRad = latNum * Math.PI / 180;
+    const lngRad = lngNum * Math.PI / 180;
 
     for (let step = 0; step <= steps; step++) {
         const bearing = (step / steps) * 2 * Math.PI;
@@ -247,8 +271,12 @@ class MapFacade {
     setView([lat, lng], zoom, options = {}) {
         if (!mapInstance)
             return;
+        const latNum = Number(lat);
+        const lngNum = Number(lng);
+        if (!Number.isFinite(latNum) || !Number.isFinite(lngNum))
+            return;
         mapInstance.easeTo({
-            center: [lng, lat],
+            center: [lngNum, latNum],
             zoom: zoom ?? mapInstance.getZoom(),
             duration: options.animate === false ? 0 : 500,
         });
@@ -374,7 +402,11 @@ class MarkerAdapter {
     }
 
     setLatLng([lat, lng]) {
-        this.marker.setLngLat([lng, lat]);
+        const latNum = Number(lat);
+        const lngNum = Number(lng);
+        if (!Number.isFinite(latNum) || !Number.isFinite(lngNum))
+            return this;
+        this.marker.setLngLat([lngNum, latNum]);
         return this;
     }
 
@@ -389,13 +421,23 @@ class MarkerAdapter {
         if (icon?.html != null)
             this.element.innerHTML = icon.html;
         if (Array.isArray(icon?.iconSize)) {
-            const [w, h] = icon.iconSize;
+            const [w, h] = icon.iconSize.map((value) => Number(value) || 0);
+            this._iconSize = [w, h];
             this.element.style.width = `${w}px`;
             this.element.style.height = `${h}px`;
+        } else {
+            this._iconSize = null;
+            this.element.style.removeProperty('width');
+            this.element.style.removeProperty('height');
         }
         if (Array.isArray(icon?.iconAnchor)) {
-            const [ax, ay] = icon.iconAnchor;
-            this.marker.setOffset([-ax, -ay]);
+            const [axRaw, ayRaw] = icon.iconAnchor;
+            const ax = Number(axRaw) || 0;
+            const ay = Number(ayRaw) || 0;
+            const [w, h] = this._iconSize ?? [0, 0];
+            const offsetX = (w / 2) - ax;
+            const offsetY = (h / 2) - ay;
+            this.marker.setOffset([offsetX, offsetY]);
         } else {
             this.marker.setOffset([0, 0]);
         }
@@ -420,7 +462,18 @@ class MarkerAdapter {
     bindPopup(content, options = {}) {
         if (!this.popup)
             this.popup = new PopupAdapter(options);
+        else if (options)
+            this.popup.updateOptions(options);
         this.popup.setContent(content);
+        if (Array.isArray(this.icon?.popupAnchor)) {
+            const [pxRaw, pyRaw] = this.icon.popupAnchor;
+            const px = Number(pxRaw) || 0;
+            const py = Number(pyRaw) || 0;
+            const [w, h] = this._iconSize ?? [0, 0];
+            const offsetX = (w / 2) - px;
+            const offsetY = (h / 2) - py;
+            this.popup.setOffset([offsetX, offsetY]);
+        }
         this.marker.setPopup(this.popup.popup);
         return this;
     }
@@ -462,6 +515,18 @@ class PopupAdapter {
         });
     }
 
+    updateOptions(options = {}) {
+        this.options = { ...this.options, ...options };
+        if (Object.prototype.hasOwnProperty.call(options, 'maxWidth'))
+            this.popup.setMaxWidth(String(options.maxWidth));
+        if (Object.prototype.hasOwnProperty.call(options, 'offset'))
+            this.setOffset(options.offset);
+        if (Object.prototype.hasOwnProperty.call(options, 'closeOnClick'))
+            this.popup.options.closeOnClick = options.closeOnClick !== false;
+        if (Object.prototype.hasOwnProperty.call(options, 'closeButton'))
+            this.popup.options.closeButton = options.closeButton !== false;
+    }
+
     setContent(content) {
         this.content = content;
         if (typeof content === 'string')
@@ -475,8 +540,26 @@ class PopupAdapter {
         return this.content;
     }
 
+    setOffset(offset) {
+        if (offset == null)
+            return this;
+        let normalized = offset;
+        if (Array.isArray(offset)) {
+            const [xRaw, yRaw] = offset;
+            const x = Number(xRaw) || 0;
+            const y = Number(yRaw) || 0;
+            normalized = [x, y];
+        }
+        this.popup.setOffset(normalized);
+        return this;
+    }
+
     setLatLng([lat, lng]) {
-        this.popup.setLngLat([lng, lat]);
+        const latNum = Number(lat);
+        const lngNum = Number(lng);
+        if (!Number.isFinite(latNum) || !Number.isFinite(lngNum))
+            return this;
+        this.popup.setLngLat([lngNum, latNum]);
         return this;
     }
 
@@ -493,8 +576,13 @@ class PopupAdapter {
         return this;
     }
 
-    openOn() {
-        this.addTo(map.instance);
+    openOn(target) {
+        if (target?.instance)
+            this.addTo(target.instance);
+        else if (target)
+            this.addTo(target);
+        else
+            this.addTo(map.instance);
         return this;
     }
 
@@ -512,8 +600,13 @@ let circleIdCounter = 0;
 class CircleAdapter {
     constructor([lat, lng], options = {}) {
         this.id = `circle-${++circleIdCounter}`;
-        this.center = { lat, lng };
-        this.radius = options.radius ?? 100;
+        const latNum = Number(lat);
+        const lngNum = Number(lng);
+        this.center = {
+            lat: Number.isFinite(latNum) ? latNum : 0,
+            lng: Number.isFinite(lngNum) ? lngNum : 0,
+        };
+        this.radius = Number.isFinite(Number(options.radius)) ? Number(options.radius) : 100;
         this.color = options.color ?? '#3388ff';
         this.fillColor = options.fillColor ?? 'rgba(51,136,255,0.2)';
         this.fillOpacity = options.fillOpacity ?? 0.5;
@@ -521,6 +614,7 @@ class CircleAdapter {
         this.pane = options.pane ?? null;
         this.map = null;
         this.popup = null;
+        this.popupWasOpen = false;
         this.events = new Map();
         this._activeBindings = [];
         this.options = {
@@ -547,6 +641,8 @@ class CircleAdapter {
         this.removeLayers();
 
         const feature = createCirclePolygon([this.center.lat, this.center.lng], this.radius);
+        if (!feature?.geometry?.coordinates?.length)
+            return;
         this.sourceId = `${this.id}-source`;
         this.fillLayerId = `${this.id}-fill`;
         this.strokeLayerId = `${this.id}-stroke`;
@@ -737,7 +833,7 @@ let polylineIdCounter = 0;
 class PolylineAdapter {
     constructor(coords, options = {}) {
         this.id = `polyline-${++polylineIdCounter}`;
-        this.coords = coords;
+        this.coords = Array.isArray(coords) ? coords : [];
         this.color = options.color ?? '#3388ff';
         this.weight = options.weight ?? 4;
         this.opacity = options.opacity ?? 1;
@@ -765,11 +861,18 @@ class PolylineAdapter {
         this.sourceId = `${this.id}-source`;
         this.layerId = `${this.id}-layer`;
 
+        const coordinates = this.coords
+            .map(([lat, lng]) => [Number(lng), Number(lat)])
+            .filter(([lng, lat]) => Number.isFinite(lat) && Number.isFinite(lng));
+
+        if (!coordinates.length)
+            return;
+
         const feature = {
             type: 'Feature',
             geometry: {
                 type: 'LineString',
-                coordinates: this.coords.map(([lat, lng]) => [lng, lat]),
+                coordinates,
             },
             properties: {},
         };
@@ -783,12 +886,14 @@ class PolylineAdapter {
             id: this.layerId,
             type: 'line',
             source: this.sourceId,
+            layout: {
+                'line-cap': this.lineCap,
+                'line-join': this.lineJoin,
+            },
             paint: {
                 'line-color': this.color,
                 'line-width': this.weight,
                 'line-opacity': this.opacity,
-                'line-cap': this.lineCap,
-                'line-join': this.lineJoin,
             },
         });
     }
@@ -893,7 +998,14 @@ function createPitchControl() {
     button.textContent = '3D';
 
     const updateState = () => {
-        button.classList.toggle('active', currentPitch > 0);
+        button.classList.toggle('active', currentPitch > 0.1);
+    };
+
+    const syncPitchFromMap = () => {
+        if (!map.instance)
+            return;
+        currentPitch = clampPitch(map.instance.getPitch?.() ?? currentPitch);
+        updateState();
     };
 
     button.addEventListener('click', () => {
@@ -907,8 +1019,20 @@ function createPitchControl() {
     container.appendChild(button);
 
     return {
-        onAdd: () => container,
-        onRemove: () => container.remove(),
+        onAdd: () => {
+            if (map.instance) {
+                map.instance.on('pitchend', syncPitchFromMap);
+                map.instance.on('load', syncPitchFromMap);
+            }
+            return container;
+        },
+        onRemove: () => {
+            if (map.instance) {
+                map.instance.off('pitchend', syncPitchFromMap);
+                map.instance.off('load', syncPitchFromMap);
+            }
+            container.remove();
+        },
     };
 }
 
@@ -929,6 +1053,13 @@ function createGeocoderControl() {
     input.placeholder = t('search_place') || 'Search';
     input.setAttribute('aria-label', input.placeholder);
     form.appendChild(input);
+
+    const submit = document.createElement('button');
+    submit.type = 'submit';
+    submit.className = 'geocoder-submit';
+    submit.title = input.placeholder;
+    submit.textContent = '🔍';
+    form.appendChild(submit);
 
     const results = document.createElement('div');
     results.className = 'geocoder-results';
