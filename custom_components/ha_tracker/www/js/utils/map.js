@@ -132,7 +132,8 @@ const BASE_STYLES = {
     },
 };
 
-let currentBaseKey = BASE_STYLE_KEYS.openfreemap;
+let currentBaseKey = BASE_STYLE_KEYS.osm;
+const baseLayerRadios = new Map();
 
 function ensurePane(name) {
     if (!panes.has(name)) {
@@ -811,6 +812,28 @@ class PolylineAdapter {
 // Base layer control
 // -----------------------------------------------------------------------------
 
+function updateBaseLayerSelection(selectedKey) {
+    baseLayerRadios.forEach((input, key) => {
+        input.checked = key === selectedKey;
+    });
+}
+
+function cloneStyleDefinition(definition) {
+    return typeof definition === 'string' ? definition : JSON.parse(JSON.stringify(definition));
+}
+
+function applyBaseStyle(styleKey, { updateSelection = true } = {}) {
+    if (!map.instance)
+        return;
+    const style = BASE_STYLES[styleKey];
+    if (!style)
+        return;
+    currentBaseKey = styleKey;
+    map.instance.setStyle(cloneStyleDefinition(style.style));
+    if (updateSelection)
+        updateBaseLayerSelection(styleKey);
+}
+
 function createBaseLayerControl() {
     const container = document.createElement('div');
     container.className = 'maplibre-control maplibre-ctrl maplibre-ctrl-group base-layer-control';
@@ -828,12 +851,12 @@ function createBaseLayerControl() {
         input.name = 'base-layer';
         input.value = style.key;
         input.checked = style.key === currentBaseKey;
+        baseLayerRadios.set(style.key, input);
 
         input.addEventListener('change', () => {
             if (!input.checked)
                 return;
-            currentBaseKey = style.key;
-            map.instance?.setStyle(style.style);
+            applyBaseStyle(style.key, { updateSelection: false });
         });
 
         const span = document.createElement('span');
@@ -847,6 +870,7 @@ function createBaseLayerControl() {
     return {
         onAdd: () => container,
         onRemove: () => {
+            baseLayerRadios.clear();
             container.remove();
         },
     };
@@ -1021,7 +1045,7 @@ export async function initMap() {
 
         mapInstance = new maplibregl.Map({
             container: 'map',
-            style: BASE_STYLES[currentBaseKey].style,
+            style: cloneStyleDefinition(BASE_STYLES[currentBaseKey].style),
             center: defaultCenter,
             zoom: 6,
             pitch: 0,
@@ -1031,6 +1055,20 @@ export async function initMap() {
         });
 
         map.setInstance(mapInstance);
+
+        mapInstance.on('error', (event) => {
+            if (currentBaseKey === BASE_STYLE_KEYS.osm)
+                return;
+            const error = event?.error ?? event;
+            const status = error?.status ?? error?.statusCode ?? error?.cause?.status ?? null;
+            const isStyleResource = error?.resourceType === 'style' || error?.sourceId === 'base';
+            const failedRequest = typeof error?.message === 'string' &&
+                /Failed to fetch|HTTP/.test(error.message);
+            if (!isStyleResource && !failedRequest && ![401, 403, 404].includes(status))
+                return;
+            console.warn('Falling back to OpenStreetMap base layer after style load error', error);
+            applyBaseStyle(BASE_STYLE_KEYS.osm);
+        });
 
         mapInstance.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
         mapInstance.addControl(new maplibregl.ScaleControl({ maxWidth: 200, unit: 'metric' }), 'bottom-left');
