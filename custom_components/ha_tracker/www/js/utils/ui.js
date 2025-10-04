@@ -1,10 +1,10 @@
 
 import { t } from './i18n.js';
-import { map } from './map.js';
+import { map, invalidateMapSize } from './map.js';
 import { use_imperial, SHOW_VISITS } from '../globals.js';
 import { updateZoneActionButtons } from '../screens/zones.js';
 
-const invalidateSoon = () => requestAnimationFrame(() => map?.invalidateSize(true));
+const invalidateSoon = () => requestAnimationFrame(() => invalidateMapSize({ hard: true }));
 
 export async function loadUI() {
     try {

@@ -3,7 +3,7 @@
 //
 
 import { isAdmin, fmt0, use_imperial, DEFAULT_COLOR, DEFAULT_ALPHA } from '../globals.js';
-import { map, getDistanceFromLatLonInMeters } from '../utils/map.js';
+import { map, getDistanceFromLatLonInMeters, focusMapOn, invalidateMapSize, adjustToDefault3DPitch } from '../utils/map.js';
 import { deleteZone, updateZone, createZone, fetchZones } from '../ha/fetch.js';
 import { updatePersonsTable } from '../screens/persons.js';
 import { t, tWithVars } from '../utils/i18n.js';
@@ -205,6 +205,7 @@ async function updateZoneMarkers() {
                 map.fitBounds(circle.getBounds(), {
                     padding: [24, 24]
                 });
+                adjustToDefault3DPitch({ animate: false });
 
                 // Abre el popup del círculo
                 circle.openPopup();
@@ -680,7 +681,9 @@ export async function showZone(idZone) {
   const key = String(idZone);
   const circle = zoneMarkers[key];
   if (circle) {
-    map.setView(circle.getLatLng(), map.getZoom());
+    invalidateMapSize();
+    const ll = circle.getLatLng();
+    focusMapOn(ll.lat, ll.lng, { ensure3d: true });
     circle.openPopup();
   } else {
     console.error("Marker for zone not found:", key);
@@ -805,6 +808,7 @@ async function updateZonesTable() {
                 map.fitBounds(circleBounds, {
                     padding: [24, 24]
                 });
+                adjustToDefault3DPitch({ animate: false });
                 marker.openPopup(); // Mostrar el popup
             } else {
                 console.error("No marker found for the zone:", id);

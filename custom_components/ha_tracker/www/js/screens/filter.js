@@ -2,7 +2,7 @@
 // FILTER
 //
 
-import { map } from '../utils/map.js';
+import { map, focusMapOn, invalidateMapSize, adjustToDefault3DPitch } from '../utils/map.js';
 import { formatDate, fmt0, fmt2, use_imperial, DEFAULT_ALPHA } from '../globals.js';
 import { fetchFilteredPositions, fetchResetReverseGeocodeCache } from '../ha/fetch.js';
 import { handleZonePosition, showZone, getZoneStyleById } from '../screens/zones.js';
@@ -768,8 +768,8 @@ function openInfoPopup(lat, lon, lastUpdated, speed, isStop = false) {
         .setContent(html)
         .openOn(map);
 
-    map.invalidateSize();
-    map.setView([lat, lon], map.getZoom());
+    invalidateMapSize();
+    focusMapOn(lat, lon, { ensure3d: true });
 }
 
 function closeInfoPopup() {
@@ -922,6 +922,7 @@ async function addRouteLine(
     }
 
     map.fitBounds(L.latLngBounds(coords));
+    adjustToDefault3DPitch({ animate: false });
 }
 
 // Curva Catmull-Rom centrípeta que INTERPOLA los puntos (pasa por ellos)

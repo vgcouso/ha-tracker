@@ -137,6 +137,60 @@ body.loaded {
   z-index: 0;
 }
 
+.pitch-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  gap: 2px;
+  min-width: 40px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.pitch-control__label {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  color: #1e293b;
+}
+
+.pitch-control__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  text-decoration: none;
+  border-top: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.pitch-control__btn:first-of-type {
+  border-top: none;
+}
+
+.pitch-control__btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.pitch-control__btn:hover {
+  background: color-mix(in srgb, #e2e8f0 88%, white 12%);
+}
+
+.pitch-control--disabled,
+.pitch-control--disabled .pitch-control__btn {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.pitch-control--disabled .pitch-control__btn {
+  pointer-events: none;
+}
+
 /* ===== Panel lateral de formularios ===== */
 #forms-container {
   width: 400px;

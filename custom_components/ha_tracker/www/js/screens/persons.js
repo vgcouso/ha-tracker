@@ -5,7 +5,7 @@
 import { formatDate, geocodeTime, geocodeDistance, use_imperial, DEFAULT_ALPHA } from '../globals.js';
 import { fetchPersons, fetchDevices } from '../ha/fetch.js';
 import { handleZonePosition } from '../screens/zones.js';
-import { map, isValidCoordinates, getDistanceFromLatLonInMeters } from '../utils/map.js';
+import { map, isValidCoordinates, getDistanceFromLatLonInMeters, focusMapOn, invalidateMapSize, adjustToDefault3DPitch } from '../utils/map.js';
 import { t } from '../utils/i18n.js';
 import { requestAddress, cancelAddress } from '../utils/geocode.js';
 import { toRgba } from '../utils/dialogs.js';
@@ -147,8 +147,8 @@ export async function handlePersonsSelection(personId) {
     }
 
     selectedPerson.openPopup();
-    map.invalidateSize();
-    map.setView([lat, lng], map.getZoom());
+    invalidateMapSize();
+    focusMapOn(lat, lng, { ensure3d: true });
 }
 
 export function updatePersonsFilter() {
@@ -207,6 +207,7 @@ export async function fitMapToAllPersons() {
 
         const bounds = L.latLngBounds(coords);
         map.fitBounds(bounds);
+        adjustToDefault3DPitch({ animate: false });
     } catch (error) {
         console.error("Error doing fitMapToAllDevices:", error);
     }
@@ -304,9 +305,9 @@ async function updatePersonsMarkers() {
                 })
                 .on('click', async() => {
                     await handlePersonRowSelection(personId);
-                    map.invalidateSize();
+                    invalidateMapSize();
                     const ll = personsMarkers[personId].getLatLng();
-                    map.setView(ll, map.getZoom());
+                    focusMapOn(ll.lat, ll.lng, { ensure3d: true });
                     personsMarkers[personId].openPopup();
                 });
         }
