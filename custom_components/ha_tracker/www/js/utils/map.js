@@ -507,6 +507,16 @@ export async function initMap() {
 
         } catch (error) {
                 console.error('Error starting map:', error);
+
+                try {
+                        map?.remove?.();
+                } catch (cleanupError) {
+                        console.warn('Error while cleaning up failed map instance:', cleanupError);
+                } finally {
+                        map = undefined;
+                }
+
+                throw error;
         }
 }
 
