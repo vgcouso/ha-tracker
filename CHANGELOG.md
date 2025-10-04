@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
 
+## [0.0.34] - 2025-10-
+
+### Changes
+- Traccar Server Integration #31
+
+### Fixed
+- 
+
+
 ## [0.0.33] - 2025-10-02
 
 ### Changes

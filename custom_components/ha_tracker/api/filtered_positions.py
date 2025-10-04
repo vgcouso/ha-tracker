@@ -199,12 +199,20 @@ def filter_positions(
 
         attrs = dict(state.attributes)
 
-        # OwnTracks: 'velocity' (km/h) -> 'speed' (m/s) si falta 'speed'
-        if "velocity" in attrs and "speed" not in attrs:
-            try:
-                attrs["speed"] = round(float(attrs.pop("velocity")) / 3.6, 2)
-            except (TypeError, ValueError):
-                pass
+        # speedMps / velocity -> speed (m/s)
+        if "speed" not in attrs:
+            # Prioridad: speedMps (ya viene en m/s)
+            if "speedMps" in attrs:
+                try:
+                    attrs["speed"] = round(float(attrs["speedMps"]), 2)
+                except (TypeError, ValueError):
+                    pass
+            # Alternativa: OwnTracks "velocity" (km/h -> m/s)
+            elif "velocity" in attrs:
+                try:
+                    attrs["speed"] = round(float(attrs.pop("velocity")) / 3.6, 2)
+                except (TypeError, ValueError):
+                    pass
 
        # Normaliza speed: si es numérica y < 0 -> 0.0
         try:
@@ -823,13 +831,14 @@ def _calc_summary(positions):
         except Exception:
             pass
 
-    # Velocidad máxima desde atributos (sin cambios)
+    # Velocidad máxima desde atributos (m/s)
     speeds = []
     for p in positions:
-        v = p.get("attributes", {}).get("speed")
+        a = p.get("attributes", {}) or {}
+        v = a.get("speed", a.get("speedMps"))  # fallback a speedMps
         try:
             v = float(v)
-            if math.isfinite(v) and v >= 0:     # ignora negativas
+            if math.isfinite(v) and v >= 0:
                 speeds.append(v)
         except Exception:
             pass

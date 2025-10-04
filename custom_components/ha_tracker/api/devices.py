@@ -99,14 +99,20 @@ class DevicesEndpoint(HomeAssistantView):
             
             attrs = dict(device.attributes)
             
-            # velocity -> speed (OwnTracks)
-            if "velocity" in attrs and "speed" not in attrs:
-                try:
-                    # OwnTracks: km/h -> m/s
-                    attrs["speed"] = round(float(attrs.pop("velocity")) / 3.6, 2)
-                except (TypeError, ValueError):
-                    # Si no es numérico, no tocamos nada
-                    pass
+            # velocity / speedMps -> speed (m/s)
+            if "speed" not in attrs:
+                # Prioridad: speedMps (ya en m/s)
+                if "speedMps" in attrs:
+                    try:
+                        attrs["speed"] = round(float(attrs["speedMps"]), 2)
+                    except (TypeError, ValueError):
+                        pass
+                # Alternativa: OwnTracks "velocity" (km/h -> m/s)
+                elif "velocity" in attrs:
+                    try:
+                        attrs["speed"] = round(float(attrs.pop("velocity")) / 3.6, 2)
+                    except (TypeError, ValueError):
+                        pass
 
             # Normaliza "speed": si es negativa, ponla a 0.0
             try:
@@ -125,6 +131,7 @@ class DevicesEndpoint(HomeAssistantView):
                 or device.attributes.get("battery_state")  # <- extra
                 or device.attributes.get("battery")
                 or device.attributes.get("bat")
+                or device.attributes.get("batteryLevel")
             )
 
             # Si no viene en atributos, intenta con el sensor sensor.<friendly>_battery_level
