@@ -5,7 +5,7 @@
 import { formatDate, geocodeTime, geocodeDistance, use_imperial, DEFAULT_ALPHA } from '../globals.js';
 import { fetchPersons, fetchDevices } from '../ha/fetch.js';
 import { handleZonePosition } from '../screens/zones.js';
-import { map, isValidCoordinates, getDistanceFromLatLonInMeters } from '../utils/map.js';
+import { map, isValidCoordinates, getDistanceFromLatLonInMeters, createMarker, createDivIcon, latLngBounds } from '../utils/map.js';
 import { t } from '../utils/i18n.js';
 import { requestAddress, cancelAddress } from '../utils/geocode.js';
 import { toRgba } from '../utils/dialogs.js';
@@ -205,8 +205,9 @@ export async function fitMapToAllPersons() {
             return;
         }
 
-        const bounds = L.latLngBounds(coords);
-        map.fitBounds(bounds);
+        const bounds = latLngBounds(coords);
+        if (bounds)
+            map.fitBounds(bounds);
     } catch (error) {
         console.error("Error doing fitMapToAllDevices:", error);
     }
@@ -278,8 +279,8 @@ async function updatePersonsMarkers() {
 		  <br><br><a href="${mapsUrl}" target="_blank" rel="noopener noreferrer"><strong>${t('open_location')}</strong></a>
 		`;
 
-        const markerIcon = L.divIcon({
-            className: '',
+        const markerIcon = createDivIcon({
+            className: 'person-marker',
             html: `<img src="${iconUrl}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;" />`,
             iconSize: [48, 48],
             iconAnchor: [24, 24],
@@ -294,21 +295,21 @@ async function updatePersonsMarkers() {
             if (p) p.setContent(popupContent);
             else existing.bindPopup(popupContent, { autoPan: false });
         } else {
-            personsMarkers[personId] = L.marker([latitude, longitude], {
+            personsMarkers[personId] = createMarker([latitude, longitude], {
                 icon: markerIcon,
-                pane: 'personsMarkers'
+                pane: 'personsMarkers',
             })
-                .addTo(map)
                 .bindPopup(popupContent, {
-                    autoPan: false
-                })
-                .on('click', async() => {
-                    await handlePersonRowSelection(personId);
-                    map.invalidateSize();
-                    const ll = personsMarkers[personId].getLatLng();
-                    map.setView(ll, map.getZoom());
-                    personsMarkers[personId].openPopup();
+                    closeOnClick: true,
                 });
+
+            personsMarkers[personId].on('click', async() => {
+                await handlePersonRowSelection(personId);
+                map.invalidateSize();
+                const ll = personsMarkers[personId].getLatLng();
+                map.setView([ll.lat, ll.lng], map.getZoom());
+                personsMarkers[personId].openPopup();
+            });
         }
     });
 }

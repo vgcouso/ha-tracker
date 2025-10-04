@@ -3,7 +3,7 @@
 //
 
 import { isAdmin, fmt0, use_imperial, DEFAULT_COLOR, DEFAULT_ALPHA } from '../globals.js';
-import { map, getDistanceFromLatLonInMeters } from '../utils/map.js';
+import { map, getDistanceFromLatLonInMeters, createCircle } from '../utils/map.js';
 import { deleteZone, updateZone, createZone, fetchZones } from '../ha/fetch.js';
 import { updatePersonsTable } from '../screens/persons.js';
 import { t, tWithVars } from '../utils/i18n.js';
@@ -175,23 +175,16 @@ async function updateZoneMarkers() {
             delete zoneMarkers[key];
         }
 
-        const circle = L.circle([latitude, longitude], {
+        const circle = createCircle([latitude, longitude], {
             radius,
-            color: strokeColor, // borde en hex
-            fillColor, // relleno rgba(...)
-            fillOpacity: 1, // ya llevamos la alpha en fillColor
+            color: strokeColor,
+            fillColor,
+            fillOpacity: 1,
             opacity: 0.8,
             pane: 'circlePane',
-        }).addTo(map);
-
-        // Habilitar edición si existe leaflet-editable
-        if (isAdmin && custom && typeof circle.enableEdit === 'function') {
-            circle.enableEdit();
-        }
-
-        circle.bindPopup(buildZonePopup(zone), {
-            autoPan: false
         });
+
+        circle.bindPopup(buildZonePopup(zone));
 
         // Si el popup estaba abierto, abrirlo de nuevo con el contenido actualizado
         if (isPopupOpen) {

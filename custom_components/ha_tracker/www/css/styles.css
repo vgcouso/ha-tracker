@@ -404,6 +404,103 @@ td {
   overflow-y: auto;
 }
 
+/* ===== MapLibre controls ===== */
+.maplibre-ctrl {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35);
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 13px;
+  overflow: hidden;
+}
+
+.maplibre-ctrl button {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 10px;
+}
+
+.maplibre-ctrl button:hover,
+.maplibre-ctrl button:focus-visible {
+  background: rgba(59, 130, 246, 0.15);
+  outline: none;
+}
+
+.pitch-control .pitch-toggle.active {
+  font-weight: 600;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.base-layer-control {
+  padding: 6px 10px;
+}
+
+.base-layer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.base-layer-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.base-layer-option input[type="radio"] {
+  accent-color: var(--brand-1);
+}
+
+.geocoder-control {
+  padding: 8px;
+  min-width: 220px;
+}
+
+.geocoder-control form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.geocoder-control input[type="search"] {
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+}
+
+.geocoder-results {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.geocoder-result-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.geocoder-result-list button {
+  width: 100%;
+  text-align: left;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.geocoder-result-list button:hover,
+.geocoder-result-list button:focus-visible {
+  background: rgba(59, 130, 246, 0.15);
+  outline: none;
+}
+
 /* ====== Modales & Toasts ====== */
 body.no-scroll { overflow: hidden; }
 

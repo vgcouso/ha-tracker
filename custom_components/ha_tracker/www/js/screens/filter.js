@@ -2,7 +2,7 @@
 // FILTER
 //
 
-import { map } from '../utils/map.js';
+import { map, createMarker, createDivIcon, createPopup, createPolyline, latLngBounds, removeOverlay } from '../utils/map.js';
 import { formatDate, fmt0, fmt2, use_imperial, DEFAULT_ALPHA } from '../globals.js';
 import { fetchFilteredPositions, fetchResetReverseGeocodeCache } from '../ha/fetch.js';
 import { handleZonePosition, showZone, getZoneStyleById } from '../screens/zones.js';
@@ -510,29 +510,29 @@ async function addFilterMarkers(positions) {
             return;
 
         const icon = pos.stop
-             ? L.icon({
-                iconUrl: STOP_ICON_24_24,
+             ? {
+                className: 'filter-stop-icon',
+                html: `<img src="${STOP_ICON_24_24}" alt="stop" style="width:24px;height:24px;"/>`,
                 iconSize: [24, 24],
-                iconAnchor: [12, 12]
-            })
-             : L.divIcon({
-                className: '',
-                html: `<div style="
-            width:10px;height:10px;border:1px solid rgba(0,0,255,0.8);
-            border-radius:50%;background-color: rgba(0,0,255,0.5);
-          "></div>`,
+                iconAnchor: [12, 12],
+            }
+             : {
+                className: 'filter-point-icon',
+                html: `<div style="width:10px;height:10px;border:1px solid rgba(0,0,255,0.8);border-radius:50%;background-color: rgba(0,0,255,0.5);"></div>`,
                 iconSize: [10, 10],
                 iconAnchor: [5, 5],
-            });
+            };
 
-        const marker = L.marker([lat, lon], {
-            icon,
-            pane: 'filterMarkers'
+        const marker = createMarker([lat, lon], {
+            icon: createDivIcon(icon),
+            pane: 'filterMarkers',
         });
         marker.isStop = !!pos.stop;
 
-        if (pos.stop || map.getZoom() >= minZoomToShow)
-            marker.addTo(map);
+        if (!pos.stop && map.getZoom() < minZoomToShow)
+            marker.setVisible(false);
+        else
+            marker.setVisible(true);
         if (pos.stop)
             marker.setZIndexOffset(50);
 
@@ -657,7 +657,7 @@ export async function resetFilter(resetCalendar = true, resetUsers = true) {
     // Marcadores
     filterMarkers.forEach(marker => {
         try {
-            map.removeLayer(marker);
+            removeOverlay(marker);
         } catch {}
     });
     filterMarkers = [];
@@ -666,14 +666,14 @@ export async function resetFilter(resetCalendar = true, resetUsers = true) {
     if (window.routeLineSegments) {
         window.routeLineSegments.forEach(seg => {
             try {
-                map.removeLayer(seg);
+                removeOverlay(seg);
             } catch {}
         });
         window.routeLineSegments = [];
     }
     if (window.routeOutline) {
         try {
-            map.removeLayer(window.routeOutline);
+            removeOverlay(window.routeOutline);
         } catch {}
         window.routeOutline = null;
     }
@@ -761,12 +761,13 @@ function openInfoPopup(lat, lon, lastUpdated, speed, isStop = false) {
     if (currentPopup)
         currentPopup.remove();
 
-    currentPopup = L.popup({
-        autoPan: true
+    currentPopup = createPopup({
+        closeOnClick: true,
     })
         .setLatLng([lat, lon])
-        .setContent(html)
-        .openOn(map);
+        .setContent(html);
+
+    currentPopup.openOn(map);
 
     map.invalidateSize();
     map.setView([lat, lon], map.getZoom());
@@ -869,14 +870,14 @@ async function addRouteLine(
     if (window.routeLineSegments) {
         window.routeLineSegments.forEach(seg => {
             try {
-                map.removeLayer(seg);
+                removeOverlay(seg);
             } catch {}
         });
     }
     window.routeLineSegments = [];
     if (window.routeOutline) {
         try {
-            map.removeLayer(window.routeOutline);
+            removeOverlay(window.routeOutline);
         } catch {}
         window.routeOutline = null;
     }
@@ -900,28 +901,30 @@ async function addRouteLine(
         const p0 = coords[i],
         p1 = coords[i + 1];
 
-        const segmentOutline = L.polyline([p0, p1], {
+        const segmentOutline = createPolyline([p0, p1], {
             color: outlineColor,
             weight: outlineWeight,
             opacity: 1,
             lineCap: 'round',
             lineJoin: 'round',
             pane: 'routeOutline',
-        }).addTo(map);
+        });
         window.routeLineSegments.push(segmentOutline);
 
-        const segmentColor = L.polyline([p0, p1], {
+        const segmentColor = createPolyline([p0, p1], {
             color,
             weight: lineWeight,
             opacity: 1,
             lineCap: 'round',
             lineJoin: 'round',
-            pane: 'routeColor'
-        }).addTo(map);
+            pane: 'routeColor',
+        });
         window.routeLineSegments.push(segmentColor);
     }
 
-    map.fitBounds(L.latLngBounds(coords));
+    const bounds = latLngBounds(coords);
+    if (bounds)
+        map.fitBounds(bounds);
 }
 
 // Curva Catmull-Rom centrípeta que INTERPOLA los puntos (pasa por ellos)
@@ -1635,12 +1638,7 @@ let _zoomHandlerBound = false;
 function _zoomHandler() {
     const zoom = map.getZoom();
     filterMarkers.forEach(marker => {
-        if (!marker.isStop) {
-            const onMap = map.hasLayer(marker);
-            if (zoom >= MIN_ZOOM_TO_SHOW && !onMap)
-                marker.addTo(map);
-            else if (zoom < MIN_ZOOM_TO_SHOW && onMap)
-                map.removeLayer(marker);
-        }
+        if (!marker.isStop)
+            marker.setVisible(zoom >= MIN_ZOOM_TO_SHOW);
     });
 }
