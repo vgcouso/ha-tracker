@@ -36,6 +36,7 @@
           "geocode_time": "ジオコーディング間隔（秒）",
           "geocode_distance": "ジオコーディング最小距離（m）",
           "only_admin": "管理者のみ",
+          "include_non_persons": "人物のないデバイストラッカーを含める",
           "use_imperial": "ヤード・ポンド法を使用",
           "owntracks_webhook_url": "OwnTracks Webhook URL（読み取り専用）",
           "gpslogger_webhook_url": "GPSLogger Webhook URL（読み取り専用）",
@@ -91,6 +92,7 @@
             "data": {
               "update_interval": "更新間隔（秒）",
               "only_admin": "管理者のみ",
+              "include_non_persons": "人物のないデバイストラッカーを含める",
               "enable_debug": "デバッグを有効にする",
               "use_imperial": "ヤード・ポンド法を使用"
             }

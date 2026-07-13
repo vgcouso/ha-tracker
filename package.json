@@ -1,0 +1,14 @@
+{
+  "name": "ha-tracker-dev",
+  "private": true,
+  "version": "0.0.37",
+  "description": "Dev build tooling for the HA Tracker custom integration (bundles www/js -> www/dist).",
+  "scripts": {
+    "build": "esbuild custom_components/ha_tracker/www/js/main.js --bundle --minify --format=esm --outfile=custom_components/ha_tracker/www/dist/ha-tracker.js --log-level=warning",
+    "watch": "npm run build -- --watch",
+    "deploy": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy.ps1"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0"
+  }
+}

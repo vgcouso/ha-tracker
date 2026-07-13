@@ -5,8 +5,8 @@ let _implPromise;
 function _getImpl() {
     if (!_implPromise) {
         _implPromise = USE_MAP === '2D'
-             ? import('./map2d.js')
-             : import('./map3d.js');
+             ? import('./map2D.js')
+             : import('./map3D.js');
     }
     return _implPromise;
 }

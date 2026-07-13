@@ -33,16 +33,17 @@ class ConfigEndpoint(HomeAssistantView):
             if config_entry.options
             else config_entry.data
         )
-        
+
         version = (hass.data.get(DOMAIN) or {}).get("version", "0")
 
         return self.json(
             {
                 "version": version,
-                "update_interval": config.get("update_interval", 10),         
+                "update_interval": config.get("update_interval", 10),
                 "geocode_time": config.get("geocode_time", 30),
                 "geocode_distance": config.get("geocode_distance", 20),
                 "enable_debug": config.get("enable_debug", False),
                 "use_imperial": config.get("use_imperial", False),
+                "include_non_persons": config.get("include_non_persons", False),
             }
         )
