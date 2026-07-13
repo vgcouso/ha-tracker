@@ -36,6 +36,7 @@
           "geocode_time": "Tiempo de geocodificación (segundos)",
           "geocode_distance": "Distancia mínima para geocodificar (metros)",
           "only_admin": "Solo administradores",
+          "include_non_persons": "Incluir dispositivos de seguimiento sin persona",
           "use_imperial": "Usar unidades imperiales",
           "owntracks_webhook_url": "URL de webhook de OwnTracks (solo lectura)",
           "gpslogger_webhook_url": "URL de webhook de GPSLogger (solo lectura)",
@@ -91,6 +92,7 @@
             "data": {
               "update_interval": "Intervalo de actualización (segundos)",
               "only_admin": "Solo administradores",
+              "include_non_persons": "Incluir dispositivos de seguimiento sin persona",
               "enable_debug": "Habilitar depuración",
               "use_imperial": "Usar unidades imperiales"
             }

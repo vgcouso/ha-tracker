@@ -32,6 +32,7 @@ DEFAULTS = {
     "only_admin": False,
     "enable_debug": False,
     "use_imperial": False,
+    "include_non_persons": False,
 }
 
 MINIMUMS = {
@@ -146,6 +147,7 @@ class HATrackerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         general = vol.Schema({
             vol.Required("update_interval", default=DEFAULTS["update_interval"]): vol.All(vol.Coerce(int)),
             vol.Required("only_admin", default=DEFAULTS["only_admin"]): bool,
+            vol.Required("include_non_persons", default=DEFAULTS["include_non_persons"]): bool,
             vol.Required("enable_debug", default=DEFAULTS["enable_debug"]): bool,
             vol.Required("use_imperial", default=DEFAULTS["use_imperial"]): bool,
         })
@@ -295,6 +297,7 @@ class HATrackerOptionsFlowHandler(config_entries.OptionsFlow):
         general = vol.Schema({
             vol.Required("update_interval", default=self._opts["update_interval"]): vol.All(vol.Coerce(int)),
             vol.Required("only_admin", default=self._opts["only_admin"]): bool,
+            vol.Required("include_non_persons", default=self._opts["include_non_persons"]): bool,
             vol.Required("enable_debug", default=self._opts["enable_debug"]): bool,
             vol.Required("use_imperial", default=self._opts["use_imperial"]): bool,
         })

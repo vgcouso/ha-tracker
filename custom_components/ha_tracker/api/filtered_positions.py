@@ -119,10 +119,18 @@ def validate_query_params(query):
 
     return person_id, start_date, end_date, None
 
-def validate_person(hass, person_id):
+def validate_person(hass, person_id, include_non_persons=False):
     person_state = hass.states.get(person_id)
     if not person_state:
         return None, {"error": f"Person {person_id} not found", "status_code": 404}
+
+    # Si el id es directamente un device_tracker (p.ej. el de un coche sin persona
+    # asignada), lo usamos como fuente sin exigir el atributo 'source', pero solo si
+    # el ajuste "include_non_persons" está activado.
+    if person_id.startswith("device_tracker."):
+        if not include_non_persons:
+            return None, {"error": f"Not valid device_tracker for person {person_id}", "status_code": 400}
+        return person_id, None
 
     source_device_id = person_state.attributes.get("source")
     if (
@@ -1169,6 +1177,7 @@ class FilteredPositionsEndpoint(HomeAssistantView):
 
         # Por si tu integración lo usa
         only_admin = False
+        include_non_persons = False
 
         # valores por defecto (radios float, tiempos int)
         stop_radius_m: float = float(STOP_RADIUS_M_FALLBACK)
@@ -1186,6 +1195,7 @@ class FilteredPositionsEndpoint(HomeAssistantView):
         if entries:
             entry = entries[0]
             only_admin = entry.options.get("only_admin", entry.data.get("only_admin", False))
+            include_non_persons = bool(entry.options.get("include_non_persons", entry.data.get("include_non_persons", False)))
 
             def _opt(key, default):
                 return entry.options.get(key, entry.data.get(key, default))
@@ -1243,7 +1253,7 @@ class FilteredPositionsEndpoint(HomeAssistantView):
         if error:
             return self.json(error, status_code=error["status_code"])
 
-        source_device_id, error = validate_person(hass, person_id)
+        source_device_id, error = validate_person(hass, person_id, include_non_persons)
         if error:
             return self.json(error, status_code=error["status_code"])
 

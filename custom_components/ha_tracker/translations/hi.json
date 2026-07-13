@@ -36,6 +36,7 @@
           "geocode_time": "जियोकोडिंग समय (सेकंड)",
           "geocode_distance": "जियोकोड करने की न्यूनतम दूरी (मीटर)",
           "only_admin": "केवल प्रशासक",
+          "include_non_persons": "बिना व्यक्ति वाले डिवाइस ट्रैकर शामिल करें",
           "use_imperial": "इम्पीरियल इकाइयों का उपयोग करें",
           "owntracks_webhook_url": "OwnTracks webhook URL (केवल पढ़ने हेतु)",
           "gpslogger_webhook_url": "GPSLogger webhook URL (केवल पढ़ने हेतु)",
@@ -91,6 +92,7 @@
             "data": {
               "update_interval": "अपडेट अंतराल (सेकंड)",
               "only_admin": "केवल प्रशासक",
+              "include_non_persons": "बिना व्यक्ति वाले डिवाइस ट्रैकर शामिल करें",
               "enable_debug": "डिबगिंग सक्षम करें",
               "use_imperial": "इम्पीरियल इकाइयों का उपयोग करें"
             }

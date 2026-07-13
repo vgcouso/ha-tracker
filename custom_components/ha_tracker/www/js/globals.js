@@ -1,4 +1,4 @@
-//	
+//
 // GLOBALS
 //
 
@@ -30,6 +30,7 @@ export let geocodeDistance = 20;
 export let updatePos = 1;
 export let enableDebug = false;
 export let use_imperial = false;
+export let includeNonPersons = false;
 
 // Almacén para las referencias originales de console
 const originalConsole = {
@@ -79,29 +80,32 @@ export async function updateAdmin() {
 
 export async function updateConfig() {
     try {
-		const config = await fetchConfig();		
-		
+		const config = await fetchConfig();
+
 		if (config){
 
 			version = config.version;
 
 			if (typeof config.update_interval === "number" && config.update_interval >= 10) {
 				updateInterval = config.update_interval;
-			}		
+			}
 			if (typeof config.geocode_time === "number" && config.geocode_time >= 10) {
 				geocodeTime = config.geocode_time;
-			}	
+			}
 			if (typeof config.geocode_distance === "number" && config.geocode_distance >= 20) {
 				geocodeDistance = config.geocode_distance;
-			}	
+			}
 			if (typeof config.enable_debug === "boolean") {
 				enableDebug = config.enable_debug;
-			}	
+			}
 			if (typeof config.use_imperial === "boolean") {
 				use_imperial = config.use_imperial;
 			}
+			if (typeof config.include_non_persons === "boolean") {
+				includeNonPersons = config.include_non_persons;
+			}
 		}
-		await configureConsole();		
+		await configureConsole();
 		console.log("Configuration: ", config);
     } catch (error) {
         console.error("Error checking admin set: ", error);

@@ -36,6 +36,7 @@
           "geocode_time": "地理编码时间（秒）",
           "geocode_distance": "触发地理编码的最小距离（米）",
           "only_admin": "仅管理员可用",
+          "include_non_persons": "包含无人员的设备跟踪器",
           "use_imperial": "使用英制单位",
           "owntracks_webhook_url": "OwnTracks Webhook URL（只读）",
           "gpslogger_webhook_url": "GPSLogger Webhook URL（只读）",
@@ -91,6 +92,7 @@
             "data": {
               "update_interval": "更新间隔（秒）",
               "only_admin": "仅管理员可用",
+              "include_non_persons": "包含无人员的设备跟踪器",
               "enable_debug": "启用调试",
               "use_imperial": "使用英制单位"
             }

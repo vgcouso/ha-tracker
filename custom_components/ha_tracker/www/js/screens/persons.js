@@ -2,7 +2,7 @@
 // DEVICES
 //
 
-import { haUrl, formatDate, geocodeTime, geocodeDistance, use_imperial, DEFAULT_ALPHA } from '../globals.js';
+import { haUrl, formatDate, geocodeTime, geocodeDistance, use_imperial, includeNonPersons, DEFAULT_ALPHA } from '../globals.js';
 import { fetchPersons, fetchDevices } from '../ha/fetch.js';
 import { handleZonePosition } from '../screens/zones.js';
 import { map, isValidCoordinates, getDistanceFromLatLonInMeters, fitBoundsSafe, focusPoint } from '../utils/map.js';
@@ -225,6 +225,9 @@ export async function fitMapToAllPersons() {
 async function updatePersonsDevicesMap() {
     personsDevicesMap = {};
 
+    // device_trackers ya "reclamados" por una persona, para no duplicarlos como entradas propias
+    const claimedTrackers = new Set();
+
     for (const person of persons) {
         const trackers = person.attributes?.device_trackers;
         let trackerEntityId = null;
@@ -248,6 +251,43 @@ async function updatePersonsDevicesMap() {
         }
 
         personsDevicesMap[person.entity_id] = device;
+        claimedTrackers.add(device.entity_id);
+    }
+
+    // device_trackers "huérfanos": los que exponen ubicación pero no están asignados a
+    // ninguna persona (p.ej. el device_tracker de un coche). Se muestran como entradas
+    // propias solo si el ajuste "include_non_persons" está activado.
+    for (const device of (includeNonPersons ? devices : [])) {
+        if (!device?.entity_id || claimedTrackers.has(device.entity_id)) {
+            continue;
+        }
+
+        const lat = Number(device.attributes?.latitude);
+        const lon = Number(device.attributes?.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+            continue;
+        }
+
+        // Crea una pseudo-persona a partir del device_tracker para reutilizar toda la
+        // tubería (tabla, marcadores, filtro/historial) sin tocar el resto del código.
+        // Como person_id usamos el propio entity_id del device_tracker; el backend de
+        // 'filtered_positions' acepta ids de device_tracker directamente.
+        const label = device.attributes?.friendly_name || device.entity_id;
+        if (!persons.some(p => p.entity_id === device.entity_id)) {
+            persons.push({
+                entity_id: device.entity_id,
+                state: device.state,
+                attributes: {
+                    friendly_name: label,
+                    device_trackers: [device.entity_id],
+                },
+                last_updated: device.last_updated,
+                last_changed: device.last_changed,
+            });
+        }
+
+        personsDevicesMap[device.entity_id] = device;
+        claimedTrackers.add(device.entity_id);
     }
 
     console.log("Devices to persons:", personsDevicesMap);

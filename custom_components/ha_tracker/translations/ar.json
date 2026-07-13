@@ -36,6 +36,7 @@
           "geocode_time": "زمن الترميز الجغرافي (ثوانٍ)",
           "geocode_distance": "أدنى مسافة للترميز الجغرافي (متر)",
           "only_admin": "المشرفون فقط",
+          "include_non_persons": "تضمين أجهزة التتبع بدون شخص",
           "use_imperial": "استخدام الوحدات الإمبريالية",
           "owntracks_webhook_url": "رابط Webhook لـ OwnTracks (للقراءة فقط)",
           "gpslogger_webhook_url": "رابط Webhook لـ GPSLogger (للقراءة فقط)",
@@ -91,6 +92,7 @@
             "data": {
               "update_interval": "فاصل التحديث (ثوانٍ)",
               "only_admin": "المشرفون فقط",
+              "include_non_persons": "تضمين أجهزة التتبع بدون شخص",
               "enable_debug": "تفعيل التصحيح",
               "use_imperial": "استخدام الوحدات الإمبريالية"
             }
