@@ -40,31 +40,10 @@ const originalConsole = {
     error: console.error,
 };
 
-// Base URL de Home Assistant (sobrescribible por ?haUrl=... en la URL)
-function normalizeHaUrl(input) {
-  if (!input) return null;
-  let s = String(input).trim();
 
-  // Soporta URLs "scheme-relative" (//host:port)
-  if (s.startsWith("//")) s = `${location.protocol}${s}`;
-
-  try {
-    // Si no trae protocolo, resuélvelo relativo a la página (soporta "/proxy" o "ha")
-    const hasProto = /^https?:\/\//i.test(s);
-    const u = hasProto ? new URL(s) : new URL(s, window.location.href);
-
-    // ✅ CONSERVA origin + pathname (no recortes el path base)
-    // y quita solo las barras finales
-    return (u.origin + u.pathname).replace(/\/+$/, "");
-  } catch {
-    console.warn("[haUrl] Valor inválido en query:", input, "-> se usa location.origin");
-    return null;
-  }
-}
 
 const qs = new URLSearchParams(window.location.search);
-const haUrlOverride = qs.get("haUrl") ?? qs.get("haurl") ?? qs.get("ha_url");
-export const haUrl = normalizeHaUrl(haUrlOverride) ?? location.origin;
+export const haUrl = location.origin;
 
 
 
