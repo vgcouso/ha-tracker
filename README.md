@@ -74,7 +74,6 @@ You can access the application by opening the panel from the menu on the left or
    
 This URL accepts 3 parameters:
   - **debug=1:** to avoid using minified JavaScript
-  - **haUrl=HOST_2:** In case you need to connect to a host other than "HOST_1"
   - **token=ll_token:** Where "ll_token" is a long-lived token
   
 **Example:** 
