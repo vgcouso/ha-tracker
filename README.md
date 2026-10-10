@@ -72,7 +72,7 @@ You can access the application by opening the panel from the menu on the left or
 
    `https://HOST/ha-tracker/index.html`
    
-This URL accepts 3 parameters:
+This URL accepts 2 parameters:
   - **debug=1:** to avoid using minified JavaScript
   - **token=ll_token:** Where "ll_token" is a long-lived token
   
