@@ -76,9 +76,6 @@ This URL accepts 3 parameters:
   - **debug=1:** to avoid using minified JavaScript
   - **token=ll_token:** Where "ll_token" is a long-lived token
   
-**Example:** 
-    
-	`https://HOST/ha-tracker/index.html?debug=1&haUrl=HOST_2&token=ll_token`   
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/vgcouso/ha-tracker/main/docs/images/install.png" alt="Install screen" style="width: 80%; max-width: 100%; height: auto;" />
